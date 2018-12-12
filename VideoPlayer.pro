@@ -23,8 +23,10 @@ HEADERS  += \
 FORMS    += \
     src/mainwindow.ui
 
+
 INCLUDEPATH += $$PWD/ffmpeg/include \
-                $$PWD/src
+               $$PWD/SDL2/include \
+               $$PWD/src
 
 LIBS += $$PWD/ffmpeg/lib/avcodec.lib \
         $$PWD/ffmpeg/lib/avdevice.lib \
@@ -33,4 +35,5 @@ LIBS += $$PWD/ffmpeg/lib/avcodec.lib \
         $$PWD/ffmpeg/lib/avutil.lib \
         $$PWD/ffmpeg/lib/postproc.lib \
         $$PWD/ffmpeg/lib/swresample.lib \
-        $$PWD/ffmpeg/lib/swscale.lib
+        $$PWD/ffmpeg/lib/swscale.lib \
+        $$PWD/SDL2/lib/x86/SDL2.lib

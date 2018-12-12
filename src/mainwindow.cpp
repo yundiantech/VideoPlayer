@@ -9,6 +9,7 @@
 #include "ui_mainwindow.h"
 
 #include <QPainter>
+#include <QPaintEvent>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
