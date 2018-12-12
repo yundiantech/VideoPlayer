@@ -11,17 +11,23 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = VideoPlayer
 TEMPLATE = app
 
+include(src/CustomTitleWidget/CustomTitleWidget.pri)
 
 SOURCES += src/main.cpp \
+    src/videoplayer/videoplayer_thread.cpp \
     src/videoplayer/videoplayer.cpp \
-    src/mainwindow.cpp
+    src/videoplayer/videoplayer_showvideowidget.cpp \
+    src/videoplayer/widget/VideoSlider.cpp
 
 HEADERS  += \
+    src/videoplayer/videoplayer_thread.h \
     src/videoplayer/videoplayer.h \
-    src/mainwindow.h
+    src/videoplayer/videoplayer_showvideowidget.h \
+    src/videoplayer/widget/VideoSlider.h
 
 FORMS    += \
-    src/mainwindow.ui
+    src/videoplayer/videoplayer.ui \
+    src/videoplayer/videoplayer_showvideowidget.ui
 
 
 INCLUDEPATH += $$PWD/ffmpeg/include \
@@ -37,3 +43,8 @@ LIBS += $$PWD/ffmpeg/lib/avcodec.lib \
         $$PWD/ffmpeg/lib/swresample.lib \
         $$PWD/ffmpeg/lib/swscale.lib \
         $$PWD/SDL2/lib/x86/SDL2.lib
+
+RESOURCES += \
+    resources.qrc
+
+win32:RC_FILE=$$PWD/main.rc
