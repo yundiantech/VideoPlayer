@@ -19,7 +19,6 @@ extern "C"
     #include "libswscale/swscale.h"
     #include "libswresample/swresample.h"
 
-
     #include <SDL.h>
     #include <SDL_audio.h>
     #include <SDL_types.h>
@@ -46,6 +45,7 @@ class VideoPlayer; //前置声明
 
 typedef struct VideoState {
     AVFormatContext *ic;
+    int videoStream, audioStream;
     AVFrame *audio_frame;// 解码音频过程中的使用缓存
     PacketQueue audioq;
     AVStream *audio_st; //音频流
@@ -73,6 +73,19 @@ typedef struct VideoState {
     AVStream *video_st;
     PacketQueue videoq;
 
+    /// 跳转相关的变量
+    int             seek_req; //跳转标志
+    int64_t         seek_pos; //跳转的位置 -- 微秒
+    int             seek_flag_audio;//跳转标志 -- 用于音频线程中
+    int             seek_flag_video;//跳转标志 -- 用于视频线程中
+    double          seek_time; //跳转的时间(秒)  值和seek_pos是一样的
+
+    ///播放控制相关
+    bool isPause;  //暂停标志
+    bool quit;  //停止
+    bool readFinished; //文件读取完毕
+    bool readThreadFinished;
+    bool videoThreadFinished;
 
     SDL_Thread *video_tid;  //视频线程id
     SDL_AudioDeviceID audioID;
@@ -86,17 +99,35 @@ class VideoPlayer : public QThread
     Q_OBJECT
 
 public:
+
+    enum PlayerState
+    {
+        Playing,
+        Pause,
+        Stop
+    };
+
     explicit VideoPlayer();
     ~VideoPlayer();
 
-    void setFileName(QString path){mFileName = path;}
+    bool setFileName(QString path);
 
-    void startPlay();
+    bool play();
+    bool pause();
+    bool stop(bool isWait = false); //参数表示是否等待所有的线程执行完毕再返回
+
+    void seek(int64_t pos); //单位是微秒
+
+    int64_t getTotalTime(); //单位微秒
+    double getCurrentTime(); //单位秒
 
     void disPlayVideo(QImage img);
 
 signals:
     void sig_GetOneFrame(QImage); //没获取到一帧图像 就发送此信号
+
+    void sig_StateChanged(VideoPlayer::PlayerState state);
+    void sig_TotalTimeChanged(qint64 uSec); //获取到视频时长的时候激发此信号
 
 protected:
     void run();
@@ -104,9 +135,9 @@ protected:
 private:
     QString mFileName;
 
-
-
     VideoState mVideoState;
+
+    PlayerState mPlayerState; //播放状态
 
 };
 

@@ -1,7 +1,7 @@
 这是Qt的工程，建议使用Qt Creator 打开
 
 
-从零开始学习音视频编程技术（九） FFMPEG Qt视频播放器之同步进阶篇
+从零开始学习音视频编程技术（十） FFMPEG Qt视频播放器之播放控制
 
 FFMPEG的版本是2.5.2
 SDL的版本是2.04
@@ -10,7 +10,7 @@ SDL的版本是2.04
 
 
 关于代码的解释 请参考：
-http://blog.yundiantech.com/?log=blog&id=12
+http://blog.yundiantech.com/?log=blog&id=13
 
 
 Qt开发环境的搭建 请参考：

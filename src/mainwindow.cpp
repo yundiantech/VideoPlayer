@@ -10,6 +10,8 @@
 
 #include <QPainter>
 #include <QPaintEvent>
+#include <QFileDialog>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -17,11 +19,31 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
+    av_register_all(); //初始化FFMPEG  调用了这个才能正常使用编码器和解码器
+    avformat_network_init(); //支持打开网络文件
+
+    if (SDL_Init(SDL_INIT_AUDIO)) {
+        fprintf(stderr,"Could not initialize SDL - %s. \n", SDL_GetError());
+        exit(1);
+    }
+
     mPlayer = new VideoPlayer;
     connect(mPlayer,SIGNAL(sig_GetOneFrame(QImage)),this,SLOT(slotGetOneFrame(QImage)));
+    connect(mPlayer,SIGNAL(sig_TotalTimeChanged(qint64)),this,SLOT(slotTotalTimeChanged(qint64)));
+    connect(mPlayer,SIGNAL(sig_StateChanged(VideoPlayer::PlayerState)),this,SLOT(slotStateChanged(VideoPlayer::PlayerState)));
 
-    mPlayer->setFileName("E:\\in.rmvb");
-    mPlayer->startPlay();
+
+    mTimer = new QTimer; //定时器-获取当前视频时间
+    connect(mTimer,SIGNAL(timeout()),this,SLOT(slotTimerTimeOut()));
+    mTimer->setInterval(500);
+
+    connect(ui->pushButton_open,SIGNAL(clicked()),this,SLOT(slotBtnClick()));
+    connect(ui->pushButton_play,SIGNAL(clicked()),this,SLOT(slotBtnClick()));
+    connect(ui->pushButton_pause,SIGNAL(clicked()),this,SLOT(slotBtnClick()));
+    connect(ui->pushButton_stop,SIGNAL(clicked()),this,SLOT(slotBtnClick()));
+
+    connect(ui->horizontalSlider,SIGNAL(sliderMoved(int)),this,SLOT(slotSliderMoved(int)));
 
 }
 
@@ -55,4 +77,80 @@ void MainWindow::slotGetOneFrame(QImage img)
 {
     mImage = img;
     update(); //调用update将执行 paintEvent函数
+}
+
+void MainWindow::slotTotalTimeChanged(qint64 uSec)
+{
+    qint64 Sec = uSec/1000000;
+
+    ui->horizontalSlider->setRange(0,Sec);
+
+//    QString hStr = QString("00%1").arg(Sec/3600);
+    QString mStr = QString("00%1").arg(Sec/60);
+    QString sStr = QString("00%1").arg(Sec%60);
+
+    QString str = QString("%1:%2").arg(mStr.right(2)).arg(sStr.right(2));
+    ui->label_totaltime->setText(str);
+
+}
+
+void MainWindow::slotSliderMoved(int value)
+{
+    if (QObject::sender() == ui->horizontalSlider)
+    {
+        mPlayer->seek((qint64)value * 1000000);
+    }
+}
+
+void MainWindow::slotTimerTimeOut()
+{
+    if (QObject::sender() == mTimer)
+    {
+
+        qint64 Sec = mPlayer->getCurrentTime();
+
+        ui->horizontalSlider->setValue(Sec);
+
+    //    QString hStr = QString("00%1").arg(Sec/3600);
+        QString mStr = QString("00%1").arg(Sec/60);
+        QString sStr = QString("00%1").arg(Sec%60);
+
+        QString str = QString("%1:%2").arg(mStr.right(2)).arg(sStr.right(2));
+        ui->label_currenttime->setText(str);
+    }
+}
+
+void MainWindow::slotBtnClick()
+{
+    if (QObject::sender() == ui->pushButton_play)
+    {
+        mPlayer->play();
+    }
+    else if (QObject::sender() == ui->pushButton_pause)
+    {
+        mPlayer->pause();
+    }
+    else if (QObject::sender() == ui->pushButton_stop)
+    {
+        mPlayer->stop(true);
+    }
+    else if (QObject::sender() == ui->pushButton_open)
+    {
+        QString s = QFileDialog::getOpenFileName(
+                   this, "选择要播放的文件",
+                    "/",//初始目录
+                    "视频文件 (*.flv *.rmvb *.avi *.MP4);; 所有文件 (*.*);; ");
+        if (!s.isEmpty())
+        {
+            s.replace("/","\\");
+
+            mPlayer->stop(true); //如果在播放则先停止
+
+            mPlayer->setFileName(s);
+
+            mTimer->start();
+
+        }
+    }
+
 }
