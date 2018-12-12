@@ -389,7 +389,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
 
         if (is->audio_buf == NULL) return;
 
-        if (is->isMute) //静音
+        if (is->isMute || is->isNeedPause) //静音 或者 是在暂停的时候跳转了
         {
             memset(is->audio_buf + is->audio_buf_index, 0, len1);
         }
@@ -637,7 +637,8 @@ int video_thread(void *arg)
 
             delayTime = delayTime > 5 ? 5:delayTime;
 
-            SDL_Delay(delayTime);
+            if (!is->isNeedPause)
+                SDL_Delay(delayTime);
         }
 
         if (got_picture) {
@@ -651,6 +652,13 @@ int video_thread(void *arg)
 //            QImage image = tmpImg.copy(); //把图像复制一份 传递给界面显示
 			QImage image = tmpImg.convertToFormat(QImage::Format_RGB888,Qt::NoAlpha); //去掉透明的部分 有些奇葩的视频会透明
             is->player->disPlayVideo(image); //调用激发信号的函数
+
+            if (is->isNeedPause)
+            {
+                is->isPause = true;
+                is->isNeedPause = false;
+            }
+
         }
 
         av_free_packet(packet);
@@ -782,6 +790,7 @@ bool VideoPlayer_Thread::replay()
 
 bool VideoPlayer_Thread::play()
 {
+    mVideoState.isNeedPause = false;
     mVideoState.isPause = false;
 
     if (mPlayerState != Pause)
@@ -1156,6 +1165,13 @@ void VideoPlayer_Thread::run()
             is->seek_time = is->seek_pos / 1000000.0;
             is->seek_flag_audio = 1;
             is->seek_flag_video = 1;
+
+            if (is->isPause)
+            {
+                is->isNeedPause = true;
+                is->isPause = false;
+            }
+
         }
 
         //这里做了个限制  当队列里面的数据超过某个大小的时候 就暂停读取  防止一下子就把视频读完了，导致的空间分配不足

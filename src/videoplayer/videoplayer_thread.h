@@ -77,6 +77,7 @@ typedef struct VideoState {
     double          seek_time; //跳转的时间(秒)  值和seek_pos是一样的
 
     ///播放控制相关
+    bool isNeedPause; //暂停后跳转先标记此变量
     bool isPause;  //暂停标志
     bool quit;  //停止
     bool readFinished; //文件读取完毕
