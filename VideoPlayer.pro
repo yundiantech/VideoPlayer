@@ -8,15 +8,20 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = VideoPlayer_1
+TARGET = VideoPlayer
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += src/main.cpp \
+    src/videoplayer/videoplayer.cpp \
+    src/mainwindow.cpp
 
-HEADERS  +=
+HEADERS  += \
+    src/videoplayer/videoplayer.h \
+    src/mainwindow.h
 
-FORMS    +=
+FORMS    += \
+    src/mainwindow.ui
 
 INCLUDEPATH += $$PWD/ffmpeg/include \
                 $$PWD/src

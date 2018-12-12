@@ -1,7 +1,8 @@
 这是Qt的工程，建议使用Qt Creator 打开
 
 
-是一个Windows下使用FFMPEG解码视频并保存成图片文件的简单的例子
+是一个Windows下使用FFMPEG解码视频
+并使用QPaint绘制到QWidget上
 FFMPEG的版本是2.5.2
 
 
@@ -9,7 +10,7 @@ FFMPEG的版本是2.5.2
 
 
 关于代码的解释 请参考：
-http://blog.yundiantech.com/?log=blog&id=8
+http://blog.yundiantech.com/?log=blog&id=9
 
 
 Qt开发环境的搭建 请参考：
