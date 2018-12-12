@@ -24,6 +24,12 @@ VideoPlayer_ShowVideoWidget::~VideoPlayer_ShowVideoWidget()
 void VideoPlayer_ShowVideoWidget::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+	
+	painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+	
     painter.setBrush(Qt::black);
     painter.drawRect(0,0,this->width(),this->height()); //先画成黑色
 
@@ -31,7 +37,7 @@ void VideoPlayer_ShowVideoWidget::paintEvent(QPaintEvent *event)
     if (mImage.size().width() <= 0) return;
 
     ///将图像按比例缩放成和窗口一样大小
-    QImage img = mImage.scaled(this->size(),Qt::KeepAspectRatio);
+    QImage img = mImage.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation); //这里效率比较低下  还不知道如何优化
 
     int x = this->width() - img.width();
     int y = this->height() - img.height();

@@ -8,5 +8,9 @@
         <file>image/start_focus.png</file>
         <file>image/start_normal.png</file>
         <file>image/start1_normal.png</file>
+        <file>image/close_normal.png</file>
+        <file>image/showmaxsizebtn.png</file>
+        <file>image/showminisizebtn.png</file>
+        <file>image/shownormalbtn.png</file>
     </qresource>
 </RCC>

@@ -11,8 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = VideoPlayer
 TEMPLATE = app
 
-include(src/CustomTitleWidget/CustomTitleWidget.pri)
-
 SOURCES += src/main.cpp \
     src/videoplayer/videoplayer_thread.cpp \
     src/videoplayer/videoplayer.cpp \

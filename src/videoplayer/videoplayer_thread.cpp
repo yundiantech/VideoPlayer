@@ -1,10 +1,4 @@
-﻿/**
- * 叶海辉
- * QQ群121376426
- * http://blog.yundiantech.com/
- */
-
-#include "videoplayer_thread.h"
+﻿#include "videoplayer_thread.h"
 
 #include <stdio.h>
 
@@ -14,6 +8,37 @@
 #define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
 
 #define FLUSH_DATA "FLUSH"
+
+//清空
+static void packet_queue_flush(PacketQueue *q)
+{
+    AVPacketList *pkt, *pkt1;
+
+    SDL_LockMutex(q->mutex);
+    for(pkt = q->first_pkt; pkt != NULL; pkt = pkt1)
+    {
+        pkt1 = pkt->next;
+
+        if(pkt1->pkt.data != (uint8_t *)"FLUSH")
+        {
+
+        }
+        av_free_packet(&pkt->pkt);
+        av_freep(&pkt);
+
+    }
+    q->last_pkt = NULL;
+    q->first_pkt = NULL;
+    q->nb_packets = 0;
+    q->size = 0;
+    SDL_UnlockMutex(q->mutex);
+}
+
+static void packet_queue_deinit(PacketQueue *q) {
+    packet_queue_flush(q);
+    SDL_DestroyMutex(q->mutex);
+    SDL_DestroyCond(q->cond);
+}
 
 void packet_queue_init(PacketQueue *q) {
     memset(q, 0, sizeof(PacketQueue));
@@ -84,29 +109,6 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
     return ret;
 }
 
-static void packet_queue_flush(PacketQueue *q)
-{
-    AVPacketList *pkt, *pkt1;
-
-    SDL_LockMutex(q->mutex);
-    for(pkt = q->first_pkt; pkt != NULL; pkt = pkt1)
-    {
-        pkt1 = pkt->next;
-
-        if(pkt1->pkt.data != (uint8_t *)"FLUSH")
-        {
-
-        }
-        av_free_packet(&pkt->pkt);
-        av_freep(&pkt);
-
-    }
-    q->last_pkt = NULL;
-    q->first_pkt = NULL;
-    q->nb_packets = 0;
-    q->size = 0;
-    SDL_UnlockMutex(q->mutex);
-}
 
 static int audio_decode_frame(VideoState *is, double *pts_ptr)
 {
@@ -124,6 +126,7 @@ static int audio_decode_frame(VideoState *is, double *pts_ptr)
 
             if (is->isPause == true) //判断暂停
             {
+                return -1;
                 SDL_Delay(10);
                 continue;
             }
@@ -256,12 +259,16 @@ static int audio_decode_frame(VideoState *is, double *pts_ptr)
         memset(pkt, 0, sizeof(*pkt));
 
         if (is->quit)
+        {
+            packet_queue_flush(&is->audioq);
             return -1;
+        }
 
         if (is->isPause == true) //判断暂停
         {
-            SDL_Delay(10);
-            continue;
+            return -1;
+//            SDL_Delay(10);
+//            continue;
         }
 
         if (packet_queue_get(&is->audioq, pkt, 0) <= 0)
@@ -289,6 +296,60 @@ static int audio_decode_frame(VideoState *is, double *pts_ptr)
     return 0;
 }
 
+typedef     signed char         int8_t;
+typedef     signed short        int16_t;
+typedef     signed int          int32_t;
+typedef     unsigned char       uint8_t;
+typedef     unsigned short      uint16_t;
+typedef     unsigned int        uint32_t;
+typedef unsigned long       DWORD;
+typedef int                 BOOL;
+typedef unsigned char       BYTE;
+typedef unsigned short      WORD;
+typedef float               FLOAT;
+typedef FLOAT               *PFLOAT;
+typedef int                 INT;
+typedef unsigned int        UINT;
+typedef unsigned int        *PUINT;
+
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
+
+#define MAKEWORD(a, b)      ((WORD)(((BYTE)(((DWORD_PTR)(a)) & 0xff)) | ((WORD)((BYTE)(((DWORD_PTR)(b)) & 0xff))) << 8))
+#define MAKELONG(a, b)      ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
+#define LOWORD(l)           ((WORD)(((DWORD_PTR)(l)) & 0xffff))
+#define HIWORD(l)           ((WORD)((((DWORD_PTR)(l)) >> 16) & 0xffff))
+#define LOBYTE(w)           ((BYTE)(((DWORD_PTR)(w)) & 0xff))
+#define HIBYTE(w)           ((BYTE)((((DWORD_PTR)(w)) >> 8) & 0xff))
+
+void RaiseVolume(char* buf, int size, int uRepeat, double vol)//buf为需要调节音量的音频数据块首地址指针，size为长度，uRepeat为重复次数，通常设为1，vol为增益倍数,可以小于1
+{
+    if (!size)
+    {
+        return;
+    }
+    for (int i = 0; i < size; i += 2)
+    {
+        short wData;
+        wData = MAKEWORD(buf[i], buf[i + 1]);
+        long dwData = wData;
+        for (int j = 0; j < uRepeat; j++)
+        {
+            dwData = dwData * vol;
+            if (dwData < -0x8000)
+            {
+                dwData = -0x8000;
+            }
+            else if (dwData > 0x7FFF)
+            {
+                dwData = 0x7FFF;
+            }
+        }
+        wData = LOWORD(dwData);
+        buf[i] = LOBYTE(wData);
+        buf[i + 1] = HIBYTE(wData);
+    }
+}
 
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
     VideoState *is = (VideoState *) userdata;
@@ -296,13 +357,14 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
     int len1, audio_data_size;
 
     double pts;
-
+//qDebug()<<__FUNCTION__<<"111...";
     /*   len是由SDL传入的SDL缓冲区的大小，如果这个缓冲未满，我们就一直往里填充数据 */
     while (len > 0) {
         /*  audio_buf_index 和 audio_buf_size 标示我们自己用来放置解码出来的数据的缓冲区，*/
         /*   这些数据待copy到SDL缓冲区， 当audio_buf_index >= audio_buf_size的时候意味着我*/
         /*   们的缓冲为空，没有数据可供copy，这时候需要调用audio_decode_frame来解码出更
          /*   多的桢数据 */
+//        qDebug()<<__FUNCTION__<<is->audio_buf_index<<is->audio_buf_size;
         if (is->audio_buf_index >= is->audio_buf_size) {
 
             audio_data_size = audio_decode_frame(is, &pts);
@@ -327,16 +389,29 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
 
         if (is->audio_buf == NULL) return;
 
-        memcpy(stream, (uint8_t *) is->audio_buf + is->audio_buf_index, len1);
-//        SDL_MixAudio(stream, (uint8_t * )is->audio_buf + is->audio_buf_index, len1, 50);
+        if (is->isMute) //静音
+        {
+            memset(is->audio_buf + is->audio_buf_index, 0, len1);
+        }
+        else
+        {
+            RaiseVolume((char*)is->audio_buf + is->audio_buf_index, len1, 1, is->mVolume);
+        }
 
+        memcpy(stream, (uint8_t *) is->audio_buf + is->audio_buf_index, len1);
+
+
+//        SDL_memset(stream, 0x0, len);// make sure this is silence.
+//        SDL_MixAudio(stream, (uint8_t *) is->audio_buf + is->audio_buf_index, len1, SDL_MIX_MAXVOLUME);
+
+//        SDL_MixAudio(stream, (uint8_t * )is->audio_buf + is->audio_buf_index, len1, 50);
 //        SDL_MixAudioFormat(stream, (uint8_t * )is->audio_buf + is->audio_buf_index, AUDIO_S16SYS, len1, 50);
 
         len -= len1;
         stream += len1;
         is->audio_buf_index += len1;
     }
-
+//qDebug()<<__FUNCTION__<<"222...";
 }
 
 static double get_audio_clock(VideoState *is)
@@ -383,12 +458,9 @@ int audio_stream_component_open(VideoState *is, int stream_index)
     AVFormatContext *ic = is->ic;
     AVCodecContext *codecCtx;
     AVCodec *codec;
-    SDL_AudioSpec wanted_spec, spec;
+
     int64_t wanted_channel_layout = 0;
     int wanted_nb_channels;
-    /*  SDL支持的声道数为 1, 2, 4, 6 */
-    /*  后面我们会使用这个数组来纠正不支持的声道数目 */
-    const int next_nb_channels[] = { 0, 0, 1, 6, 2, 6, 4, 6 };
 
     if (stream_index < 0 || stream_index >= ic->nb_streams) {
         return -1;
@@ -405,91 +477,12 @@ int audio_stream_component_open(VideoState *is, int stream_index)
         wanted_channel_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
     }
 
-    wanted_spec.channels = av_get_channel_layout_nb_channels(
-            wanted_channel_layout);
-    wanted_spec.freq = codecCtx->sample_rate;
-    if (wanted_spec.freq <= 0 || wanted_spec.channels <= 0) {
-        //fprintf(stderr,"Invalid sample rate or channel count!\n");
-        return -1;
-    }
-    wanted_spec.format = AUDIO_S16SYS; // 具体含义请查看“SDL宏定义”部分
-    wanted_spec.silence = 0;            // 0指示静音
-    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;  // 自定义SDL缓冲区大小
-    wanted_spec.callback = audio_callback;        // 音频解码的关键回调函数
-    wanted_spec.userdata = is;                    // 传给上面回调函数的外带数据
-
-//    SDL_AudioDeviceID audioID = 1;// = SDL_OpenAudioDevice("",0,&wanted_spec, &spec,1);
-//    int num = SDL_GetNumAudioDevices(0);
-//    for (int i=0;i<num;i++)
-//    {
-//        qDebug()<<SDL_GetAudioDeviceName(i,0);
-//    }
-
-//    ///  打开SDL播放设备 - 开始
-//    SDL_LockAudio();
-//    SDL_AudioSpec spec;
-//    SDL_AudioSpec wanted_spec;
-//    wanted_spec.freq = aCodecCtx->sample_rate;
-//    wanted_spec.format = AUDIO_S16SYS;
-//    wanted_spec.channels = aCodecCtx->channels;
-//    wanted_spec.silence = 0;
-//    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
-//    wanted_spec.callback = audio_callback;
-//    wanted_spec.userdata = &mVideoState;
-//    if(SDL_OpenAudio(&wanted_spec, &spec) < 0)
-//    {
-//        fprintf(stderr, "SDL_OpenAudio: %s\n", SDL_GetError());
-//        return;
-//    }
-//    SDL_UnlockAudio();
-//    SDL_PauseAudio(0);
-//    ///  打开SDL播放设备 - 结束
-
-    /*  打开音频设备，这里使用一个while来循环尝试打开不同的声道数(由上面 */
-    /*  next_nb_channels数组指定）直到成功打开，或者全部失败 */
-//    while (SDL_OpenAudio(&wanted_spec, &spec) < 0) {
-    do {
-
-        is->audioID = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(0,0),0,&wanted_spec, &spec,0);
-
-//        qDebug()<<"audioID"<<audioID;
-
-//        if (audioID >= 1) break;
-
-        fprintf(stderr,"SDL_OpenAudio (%d channels): %s\n",wanted_spec.channels, SDL_GetError());
-        qDebug()<<QString("SDL_OpenAudio (%1 channels): %2").arg(wanted_spec.channels).arg(SDL_GetError());
-        wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
-        if (!wanted_spec.channels) {
-            fprintf(stderr,"No more channel combinations to tyu, audio open failed\n");
-//            return -1;
-            break;
-        }
-        wanted_channel_layout = av_get_default_channel_layout(
-                wanted_spec.channels);
-    }while(is->audioID == 0);
-
-    /* 检查实际使用的配置（保存在spec,由SDL_OpenAudio()填充） */
-    if (spec.format != AUDIO_S16SYS) {
-        fprintf(stderr,"SDL advised audio format %d is not supported!\n",spec.format);
-        return -1;
-    }
-
-    if (spec.channels != wanted_spec.channels) {
-        wanted_channel_layout = av_get_default_channel_layout(spec.channels);
-        if (!wanted_channel_layout) {
-            fprintf(stderr,"SDL advised channel count %d is not supported!\n",spec.channels);
-            return -1;
-        }
-    }
-
-    is->audio_hw_buf_size = spec.size;
-
     /* 把设置好的参数保存到大结构中 */
     is->audio_src_fmt = is->audio_tgt_fmt = AV_SAMPLE_FMT_S16;
-    is->audio_src_freq = is->audio_tgt_freq = spec.freq;
+    is->audio_src_freq = is->audio_tgt_freq = 44100;
     is->audio_src_channel_layout = is->audio_tgt_channel_layout =
             wanted_channel_layout;
-    is->audio_src_channels = is->audio_tgt_channels = spec.channels;
+    is->audio_src_channels = is->audio_tgt_channels = 2;
 
     codec = avcodec_find_decoder(codecCtx->codec_id);
     if (!codec || (avcodec_open2(codecCtx, codec, NULL) < 0)) {
@@ -504,9 +497,7 @@ int audio_stream_component_open(VideoState *is, int stream_index)
         is->audio_buf_size = 0;
         is->audio_buf_index = 0;
         memset(&is->audio_pkt, 0, sizeof(is->audio_pkt));
-        packet_queue_init(&is->audioq);
-//        SDL_PauseAudio(0); // 开始播放静音
-        SDL_PauseAudioDevice(is->audioID,0);
+//        packet_queue_init(&is->audioq);
         break;
     default:
         break;
@@ -550,16 +541,17 @@ int video_thread(void *arg)
     while(1)
     {
         if (is->quit)
-        {
+        {qDebug()<<__FUNCTION__<<"quit!";
+            packet_queue_flush(&is->videoq); //清空队列
             break;
         }
-
+//qDebug()<<__FUNCTION__<<"000!";
         if (is->isPause == true) //判断暂停
         {
             SDL_Delay(10);
             continue;
         }
-
+//qDebug()<<__FUNCTION__<<"000!";
         if (packet_queue_get(&is->videoq, packet, 0) <= 0)
         {
             if (is->readFinished)
@@ -572,7 +564,7 @@ int video_thread(void *arg)
                 continue;
             }
         }
-
+//qDebug()<<__FUNCTION__<<"111!";
         //收到这个数据 说明刚刚执行过跳转 现在需要把解码器的数据 清除一下
         if(strcmp((char*)packet->data,FLUSH_DATA) == 0)
         {
@@ -626,6 +618,11 @@ int video_thread(void *arg)
                 break;
             }
 
+            if (is->readFinished && is->audioq.size == 0)
+            {//读取完了 且音频数据也播放完了 就剩下视频数据了  直接显示出来了 不用同步了
+                break;
+            }
+
             audio_pts = is->audio_clock;
 
             //主要是 跳转的时候 我们把video_clock设置成0了
@@ -633,7 +630,7 @@ int video_thread(void *arg)
             //否则当从后面跳转到前面的时候 会卡在这里
             video_pts = is->video_clock;
 
-
+//qDebug()<<__FUNCTION__<<video_pts<<audio_pts;
             if (video_pts <= audio_pts) break;
 
             int delayTime = (video_pts - audio_pts) * 1000;
@@ -651,17 +648,20 @@ int video_thread(void *arg)
 
             //把这个RGB数据 用QImage加载
             QImage tmpImg((uchar *)out_buffer_rgb,pCodecCtx->width,pCodecCtx->height,QImage::Format_RGB32);
-            QImage image = tmpImg.copy(); //把图像复制一份 传递给界面显示
+//            QImage image = tmpImg.copy(); //把图像复制一份 传递给界面显示
+			QImage image = tmpImg.convertToFormat(QImage::Format_RGB888,Qt::NoAlpha); //去掉透明的部分 有些奇葩的视频会透明
             is->player->disPlayVideo(image); //调用激发信号的函数
         }
 
         av_free_packet(packet);
 
     }
-
+qDebug()<<__FUNCTION__<<"quit 222!";
     av_free(pFrame);
     av_free(pFrameRGB);
     av_free(out_buffer_rgb);
+
+    sws_freeContext(img_convert_ctx);
 
     if (!is->quit)
     {
@@ -669,23 +669,78 @@ int video_thread(void *arg)
     }
 
     is->videoThreadFinished = true;
+qDebug()<<__FUNCTION__<<"finished!";
+
+//qDebug()<<__FUNCTION__<<"videoThreadFinished"<<is->videoThreadFinished;
 
     return 0;
 }
 
-
 VideoPlayer_Thread::VideoPlayer_Thread()
 {
+//    mVideoState.readThreadFinished = true;
+//    mVideoState.videoThreadFinished = true;
 
-    mVideoWidget = new VideoPlayer_ShowVideoWidget;
-    connect(this,SIGNAL(sig_GetOneFrame(QImage)),mVideoWidget,SLOT(slotGetOneFrame(QImage)));
+    memset(&mVideoState,0,sizeof(VideoState)); //为了安全起见  先将结构体的数据初始化成0了
 
+    mVideoWidget = NULL;
     mPlayerState = Stop;
+
+    mAudioID = 0;
+    mIsMute = false;
+
+    mVolume = 1;
+
+//    packet_queue_init(&mVideoState.audioq);
+//    packet_queue_init(&mVideoState.videoq);
+
+//    while (1)
+//    {
+//       openSDL();
+//       if (mAudioID > 0)
+//       {
+//           break;
+//       }
+//       SDL_Delay(1);
+//    }
+
+
 }
 
 VideoPlayer_Thread::~VideoPlayer_Thread()
 {
+    ///关闭SDL音频播放设备
+    qDebug()<<__FUNCTION__<<"111...";
+    if (mAudioID != 0)
+    {
+        SDL_LockAudioDevice(mAudioID);
+//        SDL_PauseAudioDevice(mAudioID,1);
+        SDL_CloseAudioDevice(mAudioID);
+        SDL_UnlockAudioDevice(mAudioID);
 
+        mAudioID = 0;
+    }
+
+    deInit();
+
+    qDebug()<<__FUNCTION__<<"222...";
+}
+
+void VideoPlayer_Thread::deInit()
+{
+//    packet_queue_deinit(&mVideoState.videoq);
+//    packet_queue_deinit(&mVideoState.audioq);
+
+    if (mVideoState.swr_ctx != NULL)
+    {
+        swr_free(&mVideoState.swr_ctx);
+        mVideoState.swr_ctx = NULL;
+    }
+
+    if (mVideoState.audio_frame!= NULL) {
+        avcodec_free_frame(&mVideoState.audio_frame);
+        mVideoState.audio_frame = NULL;
+    }
 }
 
 bool VideoPlayer_Thread::setFileName(QString path)
@@ -697,13 +752,32 @@ bool VideoPlayer_Thread::setFileName(QString path)
 
     mFileName = path;
 
-    mPlayerState = Playing;
-    emit sig_StateChanged(Playing);
+//    mPlayerState = Playing;
+//    emit sig_StateChanged(Playing);
+
+    memset(&mVideoState,0,sizeof(VideoState)); //为了安全起见  先将结构体的数据初始化成0了
 
     this->start(); //启动线程
 
     return true;
 
+}
+
+bool VideoPlayer_Thread::replay()
+{
+    while (this->isRunning())
+    {
+        SDL_Delay(5);
+    }
+
+    if (mPlayerState != Stop)
+    {
+        return false;
+    }
+//    memset(&mVideoState,0,sizeof(VideoState)); //为了安全起见  先将结构体的数据初始化成0了
+
+    this->start(); //启动线程
+    return true;
 }
 
 bool VideoPlayer_Thread::play()
@@ -739,34 +813,40 @@ bool VideoPlayer_Thread::pause()
 
 bool VideoPlayer_Thread::stop(bool isWait)
 {
+    qDebug()<<__FUNCTION__<<"111...";
     if (mPlayerState == Stop)
     {
+        qDebug()<<__FUNCTION__<<"333...";
         return false;
     }
 
-    mVideoState.quit = 1;
-
     mPlayerState = Stop;
-    emit sig_StateChanged(Stop);
-
+    mVideoState.quit = true;
+qDebug()<<__FUNCTION__<<"222...";
     if (isWait)
     {
-        while(!mVideoState.readThreadFinished || !mVideoState.videoThreadFinished)
+        while(!mVideoState.readThreadFinished)
         {
-            SDL_Delay(10);
+//            qDebug()<<mVideoState.readThreadFinished<<mVideoState.videoThreadFinished;
+            SDL_Delay(3);
         }
     }
 
-    ///关闭SDL音频播放设备
-    if (mVideoState.audioID != 0)
-    {
-        SDL_LockAudio();
-        SDL_PauseAudioDevice(mVideoState.audioID,1);
-        SDL_UnlockAudio();
+//    ///关闭SDL音频播放设备
+//    qDebug()<<__FUNCTION__<<mAudioID;
+//    if (mAudioID != 0)
+//    {
+//        SDL_LockAudio();
+//        SDL_PauseAudioDevice(mAudioID,1);
+//        SDL_CloseAudioDevice(mAudioID);
+//        SDL_UnlockAudio();
 
-        mVideoState.audioID = 0;
-    }
+//        mAudioID = 0;
+//    }
 
+qDebug()<<__FUNCTION__<<"999...";
+
+//    emit sig_StateChanged(Stop);
 
     return true;
 }
@@ -778,6 +858,12 @@ void VideoPlayer_Thread::seek(int64_t pos)
         mVideoState.seek_pos = pos;
         mVideoState.seek_req = 1;
     }
+}
+
+void VideoPlayer_Thread::setVolume(float value)
+{
+    mVolume = value;
+    mVideoState.mVolume = value;
 }
 
 double VideoPlayer_Thread::getCurrentTime()
@@ -795,13 +881,110 @@ void VideoPlayer_Thread::disPlayVideo(QImage img)
     emit sig_GetOneFrame(img);  //发送信号
 }
 
+void VideoPlayer_Thread::setVideoWidget(VideoPlayer_ShowVideoWidget*widget)
+{
+    mVideoWidget = widget;
+    connect(this,SIGNAL(sig_GetOneFrame(QImage)),mVideoWidget,SLOT(slotGetOneFrame(QImage)));
+}
+
+int VideoPlayer_Thread::openSDL()
+{
+
+    VideoState *is = &mVideoState;
+
+    SDL_AudioSpec wanted_spec, spec;
+    int64_t wanted_channel_layout = 0;
+    int wanted_nb_channels = 2;
+    int samplerate = 44100;
+    /*  SDL支持的声道数为 1, 2, 4, 6 */
+//    /*  后面我们会使用这个数组来纠正不支持的声道数目 */
+//    const int next_nb_channels[] = { 0, 0, 1, 6, 2, 6, 4, 6 };
+
+    if (!wanted_channel_layout
+            || wanted_nb_channels
+                    != av_get_channel_layout_nb_channels(
+                            wanted_channel_layout)) {
+        wanted_channel_layout = av_get_default_channel_layout(
+                wanted_nb_channels);
+        wanted_channel_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
+    }
+
+    wanted_spec.channels = av_get_channel_layout_nb_channels(
+            wanted_channel_layout);
+    wanted_spec.freq = samplerate;
+    if (wanted_spec.freq <= 0 || wanted_spec.channels <= 0) {
+        //fprintf(stderr,"Invalid sample rate or channel count!\n");
+        return -1;
+    }
+    wanted_spec.format = AUDIO_S16SYS; // 具体含义请查看“SDL宏定义”部分
+    wanted_spec.silence = 0;            // 0指示静音
+    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;  // 自定义SDL缓冲区大小
+    wanted_spec.callback = audio_callback;        // 音频解码的关键回调函数
+    wanted_spec.userdata = is;                    // 传给上面回调函数的外带数据
+
+    int num = SDL_GetNumAudioDevices(0);
+    for (int i=0;i<num;i++)
+    {
+        mAudioID = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(i,0), false, &wanted_spec, &spec,0);
+        if (mAudioID > 0)
+        {
+            break;
+        }
+    }
+
+    /* 检查实际使用的配置（保存在spec,由SDL_OpenAudio()填充） */
+    if (spec.format != AUDIO_S16SYS) {
+        qDebug()<<"SDL advised audio format %d is not supported!"<<spec.format;
+        return -1;
+    }
+
+    if (spec.channels != wanted_spec.channels) {
+        wanted_channel_layout = av_get_default_channel_layout(spec.channels);
+        if (!wanted_channel_layout) {
+            fprintf(stderr,"SDL advised channel count %d is not supported!\n",spec.channels);
+            return -1;
+        }
+    }
+
+    is->audio_hw_buf_size = spec.size;
+
+    /* 把设置好的参数保存到大结构中 */
+    is->audio_src_fmt = is->audio_tgt_fmt = AV_SAMPLE_FMT_S16;
+    is->audio_src_freq = is->audio_tgt_freq = spec.freq;
+    is->audio_src_channel_layout = is->audio_tgt_channel_layout =
+            wanted_channel_layout;
+    is->audio_src_channels = is->audio_tgt_channels = spec.channels;
+
+    is->audio_buf_size = 0;
+    is->audio_buf_index = 0;
+    memset(&is->audio_pkt, 0, sizeof(is->audio_pkt));
+
+    return 0;
+}
+
+void VideoPlayer_Thread::closeSDL()
+{
+    if (mAudioID > 0)
+    {
+        SDL_CloseAudioDevice(mAudioID);
+    }
+
+    mAudioID = -1;
+}
+
 void VideoPlayer_Thread::run()
 {
-    char file_path[1280] = {0};;
-
+    char file_path[1280] = {0};
     strcpy(file_path,mFileName.toUtf8().data());
 
     memset(&mVideoState,0,sizeof(VideoState)); //为了安全起见  先将结构体的数据初始化成0了
+
+    mVideoState.isMute = mIsMute;
+    mVideoState.mVolume = mVolume;
+
+//    mVideoState.Init();
+
+//    seek((23*60+50)*1000000);
 
     VideoState *is = &mVideoState;
 
@@ -898,7 +1081,10 @@ void VideoPlayer_Thread::run()
     }
 
     is->video_st = pFormatCtx->streams[videoStream];
-    packet_queue_init(&is->videoq);
+
+    packet_queue_init(&mVideoState.audioq);
+    packet_queue_init(&mVideoState.videoq);
+
 
     ///创建一个线程专门用来解码视频
     is->video_tid = SDL_CreateThread(video_thread, "video_thread", &mVideoState);
@@ -911,7 +1097,17 @@ void VideoPlayer_Thread::run()
     AVPacket *packet = (AVPacket *) malloc(sizeof(AVPacket)); //分配一个packet 用来存放读取的视频
 //    av_new_packet(packet, y_size); //av_read_frame 会给它分配空间 因此这里不需要了
 
-    av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
+//    av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
+
+    qDebug()<<__FUNCTION__<<is->quit;
+    mPlayerState = Playing;
+    emit sig_StateChanged(Playing);
+
+    openSDL();
+
+    SDL_LockAudioDevice(mAudioID);
+    SDL_PauseAudioDevice(mAudioID,0);
+    SDL_UnlockAudioDevice(mAudioID);
 
     while (1)
     {
@@ -965,10 +1161,13 @@ void VideoPlayer_Thread::run()
         //这里做了个限制  当队列里面的数据超过某个大小的时候 就暂停读取  防止一下子就把视频读完了，导致的空间分配不足
         /* 这里audioq.size是指队列中的所有数据包带的音频数据的总量或者视频数据总量，并不是包的数量 */
         //这个值可以稍微写大一些
+//        qDebug()<<__FUNCTION__<<is->audioq.size<<MAX_AUDIO_SIZE<<is->videoq.size<<MAX_VIDEO_SIZE;
         if (is->audioq.size > MAX_AUDIO_SIZE || is->videoq.size > MAX_VIDEO_SIZE) {
             SDL_Delay(10);
             continue;
         }
+
+//        qDebug()<<__FUNCTION__<<"is->isPause"<<is->isPause;
 
         if (is->isPause == true)
         {
@@ -979,6 +1178,8 @@ void VideoPlayer_Thread::run()
         if (av_read_frame(pFormatCtx, packet) < 0)
         {
             is->readFinished = true;
+
+//            qDebug()<<__FUNCTION__<<"av_read_frame<0";
 
             if (is->quit)
             {
@@ -1006,17 +1207,50 @@ void VideoPlayer_Thread::run()
         }
     }
 
+    qDebug()<<__FUNCTION__<<"333";
+
     ///文件读取结束 跳出循环的情况
     ///等待播放完毕
     while (!is->quit) {
         SDL_Delay(100);
     }
 
-    stop();
+    if (mPlayerState != Stop) //不是外部调用的stop 是正常播放结束
+    {
+        stop();
+    }
 
+    SDL_LockAudioDevice(mAudioID);
+    SDL_PauseAudioDevice(mAudioID,1);
+    SDL_UnlockAudioDevice(mAudioID);
+
+    closeSDL();
+
+ qDebug()<<__FUNCTION__<<"444";
+    while(!mVideoState.videoThreadFinished)
+    {
+//        qDebug()<<__FUNCTION__<<"videoThreadFinished"<<mVideoState.videoThreadFinished;
+        msleep(10);
+    } //确保视频线程结束后 再销毁队列
+
+    qDebug()<<__FUNCTION__<<"555";
+
+    avcodec_close(aCodecCtx);
     avcodec_close(pCodecCtx);
     avformat_close_input(&pFormatCtx);
+    avformat_free_context(pFormatCtx);
+
+    free(packet);
+
+    packet_queue_deinit(&mVideoState.videoq);
+    packet_queue_deinit(&mVideoState.audioq);
 
     is->readThreadFinished = true;
 
+    emit sig_StateChanged(Stop);
+
+qDebug()<<__FUNCTION__<<"finished!";
+
+
+//    SDL_Quit();
 }
