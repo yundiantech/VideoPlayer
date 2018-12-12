@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mPlayer = new VideoPlayer;
     connect(mPlayer,SIGNAL(sig_GetOneFrame(QImage)),this,SLOT(slotGetOneFrame(QImage)));
 
-    mPlayer->setFileName("E:\\in.mp4");
+    mPlayer->setFileName("E:\\in.rmvb");
     mPlayer->startPlay();
 
 }
