@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = VideoPlayer_1
+TARGET = VideoPlayer
 TEMPLATE = app
 
 
