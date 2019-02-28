@@ -45,6 +45,7 @@ INCLUDEPATH += $$PWD/ffmpeg/include \
 LIBS += -L$$PWD/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
 LIBS += -L$$PWD/SDL2/lib/x86 -lSDL2
 
+
 RESOURCES += \
     resources.qrc
 
