@@ -91,63 +91,6 @@ typedef struct VideoState {
     bool isMute; //静音标识
     float mVolume; //0~1 超过1 表示放大倍数
 
-//    VideoState()
-//    {
-//        isMute = false;
-
-////        Init();
-//    }
-
-//    void Init()
-//    {
-//        player = NULL;
-//        readThreadFinished = false;
-//        videoThreadFinished = false;
-//        quit = false;
-//        audio_frame = NULL;
-//        video_clock = 0;
-//        audio_clock = 0;
-
-//        ic = NULL;
-//        videoStream = 0;
-//        audioStream = 0;
-//        audio_frame = NULL;// 解码音频过程中的使用缓存
-//        audio_st = NULL; //音频流
-//        audio_buf_size = 0;
-//        audio_buf_index = 0;
-//        audio_pkt_data = NULL;
-//        audio_pkt_size = 0;
-//        audio_buf = NULL;
-//        audio_src_channels = 0;
-//        audio_tgt_channels = 0;
-//        audio_src_channel_layout = 0;
-//        audio_tgt_channel_layout = 0;
-//        audio_src_freq = 0;
-//        audio_tgt_freq = 0;
-//        swr_ctx = NULL; //用于解码后的音频格式转换
-//        audio_hw_buf_size = false;
-
-//        audio_clock = 0; ///音频时钟
-//        video_clock = 0; ///<pts of last decoded frame / predicted pts of next decoded frame
-
-//        video_st = NULL;
-
-//        /// 跳转相关的变量
-//        seek_req = 0; //跳转标志
-//        seek_pos = 0; //跳转的位置 -- 微秒
-//        seek_flag_audio = 0;//跳转标志 -- 用于音频线程中
-//        seek_flag_video = 0;//跳转标志 -- 用于视频线程中
-//        seek_time = 0; //跳转的时间(秒)  值和seek_pos是一样的
-
-//        ///播放控制相关
-//        isPause = false;  //暂停标志
-//        quit = false;  //停止
-//        readFinished = false; //文件读取完毕
-//        readThreadFinished = false;
-//        videoThreadFinished = false;
-
-//    }
-
 } VideoState;
 
 class VideoPlayer_Thread : public QThread
@@ -204,7 +147,7 @@ private:
 
     PlayerState mPlayerState; //播放状态
 
-    ///用自己的控件替代SLD 是因为SDL会导致QSS样式失效
+    ///用自己的控件替代SDL 是因为SDL会导致QSS样式失效
     VideoPlayer_ShowVideoWidget *mVideoWidget; //显示视频用的控件
 
     bool mIsMute;

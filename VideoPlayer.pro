@@ -32,15 +32,18 @@ INCLUDEPATH += $$PWD/ffmpeg/include \
                $$PWD/SDL2/include \
                $$PWD/src
 
-LIBS += $$PWD/ffmpeg/lib/avcodec.lib \
-        $$PWD/ffmpeg/lib/avdevice.lib \
-        $$PWD/ffmpeg/lib/avfilter.lib \
-        $$PWD/ffmpeg/lib/avformat.lib \
-        $$PWD/ffmpeg/lib/avutil.lib \
-        $$PWD/ffmpeg/lib/postproc.lib \
-        $$PWD/ffmpeg/lib/swresample.lib \
-        $$PWD/ffmpeg/lib/swscale.lib \
-        $$PWD/SDL2/lib/x86/SDL2.lib
+#LIBS += $$PWD/ffmpeg/lib/avcodec.lib \
+#        $$PWD/ffmpeg/lib/avdevice.lib \
+#        $$PWD/ffmpeg/lib/avfilter.lib \
+#        $$PWD/ffmpeg/lib/avformat.lib \
+#        $$PWD/ffmpeg/lib/avutil.lib \
+#        $$PWD/ffmpeg/lib/postproc.lib \
+#        $$PWD/ffmpeg/lib/swresample.lib \
+#        $$PWD/ffmpeg/lib/swscale.lib \
+#        $$PWD/SDL2/lib/x86/SDL2.lib
+
+LIBS += -L$$PWD/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
+LIBS += -L$$PWD/SDL2/lib/x86 -lSDL2
 
 RESOURCES += \
     resources.qrc

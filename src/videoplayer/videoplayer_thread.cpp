@@ -960,8 +960,7 @@ int VideoPlayer_Thread::openSDL()
     /* 把设置好的参数保存到大结构中 */
     is->audio_src_fmt = is->audio_tgt_fmt = AV_SAMPLE_FMT_S16;
     is->audio_src_freq = is->audio_tgt_freq = spec.freq;
-    is->audio_src_channel_layout = is->audio_tgt_channel_layout =
-            wanted_channel_layout;
+    is->audio_src_channel_layout = is->audio_tgt_channel_layout = wanted_channel_layout;
     is->audio_src_channels = is->audio_tgt_channels = spec.channels;
 
     is->audio_buf_size = 0;

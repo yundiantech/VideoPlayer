@@ -46,10 +46,6 @@ VideoPlayer::VideoPlayer(QWidget *parent) :
 
     mPlayer->setVideoWidget(ui->widget_videoPlayer);
 
-//    ui->horizontalSlider_videoPlayer->setValue(50);
-//    mPlayer->setVolume(0.5);
-
-
     mTimer = new QTimer; //定时器-获取当前视频时间
     connect(mTimer,SIGNAL(timeout()),this,SLOT(slotTimerTimeOut()));
     mTimer->setInterval(500);
@@ -443,7 +439,6 @@ void VideoPlayer::on_btnMenu_Close_clicked()
 //        QMouseEvent evt(QEvent::Leave, pt, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
 //        qApp->sendEvent(ui->btnMenu_Close, &evt);
 //    });
-
 
 }
 
