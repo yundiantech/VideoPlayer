@@ -8,45 +8,43 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+
+UI_DIR  = obj/Gui
+MOC_DIR = obj/Moc
+OBJECTS_DIR = obj/Obj
+
+
+#将输出文件直接放到源码目录下的bin目录下，将dll都放在了次目录中，用以解决运行后找不到dll的问
+#DESTDIR=$$OUT_PWD/bin/
+DESTDIR=$$PWD/bin/
+QMAKE_CXXFLAGS += -std=c++11
+
 TARGET = VideoPlayer
 TEMPLATE = app
 
+#包含视频播放器的代码
+include(module/VideoPlayer/VideoPlayer.pri)
+#包含可拖动窗体的代码
+include(module/DragAbleWidget/DragAbleWidget.pri)
+
 SOURCES += src/main.cpp \
-    src/videoplayer/videoplayer_thread.cpp \
-    src/videoplayer/videoplayer.cpp \
-    src/videoplayer/videoplayer_showvideowidget.cpp \
-    src/videoplayer/widget/VideoSlider.cpp
+    src/Widget/VideoPlayerWidget.cpp \
+    src/Widget/ShowVideoWidget.cpp \
+    src/Widget/VideoSlider.cpp
+
 
 HEADERS  += \
-    src/videoplayer/videoplayer_thread.h \
-    src/videoplayer/videoplayer.h \
-    src/videoplayer/videoplayer_showvideowidget.h \
-    src/videoplayer/widget/VideoSlider.h
+    src/Widget/VideoPlayerWidget.h \
+    src/Widget/ShowVideoWidget.h \
+    src/Widget/VideoSlider.h
 
 FORMS    += \
-    src/videoplayer/videoplayer.ui \
-    src/videoplayer/videoplayer_showvideowidget.ui
-
-
-INCLUDEPATH += $$PWD/ffmpeg/include \
-               $$PWD/SDL2/include \
-               $$PWD/src
-
-#LIBS += $$PWD/ffmpeg/lib/avcodec.lib \
-#        $$PWD/ffmpeg/lib/avdevice.lib \
-#        $$PWD/ffmpeg/lib/avfilter.lib \
-#        $$PWD/ffmpeg/lib/avformat.lib \
-#        $$PWD/ffmpeg/lib/avutil.lib \
-#        $$PWD/ffmpeg/lib/postproc.lib \
-#        $$PWD/ffmpeg/lib/swresample.lib \
-#        $$PWD/ffmpeg/lib/swscale.lib \
-#        $$PWD/SDL2/lib/x86/SDL2.lib
-
-LIBS += -L$$PWD/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
-LIBS += -L$$PWD/SDL2/lib/x86 -lSDL2
-
+    src/Widget/VideoPlayerWidget.ui \
+    src/Widget/ShowVideoWidget.ui
 
 RESOURCES += \
-    resources.qrc
+    resources/resources.qrc
 
-win32:RC_FILE=$$PWD/main.rc
+INCLUDEPATH += $$PWD/src
+
+win32:RC_FILE=$$PWD/resources/main.rc

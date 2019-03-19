@@ -8,7 +8,7 @@
 #include <QApplication>
 #include <QTextCodec>
 
-#include "Widget/VideoPlayerWidget.h"
+#include "videoplayer/VideoPlayerWidget.h"
 
 #undef main
 int main(int argc, char *argv[])

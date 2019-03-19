@@ -1,0 +1,32 @@
+#include "winver.h"
+
+IDI_ICON1       ICON      "main.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGS      0x0L
+ FILEFLAGSMASK  0x3fL
+ FILEOS         VOS_NT_WINDOWS32
+ FILETYPE       VFT_APP
+ FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "云天之巅 blog.yundiantech.com"
+            VALUE "FileDescription", "我的播放器"
+            VALUE "FileVersion", "1.0.0"
+            VALUE "LegalCopyright", "云天之巅 blog.yundiantech.com"
+            VALUE "InternalName", "我的播放器"
+            VALUE "OriginalFilename", "我的播放器"
+            VALUE "ProductName", "我的播放器"
+            VALUE "ProductVersion", "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
