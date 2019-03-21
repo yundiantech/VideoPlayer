@@ -38,25 +38,27 @@
 }
 </string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <property name="spacing">
-       <number>0</number>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>40</y>
+        <width>711</width>
+        <height>321</height>
+       </rect>
       </property>
-      <property name="leftMargin">
-       <number>0</number>
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <widget class="QWidget" name="page_open">
+       <layout class="QVBoxLayout" name="verticalLayout_6">
         <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
          <number>0</number>
         </property>
         <property name="rightMargin">
@@ -66,143 +68,342 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <property name="spacing">
-           <number>0</number>
+         <widget class="QWidget" name="widget_showopen" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QWidget" name="widget_showopen" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QWidget#widget_showopen
+          <property name="styleSheet">
+           <string notr="true">QWidget#widget_showopen
 {
 	
 	background-color: rgba(60, 65, 68,100);
 }</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_5">
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_3">
-               <item>
-                <spacer name="horizontalSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QToolButton" name="toolButton_open">
-                 <property name="minimumSize">
-                  <size>
-                   <width>160</width>
-                   <height>50</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>打开文件</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_2">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="widget_video" native="true">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_2">
              <item>
-              <widget class="ShowVideoWidget" name="widget_videoPlayer" native="true">
-               <property name="enabled">
-                <bool>true</bool>
+              <widget class="QToolButton" name="toolButton_open">
+               <property name="minimumSize">
+                <size>
+                 <width>160</width>
+                 <height>50</height>
+                </size>
                </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>true</bool>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">QWidget#widget_videoPlayer
-{
-	background-color: rgb(255, 55, 195);
-}</string>
+               <property name="text">
+                <string>打开文件</string>
                </property>
               </widget>
              </item>
+             <item>
+              <spacer name="horizontalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
             </layout>
-           </widget>
-          </item>
-         </layout>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget_controller" native="true">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>60</height>
-         </size>
+      </widget>
+      <widget class="QWidget" name="page_video">
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <property name="spacing">
+         <number>0</number>
         </property>
-        <property name="styleSheet">
-         <string notr="true">QWidget#widget_controller
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="ShowVideoWidget" name="widget_videoPlayer" native="true">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="mouseTracking">
+           <bool>true</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QWidget#widget_videoPlayer
 {
-	background-color: rgba(60, 65, 68,100);
+	background-color: rgb(255, 55, 195);
 }</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_7">
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="widget_controller" native="true">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>480</y>
+        <width>971</width>
+        <height>60</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QWidget#widget_controller
+{
+	background-color: rgba(60, 65, 68,160);
+}</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_7">
+       <property name="leftMargin">
+        <number>6</number>
+       </property>
+       <property name="topMargin">
+        <number>6</number>
+       </property>
+       <property name="rightMargin">
+        <number>6</number>
+       </property>
+       <property name="bottomMargin">
+        <number>6</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="spacing">
+          <number>1</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="VideoSlider" name="horizontalSlider">
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QSlider::groove:horizontal {
+          <widget class="QPushButton" name="pushButton_open">
+           <property name="minimumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{ 
+image: url(:image/open_normal.png);
+border-radius:0px; 
+} 
+QPushButton:hover{ 
+image: url(:image/open_focus.png);
+border-radius:0px; 
+} 
+QPushButton:pressed{ 
+image: url(:image/open_normal.png);
+border-radius:0px; 
+}
+</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>6</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_play">
+           <property name="minimumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{ 
+image: url(:image/start_normal.png);
+border-radius:0px; 
+}  
+QPushButton:hover{ 
+image: url(:image/start_focus.png);
+border-radius:0px; 
+} 
+QPushButton:pressed{ 
+image: url(:image/start_normal.png);
+border-radius:0px; 
+}
+</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>6</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_pause">
+           <property name="minimumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{ 
+image: url(:image/pause_normal.png);
+border-radius:0px; 
+} 
+QPushButton:hover{ 
+image: url(:image/pause_focus.png);
+border-radius:0px; 
+} 
+QPushButton:pressed{ 
+image: url(:image/pause_normal.png);
+border-radius:0px; 
+}
+</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>6</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_stop">
+           <property name="minimumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{ 
+image: url(:image/stop_normal.png);
+border-radius:0px; 
+}  
+QPushButton:hover{ 
+image: url(:image/stop_focus.png);
+border-radius:0px; 
+} 
+QPushButton:pressed{ 
+image: url(:image/stop_normal.png);
+border-radius:0px; 
+}
+</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>6</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="VideoSlider" name="horizontalSlider">
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QSlider::groove:horizontal {
 border: 0px solid #bbb;
 }
 
@@ -267,237 +468,131 @@ border-radius:5px;  /*边框拐角*/
 }
 
 </string>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout">
-             <item>
-              <widget class="QLabel" name="label_currenttime">
-               <property name="styleSheet">
-                <string notr="true">QLabel{
-	border-radius:0px;
-	color: #F0F0F0;
-	background-color:rgba(0,0,0,0);
-	border-style:none;
-font: 10pt &quot;微软雅黑&quot;;
-font-size:20px;
-font-weight:bold;
-}
-</string>
-               </property>
-               <property name="text">
-                <string>00:00:00</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_2">
-               <property name="styleSheet">
-                <string notr="true">QLabel{
-	border-radius:0px;
-	color: #F0F0F0;
-	background-color:rgba(0,0,0,0);
-	border-style:none;
-font: 10pt &quot;微软雅黑&quot;;
-font-size:20px;
-font-weight:bold;
-}
-</string>
-               </property>
-               <property name="text">
-                <string>/</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_totaltime">
-               <property name="styleSheet">
-                <string notr="true">QLabel{
-	border-radius:0px;
-	color: #F0F0F0;
-	background-color:rgba(0,0,0,0);
-	border-style:none;
-font: 10pt &quot;微软雅黑&quot;;
-font-size:20px;
-font-weight:bold;
-}
-</string>
-               </property>
-               <property name="text">
-                <string>00:00:00</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="spacing">
+            <number>3</number>
+           </property>
            <item>
-            <widget class="QPushButton" name="pushButton_open">
-             <property name="minimumSize">
-              <size>
-               <width>36</width>
-               <height>36</height>
-              </size>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QPushButton{ 
-image: url(:image/open_normal.png);
-border-radius:0px; 
-} 
-QPushButton:hover{ 
-image: url(:image/open_focus.png);
-border-radius:0px; 
-} 
-QPushButton:pressed{ 
-image: url(:image/open_normal.png);
-border-radius:0px; 
-}
-</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_play">
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>50</height>
-              </size>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QPushButton{ 
-image: url(:image/start_normal.png);
-border-radius:0px; 
-}  
-QPushButton:hover{ 
-image: url(:image/start_focus.png);
-border-radius:0px; 
-} 
-QPushButton:pressed{ 
-image: url(:image/start_normal.png);
-border-radius:0px; 
-}
-</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_pause">
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>50</height>
-              </size>
-             </property>
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QPushButton{ 
-image: url(:image/pause_normal.png);
-border-radius:0px; 
-} 
-QPushButton:hover{ 
-image: url(:image/pause_focus.png);
-border-radius:0px; 
-} 
-QPushButton:pressed{ 
-image: url(:image/pause_normal.png);
-border-radius:0px; 
-}
-</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_stop">
-             <property name="cursor">
-              <cursorShape>PointingHandCursor</cursorShape>
-             </property>
-             <property name="text">
-              <string>停止</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_4">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_63">
+            <widget class="QLabel" name="label_currenttime">
              <property name="styleSheet">
               <string notr="true">QLabel{
 	border-radius:0px;
 	color: #F0F0F0;
 	background-color:rgba(0,0,0,0);
 	border-style:none;
-font: 16px &quot;微软雅黑&quot;;
-
+font-family:&quot;微软雅黑&quot;;
+font-size:16px;
 }
 </string>
              </property>
              <property name="text">
-              <string>音量</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              <string>00:00:00</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QSlider" name="horizontalSlider_volume">
-             <property name="maximumSize">
-              <size>
-               <width>150</width>
-               <height>16777215</height>
-              </size>
-             </property>
+            <widget class="QLabel" name="label_2">
              <property name="styleSheet">
-              <string notr="true">QSlider::groove:horizontal {
+              <string notr="true">QLabel{
+	border-radius:0px;
+	color: #F0F0F0;
+	background-color:rgba(0,0,0,0);
+	border-style:none;
+font-family:&quot;微软雅黑&quot;;
+font-size:16px;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>/</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_totaltime">
+             <property name="styleSheet">
+              <string notr="true">QLabel{
+	border-radius:0px;
+	color: #F0F0F0;
+	background-color:rgba(0,0,0,0);
+	border-style:none;
+font-family:&quot;微软雅黑&quot;;
+font-size:16px;
+}
+</string>
+             </property>
+             <property name="text">
+              <string>00:00:00</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_volume">
+           <property name="minimumSize">
+            <size>
+             <width>36</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>PointingHandCursor</cursorShape>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{ 
+image: url(:/image/volume_normal.png);
+border-radius:0px; 
+padding:5px;
+}  
+QPushButton:hover{ 
+image: url(:image/stop_focus.png);
+border-radius:0px; 
+padding:3px;
+} 
+QPushButton:!checked{ 
+image: url(:/image/volume_normal.png);
+} 
+QPushButton:checked{ 
+image: url(:/image/volume_mute.png);
+} 
+
+</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="horizontalSlider_volume">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>150</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QSlider::groove:horizontal {
 border: 0px solid #bbb;
 }
 
@@ -519,11 +614,11 @@ margin-bottom:8px;
 QSlider::handle:horizontal {
 background: rgb(255,153,102); 
 border: 1px solid rgb(255,153,102); 
-width: 14px;
-height:10px;
-border-radius: 7px;
-margin-top:2px;
-margin-bottom:2px;
+width: 8px;
+height:8px;
+border-radius: 2px;
+margin-top:6px;
+margin-bottom:6px;
 }
 
 QSlider::handle:horizontal:hover {
@@ -549,57 +644,55 @@ border-radius: 4px;
 }
 
 </string>
-             </property>
-             <property name="maximum">
-              <number>100</number>
-             </property>
-             <property name="singleStep">
-              <number>0</number>
-             </property>
-             <property name="pageStep">
-              <number>0</number>
-             </property>
-             <property name="value">
-              <number>100</number>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_volume">
-             <property name="minimumSize">
-              <size>
-               <width>20</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QLabel{
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="singleStep">
+            <number>0</number>
+           </property>
+           <property name="pageStep">
+            <number>0</number>
+           </property>
+           <property name="value">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_volume">
+           <property name="minimumSize">
+            <size>
+             <width>20</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel{
 	border-radius:0px;
 	color: #F0F0F0;
 	background-color:rgba(0,0,0,0);
 	border-style:none;
 font: 16px &quot;微软雅黑&quot;;
-font-weight:bold;
+
 }
 </string>
-             </property>
-             <property name="text">
-              <string>100</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+           <property name="text">
+            <string>100</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+           </property>
+          </widget>
          </item>
         </layout>
-       </widget>
-      </item>
-     </layout>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

@@ -44,9 +44,12 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     connect(ui->pushButton_play, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
     connect(ui->pushButton_pause,&QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
     connect(ui->pushButton_stop, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
+    connect(ui->pushButton_volume, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
 
     connect(ui->horizontalSlider, SIGNAL(sig_valueChanged(int)), this, SLOT(slotSliderMoved(int)));
     connect(ui->horizontalSlider_volume, SIGNAL(valueChanged(int)), this, SLOT(slotSliderMoved(int)));
+
+    ui->widget_container->installEventFilter(this);
 
     mPlayer = this;
 
@@ -54,23 +57,19 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     connect(mTimer,SIGNAL(timeout()),this,SLOT(slotTimerTimeOut()));
     mTimer->setInterval(500);
 
-    ui->widget_video->hide();
+    ui->stackedWidget->setCurrentWidget(ui->page_open);
     ui->pushButton_pause->hide();
 
     resize(1024,768);
     setTitle(QStringLiteral("我的播放器-V%1").arg(AppConfig::VERSION_NAME));
+
+    mVolume = mPlayer->getVolume();
 
 }
 
 VideoPlayerWidget::~VideoPlayerWidget()
 {
     delete ui;
-}
-
-void VideoPlayerWidget::doClose()
-{
-    mPlayer->stop(true);
-    close();
 }
 
 void VideoPlayerWidget::slotSliderMoved(int value)
@@ -81,6 +80,7 @@ void VideoPlayerWidget::slotSliderMoved(int value)
     }
     else if (QObject::sender() == ui->horizontalSlider_volume)
     {
+        qDebug()<<__FUNCTION__;
         mPlayer->setVolume(value / 100.0);
         ui->label_volume->setText(QString("%1").arg(value));
     }
@@ -103,7 +103,7 @@ void VideoPlayerWidget::slotTimerTimeOut()
     }
 }
 
-void VideoPlayerWidget::slotBtnClick()
+void VideoPlayerWidget::slotBtnClick(bool isChecked)
 {
     if (QObject::sender() == ui->pushButton_play)
     {
@@ -130,6 +130,30 @@ void VideoPlayerWidget::slotBtnClick()
             mPlayer->stop(true); //如果在播放则先停止
             mPlayer->startPlay(s.toStdString());
         }
+    }
+    else if (QObject::sender() == ui->pushButton_volume)
+    {
+       qDebug()<<isChecked;
+
+        bool isMute = isChecked;
+        mPlayer->setMute(isMute);
+
+        if (isMute)
+        {
+            mVolume = mPlayer->getVolume();
+
+            ui->horizontalSlider_volume->setValue(0);
+            ui->horizontalSlider_volume->setEnabled(false);
+            ui->label_volume->setText(QString("%1").arg(0));
+        }
+        else
+        {
+            int volume = mVolume * 100.0;
+            ui->horizontalSlider_volume->setValue(volume);
+            ui->horizontalSlider_volume->setEnabled(true);
+            ui->label_volume->setText(QString("%1").arg(volume));
+        }
+
     }
 
 }
@@ -187,8 +211,8 @@ void VideoPlayerWidget::slotStateChanged(VideoPlayer::PlayerState state)
 {
     if (state == VideoPlayer::Stop)
     {
-        ui->widget_video->hide();
-        ui->widget_showopen->show();
+        ui->stackedWidget->setCurrentWidget(ui->page_open);
+
         ui->pushButton_pause->hide();
         ui->widget_videoPlayer->clear();
 
@@ -201,8 +225,7 @@ void VideoPlayerWidget::slotStateChanged(VideoPlayer::PlayerState state)
     }
     else if (state == VideoPlayer::Playing)
     {
-        ui->widget_showopen->hide();
-        ui->widget_video->show();
+        ui->stackedWidget->setCurrentWidget(ui->page_video);
 
         ui->pushButton_play->hide();
         ui->pushButton_pause->show();
@@ -235,4 +258,53 @@ void VideoPlayerWidget::slotDisplayVideo(const QImage &image)
     ui->widget_videoPlayer->inputOneFrame(image);
 }
 
+//图片显示部件时间过滤器处理
+bool VideoPlayerWidget::eventFilter(QObject *target, QEvent *event)
+{
+    if(target == ui->widget_container)
+    {
+        if(event->type() == QEvent::Resize)
+        {
+            QResizeEvent * e = (QResizeEvent*)event;
+            int w = e->size().width();
+            int h = e->size().height();
+            ui->stackedWidget->move(0, 0);
+            ui->stackedWidget->resize(w, h);
+
+            int x = 0;
+            int y = h - ui->widget_controller->height();
+            ui->widget_controller->move(x, y);
+            ui->widget_controller->resize(w, ui->widget_controller->height());
+        }
+//        else if(event->type() == QEvent::Enter)
+//        {
+//            qDebug("Enter...");
+//        }
+//        else if(event->type() == QEvent::Leave)
+//        {
+//            qDebug("Leave...");
+//        }
+
+//        qDebug("The imageWidget generate the event!");
+//        if(event->type() == QEvent::MouseButtonPress)
+//        {
+//            QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+//            if(mouseEvent->buttons() & Qt::LeftButton)
+//            {
+//                qDebug("The Left Button Event!");
+
+//            }
+//            else if(mouseEvent->buttons() & Qt::RightButton)
+//            {
+//                qDebug("The Right Button Event!");
+
+//            }
+
+//            return true;
+//        }
+    }
+
+    //其它部件产生的事件则交给基类处理
+    return DragAbleWidget::eventFilter(target, event);
+}
 

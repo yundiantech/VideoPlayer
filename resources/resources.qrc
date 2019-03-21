@@ -12,5 +12,10 @@
         <file>image/showmaxsizebtn.png</file>
         <file>image/showminisizebtn.png</file>
         <file>image/shownormalbtn.png</file>
+        <file>image/stop_focus.png</file>
+        <file>image/stop_normal.png</file>
+        <file>image/stop1_normal.png</file>
+        <file>image/volume_mute.png</file>
+        <file>image/volume_normal.png</file>
     </qresource>
 </RCC>

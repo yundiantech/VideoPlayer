@@ -31,7 +31,7 @@ public:
     ~VideoPlayerWidget();
 
 protected:
-    void doClose();
+    bool eventFilter(QObject *target, QEvent *event);
 
 private:
     Ui::VideoPlayerWidget *ui;
@@ -39,11 +39,13 @@ private:
     VideoPlayer *mPlayer; //播放线程
     QTimer *mTimer; //定时器-获取当前视频时间
 
+    float mVolume;
+
 private slots:
     ///播放器相关的槽函数
     void slotSliderMoved(int value);
     void slotTimerTimeOut();
-    void slotBtnClick();
+    void slotBtnClick(bool isChecked);
 
 
     ///以下函数，用于输出信息给界面

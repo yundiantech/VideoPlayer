@@ -74,6 +74,7 @@ public:
 
     void setMute(bool isMute){mIsMute = isMute;}
     void setVolume(float value);
+    float getVolume(){return mVolume;}
 
     int64_t getTotalTime(); //单位微秒
     double getCurrentTime(); //单位秒

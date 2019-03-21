@@ -155,6 +155,8 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
 
         if (got_frame)
         {
+            /// ffmpeg解码之后得到的音频数据不是SDL想要的，
+            /// 因此这里需要重采样成44100 双声道 AV_SAMPLE_FMT_S16
             if (aFrame_ReSample == NULL)
             {
                 aFrame_ReSample = av_frame_alloc();
