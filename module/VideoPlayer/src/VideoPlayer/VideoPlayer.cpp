@@ -88,7 +88,7 @@ bool VideoPlayer::play()
     mVideoStartTime += pauseTime; //将暂停的时间加到开始播放的时间上，保证同步不受暂停的影响
 
     mPlayerState = Playing;
-    doPlayerStateChanged(Playing);
+    doPlayerStateChanged(Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
@@ -106,7 +106,7 @@ bool VideoPlayer::pause()
 
     mPlayerState = Pause;
 
-    emit doPlayerStateChanged(Pause);
+    emit doPlayerStateChanged(Pause, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
@@ -403,7 +403,7 @@ void VideoPlayer::readVideoFile()
 //    av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
 
     mPlayerState = Playing;
-    doPlayerStateChanged(Playing);
+    doPlayerStateChanged(Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mVideoStartTime = av_gettime();
 OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
@@ -534,7 +534,7 @@ end:
         stop();
     }
 
-    while(!mIsVideoThreadFinished || (mAudioStream != NULL && !mIsAudioThreadFinished))
+    while((mVideoStream != nullptr && !mIsVideoThreadFinished) || (mAudioStream != nullptr && !mIsAudioThreadFinished))
     {
         AppConfig::mSleep(10);
     } //确保视频线程结束后 再销毁队列
@@ -574,7 +574,7 @@ end:
     avformat_close_input(&pFormatCtx);
     avformat_free_context(pFormatCtx);
 
-    doPlayerStateChanged(Stop);
+    doPlayerStateChanged(Stop, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mIsReadThreadFinished = true;
 
@@ -652,17 +652,17 @@ void VideoPlayer::doOpenSdlFailed(const int &code)
 ///获取到视频时长的时候调用此函数
 void VideoPlayer::doTotalTimeChanged(const int64_t &uSec)
 {
-
+    OUTPUT("%s \n", __FUNCTION__);
 }
 
 ///播放器状态改变的时候回调此函数
-void VideoPlayer::doPlayerStateChanged(const VideoPlayer::PlayerState &state)
+void VideoPlayer::doPlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-
+    OUTPUT("%s \n", __FUNCTION__);
 }
 
 ///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
 void VideoPlayer::doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height)
 {
-
+    OUTPUT("%s \n", __FUNCTION__);
 }

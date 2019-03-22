@@ -17,5 +17,6 @@
         <file>image/stop1_normal.png</file>
         <file>image/volume_mute.png</file>
         <file>image/volume_normal.png</file>
+        <file>image/audio.png</file>
     </qresource>
 </RCC>

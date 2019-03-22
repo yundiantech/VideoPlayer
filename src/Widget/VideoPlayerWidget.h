@@ -60,7 +60,7 @@ protected:
     void doTotalTimeChanged(const int64_t &uSec);
 
     ///播放器状态改变的时候回调此函数
-    void doPlayerStateChanged(const VideoPlayer::PlayerState &state);
+    void doPlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio);
 
     ///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
     void doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height);
@@ -70,14 +70,14 @@ signals:
     void sig_OpenVideoFileFailed(const int &code);
     void sig_OpenSdlFailed(const int &code);
     void sig_TotalTimeChanged(const qint64 &Usec);
-    void sig_PlayerStateChanged(const VideoPlayer::PlayerState &state);
+    void sig_PlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio);
     void sig_DisplayVideo(const QImage &image);
 
 private slots:
     void slotOpenVideoFileFailed(const int &code);
     void slotOpenSdlFailed(const int &code);
     void slotTotalTimeChanged(const qint64 &uSec);
-    void slotStateChanged(VideoPlayer::PlayerState state);
+    void slotStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio);
     void slotDisplayVideo(const QImage &image);
 
 };

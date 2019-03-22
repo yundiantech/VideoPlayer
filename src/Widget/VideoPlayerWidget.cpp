@@ -121,7 +121,9 @@ void VideoPlayerWidget::slotBtnClick(bool isChecked)
         QString s = QFileDialog::getOpenFileName(
                    this, QStringLiteral("选择要播放的文件"),
                     "/",//初始目录
-                    QStringLiteral("视频文件 (*.flv *.rmvb *.avi *.MP4 *.mkv);; 所有文件 (*.*);; "));
+                    QStringLiteral("视频文件 (*.flv *.rmvb *.avi *.MP4 *.mkv);;")
+                    +QStringLiteral("音频文件 (*.mp3 *.wma *.wav);;")
+                    +QStringLiteral("所有文件 (*.*)"));
         if (!s.isEmpty())
         {
             s.replace("/","\\");
@@ -176,9 +178,9 @@ void VideoPlayerWidget::doTotalTimeChanged(const int64_t &uSec)
 }
 
 ///播放器状态改变的时候回调此函数
-void VideoPlayerWidget::doPlayerStateChanged(const VideoPlayer::PlayerState &state)
+void VideoPlayerWidget::doPlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-    emit sig_PlayerStateChanged(state);
+    emit sig_PlayerStateChanged(state, hasVideo, hasAudio);
 }
 
 void VideoPlayerWidget::slotOpenVideoFileFailed(const int &code)
@@ -206,7 +208,7 @@ void VideoPlayerWidget::slotTotalTimeChanged(const qint64 &uSec)
 
 }
 
-void VideoPlayerWidget::slotStateChanged(VideoPlayer::PlayerState state)
+void VideoPlayerWidget::slotStateChanged(const PlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
     if (state == VideoPlayer::Stop)
     {
@@ -224,7 +226,14 @@ void VideoPlayerWidget::slotStateChanged(VideoPlayer::PlayerState state)
     }
     else if (state == VideoPlayer::Playing)
     {
-        ui->stackedWidget->setCurrentWidget(ui->page_video);
+        if (hasVideo)
+        {
+            ui->stackedWidget->setCurrentWidget(ui->page_video);
+        }
+        else
+        {
+            ui->stackedWidget->setCurrentWidget(ui->page_audio);
+        }
 
         ui->pushButton_play->hide();
         ui->pushButton_pause->show();

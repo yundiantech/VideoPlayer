@@ -43,12 +43,12 @@
        <rect>
         <x>80</x>
         <y>40</y>
-        <width>711</width>
-        <height>321</height>
+        <width>931</width>
+        <height>381</height>
        </rect>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="page_open">
        <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -127,6 +127,20 @@
             </layout>
            </item>
           </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_audio">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="styleSheet">
+           <string notr="true">image: url(:/image/audio.png);</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
          </widget>
         </item>
        </layout>
@@ -288,22 +302,6 @@ border-radius:0px;
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>6</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="QPushButton" name="pushButton_pause">
            <property name="minimumSize">
             <size>
@@ -409,10 +407,10 @@ border: 0px solid #bbb;
 
 QSlider::sub-page:horizontal {
 background-color: #ff9900;
-border-bottom-left-radius: 5px; 
-border-top-left-radius: 5px; 
+border-bottom-left-radius: 2px; 
+border-top-left-radius: 2px; 
 
-border-radius: 5px; 
+border-radius: 2px; 
 margin-top:5px;
 margin-bottom:5px;
 }
@@ -454,23 +452,15 @@ border-color: #999;
 QSlider::handle:horizontal:disabled {
 background: #eee;
 border: 1px solid #aaa;
-border-radius: 4px;
+border-radius: 2px;
 }
-
-
-
-QProgressBar 
-{   
-border: 0px solid grey;   
-border-radius: 5px;   
-background-color: rgba(228, 228, 228, 50);
-border-radius:5px;  /*边框拐角*/
-}
-
 </string>
            </property>
            <property name="maximum">
             <number>100</number>
+           </property>
+           <property name="value">
+            <number>0</number>
            </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
