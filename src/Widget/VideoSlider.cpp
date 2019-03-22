@@ -1,4 +1,10 @@
-﻿#include "VideoSlider.h"
+﻿/**
+ * 叶海辉
+ * QQ群121376426
+ * http://blog.yundiantech.com/
+ */
+
+#include "VideoSlider.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -37,7 +43,6 @@ void VideoSlider::mousePressEvent(QMouseEvent *event)
 {
 //    isSliderMoving = true;
 
-
     int posX = event->pos().x();
 
     int w = this->width();
@@ -48,7 +53,7 @@ void VideoSlider::mousePressEvent(QMouseEvent *event)
 
     setValue(value);
 
-    qDebug()<<value<<maximum();
+//    qDebug()<<value<<maximum();
 
     emit sig_valueChanged(value);
 //    emit valueChanged(value);

@@ -80,7 +80,6 @@ void VideoPlayerWidget::slotSliderMoved(int value)
     }
     else if (QObject::sender() == ui->horizontalSlider_volume)
     {
-        qDebug()<<__FUNCTION__;
         mPlayer->setVolume(value / 100.0);
         ui->label_volume->setText(QString("%1").arg(value));
     }
