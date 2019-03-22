@@ -20,6 +20,12 @@ DragAbleWidget::DragAbleWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ///定时器用于定制检测鼠标位置，防止鼠标快速移入窗口，没有检测到，导致鼠标箭头呈现拖拉的形状
+    mTimer = new QTimer;
+    mTimer->setInterval(1000);
+    connect(mTimer, &QTimer::timeout, this, &DragAbleWidget::slotTimerTimeOut);
+    mTimer->start();
+
 ///改变窗体大小相关
     isMax = false;
 
@@ -447,4 +453,12 @@ void DragAbleWidget::on_btnMenu_Min_clicked()
         QMouseEvent evt(QEvent::Leave, pt, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
         qApp->sendEvent(ui->btnMenu_Min, &evt);
     });
+}
+
+void DragAbleWidget::slotTimerTimeOut()
+{
+    if (QObject::sender() == mTimer)
+    {
+        checkCursorDirect(QCursor::pos());
+    }
 }

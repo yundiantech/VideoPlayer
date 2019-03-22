@@ -8,6 +8,7 @@
 #define DRAGABLEWIDGET_H
 
 #include <QWidget>
+#include <QTimer>
 
 namespace Ui {
 class DragAbleWidget;
@@ -32,6 +33,8 @@ public:
 
 private:
     Ui::DragAbleWidget *ui;
+
+    QTimer *mTimer;
 
     ///以下是改变窗体大小相关
     ////////
@@ -58,6 +61,8 @@ private:
     void doChangeFullScreen();
 
 private slots:
+    void slotTimerTimeOut();
+
     void on_btnMenu_Close_clicked();
     void on_btnMenu_Max_clicked();
     void on_btnMenu_Min_clicked();

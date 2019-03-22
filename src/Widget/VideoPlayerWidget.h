@@ -13,6 +13,7 @@
 #include <QPaintEvent>
 #include <QTimer>
 #include <QPushButton>
+#include <QPropertyAnimation>
 
 #include "VideoPlayer/VideoPlayer.h"
 #include "DragAbleWidget.h"
@@ -38,8 +39,12 @@ private:
 
     VideoPlayer *mPlayer; //播放线程
     QTimer *mTimer; //定时器-获取当前视频时间
-
     float mVolume;
+
+    QTimer *mTimer_CheckControlWidget; //用于控制控制界面的出现和隐藏
+    QPropertyAnimation *mAnimation_ControlWidget;   //控制底部控制控件的出现和隐藏
+    void showOutControlWidget(); //显示底部控制控件
+    void hideControlWidget();    //隐藏底部控制控件
 
 private slots:
     ///播放器相关的槽函数

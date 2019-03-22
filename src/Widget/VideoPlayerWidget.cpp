@@ -49,13 +49,21 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     connect(ui->horizontalSlider, SIGNAL(sig_valueChanged(int)), this, SLOT(slotSliderMoved(int)));
     connect(ui->horizontalSlider_volume, SIGNAL(valueChanged(int)), this, SLOT(slotSliderMoved(int)));
 
+    ui->page_video->setMouseTracking(true);
+    ui->page_video->installEventFilter(this);
     ui->widget_container->installEventFilter(this);
 
     mPlayer = this;
 
     mTimer = new QTimer; //定时器-获取当前视频时间
-    connect(mTimer,SIGNAL(timeout()),this,SLOT(slotTimerTimeOut()));
+    connect(mTimer, &QTimer::timeout, this, &VideoPlayerWidget::slotTimerTimeOut);
     mTimer->setInterval(500);
+
+    mTimer_CheckControlWidget = new QTimer; //用于控制控制界面的出现和隐藏
+    connect(mTimer_CheckControlWidget, &QTimer::timeout, this, &VideoPlayerWidget::slotTimerTimeOut);
+    mTimer_CheckControlWidget->setInterval(1500);
+
+    mAnimation_ControlWidget  = new QPropertyAnimation(ui->widget_controller, "geometry");
 
     ui->stackedWidget->setCurrentWidget(ui->page_open);
     ui->pushButton_pause->hide();
@@ -71,6 +79,56 @@ VideoPlayerWidget::~VideoPlayerWidget()
 {
     delete ui;
 }
+
+void VideoPlayerWidget::showOutControlWidget()
+{
+
+    mAnimation_ControlWidget->setDuration(800);
+
+    int w = ui->widget_controller->width();
+    int h = ui->widget_controller->height();
+    int x = 0;
+    int y = ui->widget_container->height() - ui->widget_controller->height();
+
+    if (ui->widget_controller->isHidden())
+    {
+        ui->widget_controller->show();
+        mAnimation_ControlWidget->setStartValue(ui->widget_controller->geometry());
+    }
+    else
+    {
+        mAnimation_ControlWidget->setStartValue(ui->widget_controller->geometry());
+    }
+
+//    mAnimation_ControlWidget->setKeyValueAt(0, QRect(0, 0, 00, 00));
+//    mAnimation_ControlWidget->setKeyValueAt(0.4, QRect(20, 250, 20, 30));
+//    mAnimation_ControlWidget->setKeyValueAt(0.8, QRect(100, 250, 20, 30));
+//    mAnimation_ControlWidget->setKeyValueAt(1, QRect(250, 250, 100, 30));
+    mAnimation_ControlWidget->setEndValue(QRect(x, y, w, h));
+    mAnimation_ControlWidget->setEasingCurve(QEasingCurve::Linear); //设置动画效果
+
+    mAnimation_ControlWidget->start();
+
+}
+
+void VideoPlayerWidget::hideControlWidget()
+{
+    mAnimation_ControlWidget->setTargetObject(ui->widget_controller);
+
+    mAnimation_ControlWidget->setDuration(300);
+
+    int w = ui->widget_controller->width();
+    int h = ui->widget_controller->height();
+    int x = 0;
+    int y = ui->widget_container->height() + h;
+
+    mAnimation_ControlWidget->setStartValue(ui->widget_controller->geometry());
+    mAnimation_ControlWidget->setEndValue(QRect(x, y, w, h));
+    mAnimation_ControlWidget->setEasingCurve(QEasingCurve::Linear); //设置动画效果
+
+    mAnimation_ControlWidget->start();
+}
+
 
 void VideoPlayerWidget::slotSliderMoved(int value)
 {
@@ -99,6 +157,11 @@ void VideoPlayerWidget::slotTimerTimeOut()
 
         QString str = QString("%1:%2").arg(mStr.right(2)).arg(sStr.right(2));
         ui->label_currenttime->setText(str);
+    }
+    else if (QObject::sender() == mTimer_CheckControlWidget)
+    {
+        mTimer_CheckControlWidget->stop();
+        hideControlWidget();
     }
 }
 
@@ -273,6 +336,9 @@ bool VideoPlayerWidget::eventFilter(QObject *target, QEvent *event)
     {
         if(event->type() == QEvent::Resize)
         {
+            ///停止动画，防止此时刚好开始动画，导致位置出错
+            mAnimation_ControlWidget->stop();
+
             QResizeEvent * e = (QResizeEvent*)event;
             int w = e->size().width();
             int h = e->size().height();
@@ -284,35 +350,30 @@ bool VideoPlayerWidget::eventFilter(QObject *target, QEvent *event)
             ui->widget_controller->move(x, y);
             ui->widget_controller->resize(w, ui->widget_controller->height());
         }
-//        else if(event->type() == QEvent::Enter)
-//        {
-//            qDebug("Enter...");
-//        }
-//        else if(event->type() == QEvent::Leave)
-//        {
-//            qDebug("Leave...");
-//        }
+    }
+    else if(target == ui->page_video)
+    {
+        if(event->type() == QEvent::MouseMove)
+        {
+            if (!mTimer_CheckControlWidget->isActive())
+            {
+                showOutControlWidget();
+            }
 
-//        qDebug("The imageWidget generate the event!");
-//        if(event->type() == QEvent::MouseButtonPress)
-//        {
-//            QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
-//            if(mouseEvent->buttons() & Qt::LeftButton)
-//            {
-//                qDebug("The Left Button Event!");
-
-//            }
-//            else if(mouseEvent->buttons() & Qt::RightButton)
-//            {
-//                qDebug("The Right Button Event!");
-
-//            }
-
-//            return true;
-//        }
+            mTimer_CheckControlWidget->stop();
+            mTimer_CheckControlWidget->start();
+        }
+        else if(event->type() == QEvent::Enter)
+        {
+            ui->widget_controller->show();
+        }
+        else if(event->type() == QEvent::Leave)
+        {
+            mTimer_CheckControlWidget->stop();
+            mTimer_CheckControlWidget->start();
+        }
     }
 
     //其它部件产生的事件则交给基类处理
     return DragAbleWidget::eventFilter(target, event);
 }
-
