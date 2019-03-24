@@ -3,7 +3,7 @@ Qt+ffmpeg实现的视频播放器
 博客地址：http://blog.yundiantech.com/?log=blog&scat=182
 
 
-版本一说明：
+版本说明：
 Qt开发环境的搭建 请参考：
 http://blog.yundiantech.com/?log=blog&id=6
 
@@ -55,4 +55,9 @@ Qt5.6.2(vs2013) + ffmpeg2.5.2 + SDL2
 4.支持播放音频文件
 5.修复SDL打开失败后，视频不播放的bug
 6.界面细节调整
+
+
+【V2.0.0】 2019-03.24
+Qt5.6.2(vs2013) + ffmpeg4.1 + SDL2
+1.将ffmpeg升级到4.1版本
 
