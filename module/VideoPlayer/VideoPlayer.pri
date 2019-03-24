@@ -21,12 +21,23 @@ HEADERS  += \
 
 win32{
 
-    INCLUDEPATH += $$PWD/lib/win32/ffmpeg/include \
-                   $$PWD/lib/win32/SDL2/include \
-                   $$PWD/src
+    contains(QT_ARCH, i386) {
+        message("32-bit")
+        INCLUDEPATH += $$PWD/lib/win32/ffmpeg/include \
+                       $$PWD/lib/win32/SDL2/include \
+                       $$PWD/src
 
-    LIBS += -L$$PWD/lib/win32/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
-    LIBS += -L$$PWD/lib/win32/SDL2/lib -lSDL2
+        LIBS += -L$$PWD/lib/win32/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
+        LIBS += -L$$PWD/lib/win32/SDL2/lib -lSDL2
+    } else {
+        message("64-bit")
+        INCLUDEPATH += $$PWD/lib/win64/ffmpeg/include \
+                       $$PWD/lib/win64/SDL2/include \
+                       $$PWD/src
+
+        LIBS += -L$$PWD/lib/win64/ffmpeg/lib -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
+        LIBS += -L$$PWD/lib/win64/SDL2/lib -lSDL2
+    }
 
 }
 

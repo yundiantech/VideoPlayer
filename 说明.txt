@@ -7,8 +7,6 @@ Qt的版本是5.6.2（vs2013）
 FFMPEG的版本是2.5.2
 SDL的版本是2.04
 
-记得将ffmpeg/bin目录下的dll文件拷贝到编译生成的exe所在的目录下，否则会无法运行。
-
 
 关于代码的解释 请参考：
 http://blog.yundiantech.com/?log=blog&id=35
