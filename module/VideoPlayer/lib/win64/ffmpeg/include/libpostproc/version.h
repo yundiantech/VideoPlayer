@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef POSTPROC_POSTPROCESS_VERSION_H
-#define POSTPROC_POSTPROCESS_VERSION_H
+#ifndef POSTPROC_VERSION_H
+#define POSTPROC_VERSION_H
 
 /**
  * @file
@@ -28,7 +28,7 @@
 
 #include "libavutil/avutil.h"
 
-#define LIBPOSTPROC_VERSION_MAJOR  53
+#define LIBPOSTPROC_VERSION_MAJOR  55
 #define LIBPOSTPROC_VERSION_MINOR   3
 #define LIBPOSTPROC_VERSION_MICRO 100
 
@@ -42,4 +42,4 @@
 
 #define LIBPOSTPROC_IDENT       "postproc" AV_STRINGIFY(LIBPOSTPROC_VERSION)
 
-#endif /* POSTPROC_POSTPROCESS_VERSION_H */
+#endif /* POSTPROC_VERSION_H */

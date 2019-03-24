@@ -48,7 +48,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page_open">
        <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -105,6 +105,9 @@
                  <width>160</width>
                  <height>50</height>
                 </size>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
                </property>
                <property name="text">
                 <string>打开文件</string>

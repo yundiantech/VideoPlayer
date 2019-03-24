@@ -549,13 +549,13 @@ end:
 
     if (aFrame != nullptr)
     {
-        avcodec_free_frame(&aFrame);
+        av_frame_free(&aFrame);
         aFrame = nullptr;
     }
 
     if (aFrame_ReSample != nullptr)
     {
-        avcodec_free_frame(&aFrame_ReSample);
+        av_frame_free(&aFrame_ReSample);
         aFrame_ReSample = nullptr;
     }
 

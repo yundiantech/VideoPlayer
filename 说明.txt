@@ -1,10 +1,10 @@
 这是Qt的工程，建议使用Qt Creator 打开
 
 
-从零开始学习音视频编程技术（二十二） FFMPEG Qt视频播放器之BUG修复
+从零开始学习音视频编程技术（二十二） FFMPEG Qt视频播放器之BUG修复（升级到ffmpeg4.1）
 
 Qt的版本是5.6.2（vs2013）
-FFMPEG的版本是2.5.2
+FFMPEG的版本是4.1
 SDL的版本是2.04
 
 
