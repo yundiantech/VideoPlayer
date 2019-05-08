@@ -61,3 +61,7 @@ Qt5.6.2(vs2013) + ffmpeg2.5.2 + SDL2
 Qt5.6.2(vs2013) + ffmpeg4.1 + SDL2
 1.将ffmpeg升级到4.1版本
 
+【V2.1.0】 2019-03.24
+Qt5.6.2(vs2013/mingw) + ffmpeg4.1 + SDL2
+1.新增mingw编译器支持
+2.回调函数调整
