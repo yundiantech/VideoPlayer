@@ -17,7 +17,7 @@ void Sleep(long mSeconds)
 #endif
 
 int AppConfig::VERSION = 1;
-char AppConfig::VERSION_NAME[32] = "1.8.0";
+char AppConfig::VERSION_NAME[32] = "2.1.0";
 
 LogWriter* AppConfig::gLogWriter = new LogWriter;
 

@@ -1,11 +1,19 @@
 #ifndef COND_H
 #define COND_H
 
-#if defined(WIN32)
+/// ×¢ÒâMingwµÄ»°Ê¹ÓÃµÄÊÇlinuxÏÂµÄapi pthread
+/// Ã»ÓĞ_MSC_VERÕâ¸öºê ÎÒÃÇ¾ÍÈÏÎªËûÓÃµÄÊÇmingw±àÒëÆ÷
+
+#ifndef _MSC_VER
+#define MINGW
+#endif
+
+#if defined(WIN32) && !defined(MINGW)
     #include <winsock2.h>
     #include <windows.h>
 #else
     #include <pthread.h>
+    #include <time.h>
 #endif
 
 class Cond
@@ -14,27 +22,27 @@ public:
     Cond();
     ~Cond();
 
-    //ä¸Šé”
+    //ÉÏËø
     int Lock();
 
-    //è§£é”
+    //½âËø
     int Unlock();
 
     //
     int Wait();
 
-    //å›ºå®šæ—¶é—´ç­‰å¾…
+    //¹Ì¶¨Ê±¼äµÈ´ı
     int TimedWait(int second);
 
     //
     int Signal();
 
-    //å”¤é†’æ‰€æœ‰ç¡çœ çº¿ç¨‹
+    //»½ĞÑËùÓĞË¯ÃßÏß³Ì
     int Broadcast();
 
 private:
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     CRITICAL_SECTION m_mutex;
     RTL_CONDITION_VARIABLE m_cond;
 #else

@@ -16,7 +16,7 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 
-Q_DECLARE_METATYPE(VideoPlayer::PlayerState)
+Q_DECLARE_METATYPE(VideoPlayerState)
 
 VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     DragAbleWidget(parent),
@@ -31,7 +31,7 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     setAttribute(Qt::WA_TranslucentBackground);
 
     //因为VideoPlayer::PlayerState是自定义的类型 要跨线程传递需要先注册一下
-    qRegisterMetaType<VideoPlayer::PlayerState>();
+    qRegisterMetaType<VideoPlayerState>();
 
     connect(this, &VideoPlayerWidget::sig_OpenVideoFileFailed, this, &VideoPlayerWidget::slotOpenVideoFileFailed);
     connect(this, &VideoPlayerWidget::sig_OpenSdlFailed, this, &VideoPlayerWidget::slotOpenSdlFailed);
@@ -53,7 +53,8 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     ui->page_video->installEventFilter(this);
     ui->widget_container->installEventFilter(this);
 
-    mPlayer = this;
+    mPlayer = new VideoPlayer();
+    mPlayer->setVideoPlayerCallBack(this);
 
     mTimer = new QTimer; //定时器-获取当前视频时间
     connect(mTimer, &QTimer::timeout, this, &VideoPlayerWidget::slotTimerTimeOut);
@@ -223,25 +224,25 @@ void VideoPlayerWidget::slotBtnClick(bool isChecked)
 }
 
 ///打开文件失败
-void VideoPlayerWidget::doOpenVideoFileFailed(const int &code)
+void VideoPlayerWidget::onOpenVideoFileFailed(const int &code)
 {
     emit sig_OpenVideoFileFailed(code);
 }
 
 ///打开SDL失败的时候回调此函数
-void VideoPlayerWidget::doOpenSdlFailed(const int &code)
+void VideoPlayerWidget::onOpenSdlFailed(const int &code)
 {
     emit sig_OpenSdlFailed(code);
 }
 
 ///获取到视频时长的时候调用此函数
-void VideoPlayerWidget::doTotalTimeChanged(const int64_t &uSec)
+void VideoPlayerWidget::onTotalTimeChanged(const int64_t &uSec)
 {
     emit sig_TotalTimeChanged(uSec);
 }
 
 ///播放器状态改变的时候回调此函数
-void VideoPlayerWidget::doPlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio)
+void VideoPlayerWidget::onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
     emit sig_PlayerStateChanged(state, hasVideo, hasAudio);
 }
@@ -271,9 +272,9 @@ void VideoPlayerWidget::slotTotalTimeChanged(const qint64 &uSec)
 
 }
 
-void VideoPlayerWidget::slotStateChanged(const PlayerState &state, const bool &hasVideo, const bool &hasAudio)
+void VideoPlayerWidget::slotStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-    if (state == VideoPlayer::Stop)
+    if (state == VideoPlayer_Stop)
     {
         ui->stackedWidget->setCurrentWidget(ui->page_open);
 
@@ -287,7 +288,7 @@ void VideoPlayerWidget::slotStateChanged(const PlayerState &state, const bool &h
         mTimer->stop();
 
     }
-    else if (state == VideoPlayer::Playing)
+    else if (state == VideoPlayer_Playing)
     {
         if (hasVideo)
         {
@@ -303,7 +304,7 @@ void VideoPlayerWidget::slotStateChanged(const PlayerState &state, const bool &h
 
         mTimer->start();
     }
-    else if (state == VideoPlayer::Pause)
+    else if (state == VideoPlayer_Pause)
     {
         ui->pushButton_pause->hide();
         ui->pushButton_play->show();
@@ -311,7 +312,7 @@ void VideoPlayerWidget::slotStateChanged(const PlayerState &state, const bool &h
 }
 
 ///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
-void VideoPlayerWidget::doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height)
+void VideoPlayerWidget::onDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height)
 {
 //    qDebug()<<__FUNCTION__<<width<<height;
 

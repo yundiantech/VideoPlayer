@@ -85,7 +85,7 @@ void LogWriter::writeLog(int cameraId, const std::string &str)
     memset(mTmpBuffer, 0x0, TMPBUFFERLEN);
 
     sprintf(mTmpBuffer,"[%d-%02d-%02d %02d:%02d:%02d.%03d] %s\n",
-            sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds, str);
+            sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond, sys.wMilliseconds, str.c_str());
 
     node.logStr = mTmpBuffer;
 

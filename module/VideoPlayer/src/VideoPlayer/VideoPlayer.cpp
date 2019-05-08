@@ -15,7 +15,9 @@ VideoPlayer::VideoPlayer()
     mConditon_Video = new Cond;
     mConditon_Audio = new Cond;
 
-    mPlayerState = Stop;
+    mPlayerState = VideoPlayer_Stop;
+
+    mVideoPlayerCallBack = nullptr;
 
     mAudioID = 0;
     mIsMute = false;
@@ -44,7 +46,7 @@ bool VideoPlayer::initPlayer()
 
 bool VideoPlayer::startPlay(const std::string &filePath)
 {
-    if (mPlayerState != Stop)
+    if (mPlayerState != VideoPlayer_Stop)
     {
         return false;
     }
@@ -79,7 +81,7 @@ bool VideoPlayer::play()
     mIsNeedPause = false;
     mIsPause = false;
 
-    if (mPlayerState != Pause)
+    if (mPlayerState != VideoPlayer_Pause)
     {
         return false;
     }
@@ -87,8 +89,8 @@ bool VideoPlayer::play()
     uint64_t pauseTime = av_gettime() - mVideoStartTime; //暂停了多长时间
     mVideoStartTime += pauseTime; //将暂停的时间加到开始播放的时间上，保证同步不受暂停的影响
 
-    mPlayerState = Playing;
-    doPlayerStateChanged(Playing, mVideoStream != nullptr, mAudioStream != nullptr);
+    mPlayerState = VideoPlayer_Playing;
+    doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
@@ -97,28 +99,28 @@ bool VideoPlayer::pause()
 {
     mIsPause = true;
 
-    if (mPlayerState != Playing)
+    if (mPlayerState != VideoPlayer_Playing)
     {
         return false;
     }
 
     mPauseStartTime = av_gettime();
 
-    mPlayerState = Pause;
+    mPlayerState = VideoPlayer_Pause;
 
-    emit doPlayerStateChanged(Pause, mVideoStream != nullptr, mAudioStream != nullptr);
+    emit doPlayerStateChanged(VideoPlayer_Pause, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
 
 bool VideoPlayer::stop(bool isWait)
 {
-    if (mPlayerState == Stop)
+    if (mPlayerState == VideoPlayer_Stop)
     {
         return false;
     }
 
-    mPlayerState = Stop;
+    mPlayerState = VideoPlayer_Stop;
     mIsQuit = true;
 
     if (isWait)
@@ -402,8 +404,8 @@ void VideoPlayer::readVideoFile()
 
 //    av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
 
-    mPlayerState = Playing;
-    doPlayerStateChanged(Playing, mVideoStream != nullptr, mAudioStream != nullptr);
+    mPlayerState = VideoPlayer_Playing;
+    doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mVideoStartTime = av_gettime();
 OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
@@ -529,7 +531,7 @@ end:
     clearAudioQuene();
     clearVideoQuene();
 
-    if (mPlayerState != Stop) //不是外部调用的stop 是正常播放结束
+    if (mPlayerState != VideoPlayer_Stop) //不是外部调用的stop 是正常播放结束
     {
         stop();
     }
@@ -574,7 +576,7 @@ end:
     avformat_close_input(&pFormatCtx);
     avformat_free_context(pFormatCtx);
 
-    doPlayerStateChanged(Stop, mVideoStream != nullptr, mAudioStream != nullptr);
+    doPlayerStateChanged(VideoPlayer_Stop, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mIsReadThreadFinished = true;
 
@@ -641,28 +643,55 @@ void VideoPlayer::clearAudioQuene()
 void VideoPlayer::doOpenVideoFileFailed(const int &code)
 {
     OUTPUT("%s \n", __FUNCTION__);
+
+    if (mVideoPlayerCallBack != nullptr)
+    {
+        mVideoPlayerCallBack->onOpenVideoFileFailed(code);
+    }
+
 }
 
 ///打开sdl失败的时候回调此函数
 void VideoPlayer::doOpenSdlFailed(const int &code)
 {
     OUTPUT("%s \n", __FUNCTION__);
+
+    if (mVideoPlayerCallBack != nullptr)
+    {
+        mVideoPlayerCallBack->onOpenSdlFailed(code);
+    }
 }
 
 ///获取到视频时长的时候调用此函数
 void VideoPlayer::doTotalTimeChanged(const int64_t &uSec)
 {
     OUTPUT("%s \n", __FUNCTION__);
+
+    if (mVideoPlayerCallBack != nullptr)
+    {
+        mVideoPlayerCallBack->onTotalTimeChanged(uSec);
+    }
 }
 
 ///播放器状态改变的时候回调此函数
-void VideoPlayer::doPlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio)
+void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
     OUTPUT("%s \n", __FUNCTION__);
+
+    if (mVideoPlayerCallBack != nullptr)
+    {
+        mVideoPlayerCallBack->onPlayerStateChanged(state, hasVideo, hasAudio);
+    }
+
 }
 
 ///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
 void VideoPlayer::doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height)
 {
-    OUTPUT("%s \n", __FUNCTION__);
+//    OUTPUT("%s \n", __FUNCTION__);
+
+    if (mVideoPlayerCallBack != nullptr)
+    {
+        mVideoPlayerCallBack->onDisplayVideo(brgb32Buffer, width, height);
+    }
 }

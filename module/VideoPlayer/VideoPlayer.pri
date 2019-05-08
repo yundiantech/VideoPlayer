@@ -9,6 +9,7 @@ SOURCES +=  \
     $$PWD/src/VideoPlayer/Video/VideoPlayer_VideoThread.cpp \
     $$PWD/src/VideoPlayer/Audio/VideoPlayer_AudioThread.cpp \
     $$PWD/src/VideoPlayer/Audio/PcmVolumeControl.cpp \
+    $$PWD/src/EventHandle/VideoPlayerEventHandle.cpp
 
 HEADERS  += \
     $$PWD/src/AppConfig.h \
@@ -17,6 +18,8 @@ HEADERS  += \
     $$PWD/src/LogWriter/LogWriter.h \
     $$PWD/src/VideoPlayer/VideoPlayer.h \
     $$PWD/src/VideoPlayer/Audio/PcmVolumeControl.h \
+    $$PWD/src/EventHandle/VideoPlayerEventHandle.h \
+    $$PWD/src/types.h
 
 
 win32{

@@ -30,6 +30,8 @@ extern "C"
 }
 
 #include "AppConfig.h"
+#include "types.h"
+#include "EventHandle/VideoPlayerEventHandle.h"
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
@@ -48,19 +50,17 @@ extern "C"
 class VideoPlayer
 {
 public:
-
-    enum PlayerState
-    {
-        Playing,
-        Pause,
-        Stop
-    };
-
-    explicit VideoPlayer();
+    VideoPlayer();
     ~VideoPlayer();
 
     ///初始化播放器（必需要调用一次）
     static bool initPlayer();
+
+    /**
+     * @brief setVideoPlayerCallBack 设置播放器回调函数
+     * @param pointer
+     */
+    void setVideoPlayerCallBack(VideoPlayerCallBack *pointer){mVideoPlayerCallBack=pointer;}
 
     bool startPlay(const std::string &filePath);
 
@@ -90,12 +90,11 @@ protected:
 private:
     std::string mFilePath; //视频文件路径
 
-    PlayerState mPlayerState; //播放状态
+    VideoPlayerState mPlayerState; //播放状态
 
     ///音量相关变量
     bool  mIsMute;
     float mVolume; //音量 0~1 超过1 表示放大倍数
-
 
     /// 跳转相关的变量
     int             seek_req; //跳转标志
@@ -165,25 +164,28 @@ private:
     int openSDL();
     void closeSDL();
 
-    /// 以下函数，用于输出信息给界面
-    /// 当使用界面类继承了本类之后，以下函数不会执行
-protected:
+
+    ///回调函数相关，主要用于输出信息给界面
+private:
+    ///回调函数
+    VideoPlayerCallBack *mVideoPlayerCallBack;
+
     ///打开文件失败
-    virtual void doOpenVideoFileFailed(const int &code = 0);
+    void doOpenVideoFileFailed(const int &code = 0);
 
     ///打开sdl失败的时候回调此函数
-    virtual void doOpenSdlFailed(const int &code);
+    void doOpenSdlFailed(const int &code);
 
     ///获取到视频时长的时候调用此函数
-    virtual void doTotalTimeChanged(const int64_t &uSec);
+    void doTotalTimeChanged(const int64_t &uSec);
 
     ///播放器状态改变的时候回调此函数
-    virtual void doPlayerStateChanged(const VideoPlayer::PlayerState &state, const bool &hasVideo, const bool &hasAudio);
+    void doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio);
 
     ///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
-    virtual void doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height);
-
+    void doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height);
 
 };
+
 
 #endif // VIDEOPLAYER_H

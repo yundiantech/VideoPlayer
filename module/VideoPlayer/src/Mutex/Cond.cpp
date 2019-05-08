@@ -2,7 +2,7 @@
 
 Cond::Cond()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     InitializeCriticalSection(&m_mutex);
     InitializeConditionVariable(&m_cond);
 #else
@@ -14,7 +14,7 @@ Cond::Cond()
 
 Cond::~Cond()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     DeleteCriticalSection(&m_mutex);
 #else
     pthread_mutex_destroy(&m_mutex);
@@ -23,10 +23,10 @@ Cond::~Cond()
 
 }
 
-//åŠ é”
+//¼ÓËø
 int Cond::Lock()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     EnterCriticalSection(&m_mutex);
     return 0;
 #else
@@ -35,10 +35,10 @@ int Cond::Lock()
 
 }
 
-//è§£é”
+//½âËø
 int Cond::Unlock()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     LeaveCriticalSection(&m_mutex);
     return 0;
 #else
@@ -48,7 +48,7 @@ int Cond::Unlock()
 
 int Cond::Wait()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     DWORD ret = SleepConditionVariableCS((PCONDITION_VARIABLE)&m_cond, &m_mutex, INFINITE);
 #else
     int ret = pthread_cond_wait(&m_cond, &m_mutex);
@@ -58,15 +58,15 @@ int Cond::Wait()
 
 }
 
-//å›ºå®šæ—¶é—´ç­‰å¾…
+//¹Ì¶¨Ê±¼äµÈ´ı
 int Cond::TimedWait(int second)
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     SleepConditionVariableCS((PCONDITION_VARIABLE)&m_cond, &m_mutex, second*1000);
     return 0;
 #else
     struct timespec abstime;
-    //è·å–ä»å½“å‰æ—¶é—´ï¼Œå¹¶åŠ ä¸Šç­‰å¾…æ—¶é—´ï¼Œ è®¾ç½®è¿›ç¨‹çš„è¶…æ—¶ç¡çœ æ—¶é—´
+    //»ñÈ¡´Óµ±Ç°Ê±¼ä£¬²¢¼ÓÉÏµÈ´ıÊ±¼ä£¬ ÉèÖÃ½ø³ÌµÄ³¬Ê±Ë¯ÃßÊ±¼ä
     clock_gettime(CLOCK_REALTIME, &abstime);
     abstime.tv_sec += second;
     return pthread_cond_timedwait(&m_cond, &m_mutex, &abstime);
@@ -76,7 +76,7 @@ int Cond::TimedWait(int second)
 
 int Cond::Signal()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     int ret = 0;
     WakeConditionVariable((PCONDITION_VARIABLE)&m_cond);
 #else
@@ -85,10 +85,10 @@ int Cond::Signal()
     return ret;
 }
 
-//å”¤é†’æ‰€æœ‰ç¡çœ çº¿ç¨‹
+//»½ĞÑËùÓĞË¯ÃßÏß³Ì
 int Cond::Broadcast()
 {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(MINGW)
     WakeAllConditionVariable((PCONDITION_VARIABLE)&m_cond);
     return 0;
 #else
