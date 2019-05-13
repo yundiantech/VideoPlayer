@@ -361,13 +361,24 @@ void VideoPlayer::readVideoFile()
 
             out_ch_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
 
+            /// 2019-5-13添加
+            /// wav文件获取到的aCodecCtx->channel_layout为0会导致后面的初始化失败，因为这里需要加个判断。
+            if (in_ch_layout <= 0)
+            {
+                in_ch_layout = av_get_default_channel_layout(aCodecCtx->channels);
+            }
+
             swrCtx = swr_alloc_set_opts(nullptr, out_ch_layout, out_sample_fmt, out_sample_rate,
                                                  in_ch_layout, in_sample_fmt, in_sample_rate, 0, nullptr);
 
             /** Open the resampler with the specified parameters. */
-            if (swr_init(swrCtx) < 0)
+            int ret = swr_init(swrCtx);
+            if (ret < 0)
             {
-                OUTPUT("Could not open resample context\n");
+                char buff[128]={0};
+                av_strerror(ret, buff, 128);
+
+                OUTPUT("Could not open resample context %s\n", buff);
                 swr_free(&swrCtx);
                 swrCtx = nullptr;
                 doOpenVideoFileFailed();
