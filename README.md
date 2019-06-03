@@ -1,6 +1,6 @@
 # VideoPlayer
 # Qt+ffmpeg实现的视频播放器  
-# 博客地址：http://blog.yundiantech.com/?log=blog&scat=182  
+博客地址：http://blog.yundiantech.com/?log=blog&scat=182  
 
 
 版本说明：  
