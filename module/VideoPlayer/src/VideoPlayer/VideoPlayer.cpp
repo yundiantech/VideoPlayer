@@ -362,7 +362,7 @@ void VideoPlayer::readVideoFile()
             out_ch_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
 
             /// 2019-5-13添加
-            /// wav文件获取到的aCodecCtx->channel_layout为0会导致后面的初始化失败，因此这里需要加个判断。
+            /// wav/wmv 文件获取到的aCodecCtx->channel_layout为0会导致后面的初始化失败，因此这里需要加个判断。
             if (in_ch_layout <= 0)
             {
                 in_ch_layout = av_get_default_channel_layout(aCodecCtx->channels);

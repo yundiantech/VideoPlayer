@@ -190,7 +190,7 @@ int64_t AppConfig::getTimeStamp_MilliSecond()
 
 #endif
 
-    int64_t timeStamp = time(NULL) * 1000 + mSecond;
+    int64_t timeStamp = ((int64_t)time(NULL)) * 1000 + mSecond;
 
     return timeStamp;
 
