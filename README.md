@@ -2,6 +2,8 @@
 # Qt+ffmpeg实现的视频播放器  
 博客地址：http://blog.yundiantech.com/?log=blog&scat=182  
 
+![Image text](https://raw.githubusercontent.com/yundiantech/VideoPlayer/master/screenshot.jpg)
+
 
 版本说明：  
 Qt开发环境的搭建 请参考：  
