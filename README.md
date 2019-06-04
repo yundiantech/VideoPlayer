@@ -68,3 +68,6 @@ Qt5.6.2(vs2013/mingw) + ffmpeg4.1 + SDL2
 1.新增mingw编译器支持  
 2.回调函数调整  
  
+【V2.1.0】 2019-05-13  
+Qt5.6.2(vs2013/mingw) + ffmpeg4.1 + SDL2  
+1.解决wav文件不能播放的bug
