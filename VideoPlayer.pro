@@ -8,6 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+CONFIG += c++11
 
 UI_DIR  = obj/Gui
 MOC_DIR = obj/Moc
@@ -33,19 +34,24 @@ include(module/VideoPlayer/VideoPlayer.pri)
 #包含可拖动窗体的代码
 include(module/DragAbleWidget/DragAbleWidget.pri)
 
-SOURCES += src/main.cpp \
-    src/Widget/VideoPlayerWidget.cpp \
+SOURCES += \
+    src/main.cpp \
+    src/AppConfig.cpp \
+    src/Base/FunctionTransfer.cpp \
+    src/MainWindow.cpp \
     src/Widget/ShowVideoWidget.cpp \
     src/Widget/VideoSlider.cpp
 
-
 HEADERS  += \
-    src/Widget/VideoPlayerWidget.h \
+    src/AppConfig.h \
+    src/Base/FunctionTransfer.h \
+    src/MainWindow.h \
     src/Widget/ShowVideoWidget.h \
     src/Widget/VideoSlider.h
 
+
 FORMS    += \
-    src/Widget/VideoPlayerWidget.ui \
+    src/MainWindow.ui \
     src/Widget/ShowVideoWidget.ui
 
 RESOURCES += \

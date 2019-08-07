@@ -8,7 +8,7 @@
 
 void VideoPlayer::decodeVideoThread()
 {
-OUTPUT("%s start \n", __FUNCTION__);
+    fprintf(stderr, "%s start \n", __FUNCTION__);
 
     mIsVideoThreadFinished = false;
 
@@ -19,24 +19,24 @@ OUTPUT("%s start \n", __FUNCTION__);
     double audio_pts = 0; //音频pts
 
     ///解码视频相关
-    AVFrame *pFrame, *pFrameRGB;
-    uint8_t *out_buffer_rgb; //解码后的rgb数据
+    AVFrame *pFrame, *pFrameYUV;
+    uint8_t *out_buffer_yuv; //解码后的yuv数据
     struct SwsContext *img_convert_ctx;  //用于解码后的视频格式转换
 
     AVCodecContext *pCodecCtx = mVideoStream->codec; //视频解码器
 
     pFrame = av_frame_alloc();
-    pFrameRGB = av_frame_alloc();
+    pFrameYUV = av_frame_alloc();
 
-    ///这里我们改成了 将解码后的YUV数据转换成RGB32
+    ///由于解码后的数据不一定都是yuv420p，因此需要将解码后的数据统一转换成YUV420P
     img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
             pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
-            AV_PIX_FMT_RGB32, SWS_BICUBIC, NULL, NULL, NULL);
+            AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 
-    numBytes = avpicture_get_size(AV_PIX_FMT_RGB32, pCodecCtx->width,pCodecCtx->height);
+    numBytes = avpicture_get_size(AV_PIX_FMT_YUV420P, pCodecCtx->width,pCodecCtx->height);
 
-    out_buffer_rgb = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-    avpicture_fill((AVPicture *) pFrameRGB, out_buffer_rgb, AV_PIX_FMT_RGB32,
+    out_buffer_yuv = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
+    avpicture_fill((AVPicture *) pFrameYUV, out_buffer_yuv, AV_PIX_FMT_YUV420P,
             pCodecCtx->width, pCodecCtx->height);
 
     while(1)
@@ -49,7 +49,7 @@ OUTPUT("%s start \n", __FUNCTION__);
 
         if (mIsPause == true) //判断暂停
         {
-            AppConfig::mSleep(10);
+            mSleep(10);
             continue;
         }
 
@@ -65,7 +65,7 @@ OUTPUT("%s start \n", __FUNCTION__);
             }
             else
             {
-                AppConfig::mSleep(1); //队列只是暂时没有数据而已
+                mSleep(1); //队列只是暂时没有数据而已
                 continue;
             }
         }
@@ -85,16 +85,6 @@ OUTPUT("%s start \n", __FUNCTION__);
             continue;
         }
 
-        ///avcodec_decode_video2 是ffmpeg2中的用法
-//        ret = avcodec_decode_video2(pCodecCtx, pFrame, &got_picture,packet);
-//        if (ret < 0)
-//        {
-//            av_packet_unref(packet);
-//            continue;
-//        }
-
-
-        ///ffmpeg4.1解码视频使用新的api 如下：
         if (avcodec_send_packet(pCodecCtx, packet) != 0)
         {
            qDebug("input AVPacket to decoder failed!\n");
@@ -174,16 +164,16 @@ OUTPUT("%s start \n", __FUNCTION__);
 
                 if (!mIsNeedPause)
                 {
-                    AppConfig::mSleep(delayTime);
+                    mSleep(delayTime);
                 }
             }
 
             sws_scale(img_convert_ctx,
                     (uint8_t const * const *) pFrame->data,
-                    pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data,
-                    pFrameRGB->linesize);
+                    pFrame->linesize, 0, pCodecCtx->height, pFrameYUV->data,
+                    pFrameYUV->linesize);
 
-            doDisplayVideo(out_buffer_rgb, pCodecCtx->width, pCodecCtx->height);
+            doDisplayVideo(out_buffer_yuv, pCodecCtx->width, pCodecCtx->height);
 
             if (mIsNeedPause)
             {
@@ -196,8 +186,8 @@ OUTPUT("%s start \n", __FUNCTION__);
     }
 
     av_free(pFrame);
-    av_free(pFrameRGB);
-    av_free(out_buffer_rgb);
+    av_free(pFrameYUV);
+    av_free(out_buffer_yuv);
 
     sws_freeContext(img_convert_ctx);
 
@@ -207,6 +197,8 @@ OUTPUT("%s start \n", __FUNCTION__);
     }
 
     mIsVideoThreadFinished = true;
-OUTPUT("%s finished \n", __FUNCTION__);
+
+    fprintf(stderr, "%s finished \n", __FUNCTION__);
+
     return;
 }

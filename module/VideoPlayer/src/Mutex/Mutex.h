@@ -3,8 +3,8 @@
 
 
 #if defined(WIN32)
-    #include <winsock2.h>
-    #include <windows.h>
+    #include <WinSock2.h>
+    #include <Windows.h>
 //#elif defined(Q_OS_LINUX)
 #else
     #include <pthread.h>

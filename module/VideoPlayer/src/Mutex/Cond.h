@@ -9,8 +9,8 @@
 #endif
 
 #if defined(WIN32) && !defined(MINGW)
-    #include <winsock2.h>
-    #include <windows.h>
+    #include <WinSock2.h>
+    #include <Windows.h>
 #else
     #include <pthread.h>
     #include <time.h>

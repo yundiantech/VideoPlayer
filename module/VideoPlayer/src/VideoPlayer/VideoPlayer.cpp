@@ -37,7 +37,7 @@ bool VideoPlayer::initPlayer()
 
     if (SDL_Init(SDL_INIT_AUDIO))
     {
-        OUTPUT("Could not initialize SDL - %s. \n", SDL_GetError());
+        fprintf(stderr, "Could not initialize SDL - %s. \n", SDL_GetError());
         return false;
     }
 
@@ -127,7 +127,7 @@ bool VideoPlayer::stop(bool isWait)
     {
         while(!mIsReadThreadFinished)
         {
-            AppConfig::mSleep(3);
+            mSleep(3);
         }
     }
 
@@ -191,7 +191,7 @@ int VideoPlayer::openSDL()
 
         return -1;
     }
-OUTPUT("mAudioID=%d\n\n\n\n\n\n", mAudioID);
+fprintf(stderr, "mAudioID=%d\n\n\n\n\n\n", mAudioID);
     return 0;
 }
 
@@ -237,14 +237,14 @@ void VideoPlayer::readVideoFile()
 
     if (avformat_open_input(&pFormatCtx, file_path, nullptr, nullptr) != 0)
     {
-        OUTPUT("can't open the file. \n");
+        fprintf(stderr, "can't open the file. \n");
         doOpenVideoFileFailed();
         goto end;
     }
 
     if (avformat_find_stream_info(pFormatCtx, nullptr) < 0)
     {
-        OUTPUT("Could't find stream infomation.\n");
+        fprintf(stderr, "Could't find stream infomation.\n");
         doOpenVideoFileFailed();
         goto end;
     }
@@ -276,7 +276,7 @@ void VideoPlayer::readVideoFile()
 
         if (pCodec == nullptr)
         {
-            OUTPUT("PCodec not found.\n");
+            fprintf(stderr, "PCodec not found.\n");
             doOpenVideoFileFailed();
             goto end;
         }
@@ -284,7 +284,7 @@ void VideoPlayer::readVideoFile()
         ///打开视频解码器
         if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0)
         {
-            OUTPUT("Could not open video codec.\n");
+            fprintf(stderr, "Could not open video codec.\n");
             doOpenVideoFileFailed();
             goto end;
         }
@@ -308,7 +308,7 @@ void VideoPlayer::readVideoFile()
 
         if (aCodec == NULL)
         {
-            OUTPUT("ACodec not found.\n");
+            fprintf(stderr, "ACodec not found.\n");
             audioStream = -1;
         }
         else
@@ -316,7 +316,7 @@ void VideoPlayer::readVideoFile()
             ///打开音频解码器
             if (avcodec_open2(aCodecCtx, aCodec, nullptr) < 0)
             {
-                OUTPUT("Could not open audio codec.\n");
+                fprintf(stderr, "Could not open audio codec.\n");
                 doOpenVideoFileFailed();
                 goto end;
             }
@@ -378,7 +378,7 @@ void VideoPlayer::readVideoFile()
                 char buff[128]={0};
                 av_strerror(ret, buff, 128);
 
-                OUTPUT("Could not open resample context %s\n", buff);
+                fprintf(stderr, "Could not open resample context %s\n", buff);
                 swr_free(&swrCtx);
                 swrCtx = nullptr;
                 doOpenVideoFileFailed();
@@ -419,7 +419,7 @@ void VideoPlayer::readVideoFile()
     doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mVideoStartTime = av_gettime();
-OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
+fprintf(stderr, "%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
     while (1)
     {
         if (mIsQuit)
@@ -446,7 +446,7 @@ OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
 
             if (av_seek_frame(pFormatCtx, stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
             {
-                OUTPUT("%s: error while seeking\n",pFormatCtx->filename);
+                fprintf(stderr, "%s: error while seeking\n",pFormatCtx->filename);
             }
             else
             {
@@ -489,13 +489,13 @@ OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
         //这个值可以稍微写大一些
         if (mAudioPacktList.size() > MAX_AUDIO_SIZE || mVideoPacktList.size() > MAX_VIDEO_SIZE)
         {
-            AppConfig::mSleep(10);
+            mSleep(10);
             continue;
         }
 
         if (mIsPause == true)
         {
-            AppConfig::mSleep(10);
+            mSleep(10);
             continue;
         }
 
@@ -509,7 +509,7 @@ OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
                 break; //解码线程也执行完了 可以退出了
             }
 
-            AppConfig::mSleep(10);
+            mSleep(10);
             continue;
         }
 
@@ -520,8 +520,16 @@ OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
         }
         else if( packet.stream_index == audioStream )
         {
-            inputAudioQuene(packet);
-            //这里我们将数据存入队列 因此不调用 av_free_packet 释放
+            if (mIsAudioThreadFinished)
+            { ///SDL没有打开，则音频数据直接释放
+                av_packet_unref(&packet);
+            }
+            else
+            {
+                inputAudioQuene(packet);
+                //这里我们将数据存入队列 因此不调用 av_free_packet 释放
+            }
+
         }
         else
         {
@@ -534,7 +542,7 @@ OUTPUT("%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
     ///等待播放完毕
     while (!mIsQuit)
     {
-        AppConfig::mSleep(100);
+        mSleep(100);
     }
 
 end:
@@ -549,7 +557,7 @@ end:
 
     while((mVideoStream != nullptr && !mIsVideoThreadFinished) || (mAudioStream != nullptr && !mIsAudioThreadFinished))
     {
-        AppConfig::mSleep(10);
+        mSleep(10);
     } //确保视频线程结束后 再销毁队列
 
     closeSDL();
@@ -591,7 +599,7 @@ end:
 
     mIsReadThreadFinished = true;
 
-OUTPUT("%s finished \n", __FUNCTION__);
+fprintf(stderr, "%s finished \n", __FUNCTION__);
 }
 
 bool VideoPlayer::inputVideoQuene(const AVPacket &pkt)
@@ -653,7 +661,7 @@ void VideoPlayer::clearAudioQuene()
 ///打开文件失败
 void VideoPlayer::doOpenVideoFileFailed(const int &code)
 {
-    OUTPUT("%s \n", __FUNCTION__);
+    fprintf(stderr, "%s \n", __FUNCTION__);
 
     if (mVideoPlayerCallBack != nullptr)
     {
@@ -665,7 +673,7 @@ void VideoPlayer::doOpenVideoFileFailed(const int &code)
 ///打开sdl失败的时候回调此函数
 void VideoPlayer::doOpenSdlFailed(const int &code)
 {
-    OUTPUT("%s \n", __FUNCTION__);
+    fprintf(stderr, "%s \n", __FUNCTION__);
 
     if (mVideoPlayerCallBack != nullptr)
     {
@@ -676,7 +684,7 @@ void VideoPlayer::doOpenSdlFailed(const int &code)
 ///获取到视频时长的时候调用此函数
 void VideoPlayer::doTotalTimeChanged(const int64_t &uSec)
 {
-    OUTPUT("%s \n", __FUNCTION__);
+    fprintf(stderr, "%s \n", __FUNCTION__);
 
     if (mVideoPlayerCallBack != nullptr)
     {
@@ -687,7 +695,7 @@ void VideoPlayer::doTotalTimeChanged(const int64_t &uSec)
 ///播放器状态改变的时候回调此函数
 void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-    OUTPUT("%s \n", __FUNCTION__);
+    fprintf(stderr, "%s \n", __FUNCTION__);
 
     if (mVideoPlayerCallBack != nullptr)
     {
@@ -696,13 +704,19 @@ void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool
 
 }
 
-///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
-void VideoPlayer::doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height)
+///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
+void VideoPlayer::doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, const int &height)
 {
-//    OUTPUT("%s \n", __FUNCTION__);
-
+//    fprintf(stderr, "%s \n", __FUNCTION__);
     if (mVideoPlayerCallBack != nullptr)
     {
-        mVideoPlayerCallBack->onDisplayVideo(brgb32Buffer, width, height);
+        VideoFramePtr videoFrame = std::make_shared<VideoFrame>();
+
+        VideoFrame * ptr = videoFrame.get();
+
+        ptr->initBuffer(width, height);
+        ptr->setYUVbuf(yuv420Buffer);
+
+        mVideoPlayerCallBack->onDisplayVideo(videoFrame);
     }
 }

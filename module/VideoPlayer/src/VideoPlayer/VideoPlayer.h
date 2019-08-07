@@ -29,8 +29,8 @@ extern "C"
     #include <SDL_config.h>
 }
 
-#include "AppConfig.h"
 #include "types.h"
+#include "Mutex/Cond.h"
 #include "EventHandle/VideoPlayerEventHandle.h"
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
@@ -182,8 +182,8 @@ private:
     ///播放器状态改变的时候回调此函数
     void doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio);
 
-    ///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
-    void doDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height);
+    ///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
+    void doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, const int &height);
 
 };
 

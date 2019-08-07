@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "AppConfig.h"
+#include "types.h"
 
 #ifdef WIN32
 #include <direct.h>
@@ -15,14 +15,15 @@
 #endif
 
 #if defined(WIN32)
-#include <windows.h>
+    #include <WinSock2.h>
+    #include <Windows.h>
 static DWORD WINAPI thread_Func(LPVOID pM)
 #else
-#include <sys/time.h>
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
-#include <unistd.h>
+    #include <sys/time.h>
+    #include <stdio.h>
+    #include <time.h>
+    #include <stdlib.h>
+    #include <unistd.h>
 static void *thread_Func(void *pM)
 #endif
 {
@@ -76,7 +77,7 @@ void LogWriter::writeLog(int cameraId, const std::string &str)
 
     LogInfoNode node;
     node.cameraId = cameraId;
-    node.mCreateTime =  AppConfig::getTimeStamp_MilliSecond();
+    node.mCreateTime =  getTimeStamp_MilliSecond();
 
 #if defined(WIN32)
     SYSTEMTIME sys;
@@ -153,7 +154,7 @@ void LogWriter::run()
         else
         {
             uint64_t startTime = mLogNodeList.front().mCreateTime;
-            uint64_t currentTime = AppConfig::getTimeStamp_MilliSecond();
+            uint64_t currentTime = getTimeStamp_MilliSecond();
 
             if ((currentTime - startTime) > (10000)) //日志数据最迟10秒写入文件
             {
@@ -235,7 +236,7 @@ void LogWriter::run()
         else
         {
             mCondition->Unlock();
-            AppConfig::mSleep(5000);
+            mSleep(5000);
             continue;
         }
     }

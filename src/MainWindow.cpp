@@ -4,8 +4,8 @@
  * http://blog.yundiantech.com/
  */
 
-#include "VideoPlayerWidget.h"
-#include "ui_VideoPlayerWidget.h"
+#include "MainWindow.h"
+#include "ui_MainWindow.h"
 
 #include <QPainter>
 #include <QPaintEvent>
@@ -16,13 +16,18 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 
+#include "AppConfig.h"
+#include "Base/FunctionTransfer.h"
+
 Q_DECLARE_METATYPE(VideoPlayerState)
 
-VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     DragAbleWidget(parent),
-    ui(new Ui::VideoPlayerWidget)
+    ui(new Ui::MainWindow)
 {
     ui->setupUi(this->getContainWidget());
+
+    FunctionTransfer::init(QThread::currentThreadId());
 
     ///初始化播放器
     VideoPlayer::initPlayer();
@@ -33,18 +38,12 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     //因为VideoPlayer::PlayerState是自定义的类型 要跨线程传递需要先注册一下
     qRegisterMetaType<VideoPlayerState>();
 
-    connect(this, &VideoPlayerWidget::sig_OpenVideoFileFailed, this, &VideoPlayerWidget::slotOpenVideoFileFailed);
-    connect(this, &VideoPlayerWidget::sig_OpenSdlFailed, this, &VideoPlayerWidget::slotOpenSdlFailed);
-    connect(this, &VideoPlayerWidget::sig_TotalTimeChanged, this, &VideoPlayerWidget::slotTotalTimeChanged);
-    connect(this, &VideoPlayerWidget::sig_PlayerStateChanged, this, &VideoPlayerWidget::slotStateChanged);
-    connect(this, &VideoPlayerWidget::sig_DisplayVideo, this, &VideoPlayerWidget::slotDisplayVideo);
-
-    connect(ui->pushButton_open, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
-    connect(ui->toolButton_open, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
-    connect(ui->pushButton_play, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
-    connect(ui->pushButton_pause,&QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
-    connect(ui->pushButton_stop, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
-    connect(ui->pushButton_volume, &QPushButton::clicked, this, &VideoPlayerWidget::slotBtnClick);
+    connect(ui->pushButton_open, &QPushButton::clicked, this, &MainWindow::slotBtnClick);
+    connect(ui->toolButton_open, &QPushButton::clicked, this, &MainWindow::slotBtnClick);
+    connect(ui->pushButton_play, &QPushButton::clicked, this, &MainWindow::slotBtnClick);
+    connect(ui->pushButton_pause,&QPushButton::clicked, this, &MainWindow::slotBtnClick);
+    connect(ui->pushButton_stop, &QPushButton::clicked, this, &MainWindow::slotBtnClick);
+    connect(ui->pushButton_volume, &QPushButton::clicked, this, &MainWindow::slotBtnClick);
 
     connect(ui->horizontalSlider, SIGNAL(sig_valueChanged(int)), this, SLOT(slotSliderMoved(int)));
     connect(ui->horizontalSlider_volume, SIGNAL(valueChanged(int)), this, SLOT(slotSliderMoved(int)));
@@ -57,11 +56,11 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
     mPlayer->setVideoPlayerCallBack(this);
 
     mTimer = new QTimer; //定时器-获取当前视频时间
-    connect(mTimer, &QTimer::timeout, this, &VideoPlayerWidget::slotTimerTimeOut);
+    connect(mTimer, &QTimer::timeout, this, &MainWindow::slotTimerTimeOut);
     mTimer->setInterval(500);
 
     mTimer_CheckControlWidget = new QTimer; //用于控制控制界面的出现和隐藏
-    connect(mTimer_CheckControlWidget, &QTimer::timeout, this, &VideoPlayerWidget::slotTimerTimeOut);
+    connect(mTimer_CheckControlWidget, &QTimer::timeout, this, &MainWindow::slotTimerTimeOut);
     mTimer_CheckControlWidget->setInterval(1500);
 
     mAnimation_ControlWidget  = new QPropertyAnimation(ui->widget_controller, "geometry");
@@ -76,12 +75,15 @@ VideoPlayerWidget::VideoPlayerWidget(QWidget *parent) :
 
 }
 
-VideoPlayerWidget::~VideoPlayerWidget()
+MainWindow::~MainWindow()
 {
+    AppConfig::saveConfigInfoToFile();
+    AppConfig::removeDirectory(AppConfig::AppDataPath_Tmp);
+
     delete ui;
 }
 
-void VideoPlayerWidget::showOutControlWidget()
+void MainWindow::showOutControlWidget()
 {
 
     mAnimation_ControlWidget->setDuration(800);
@@ -112,7 +114,7 @@ void VideoPlayerWidget::showOutControlWidget()
 
 }
 
-void VideoPlayerWidget::hideControlWidget()
+void MainWindow::hideControlWidget()
 {
     mAnimation_ControlWidget->setTargetObject(ui->widget_controller);
 
@@ -131,7 +133,7 @@ void VideoPlayerWidget::hideControlWidget()
 }
 
 
-void VideoPlayerWidget::slotSliderMoved(int value)
+void MainWindow::slotSliderMoved(int value)
 {
     if (QObject::sender() == ui->horizontalSlider)
     {
@@ -144,7 +146,7 @@ void VideoPlayerWidget::slotSliderMoved(int value)
     }
 }
 
-void VideoPlayerWidget::slotTimerTimeOut()
+void MainWindow::slotTimerTimeOut()
 {
     if (QObject::sender() == mTimer)
     {
@@ -166,7 +168,7 @@ void VideoPlayerWidget::slotTimerTimeOut()
     }
 }
 
-void VideoPlayerWidget::slotBtnClick(bool isChecked)
+void MainWindow::slotBtnClick(bool isChecked)
 {
     if (QObject::sender() == ui->pushButton_play)
     {
@@ -184,16 +186,19 @@ void VideoPlayerWidget::slotBtnClick(bool isChecked)
     {
         QString s = QFileDialog::getOpenFileName(
                    this, QStringLiteral("选择要播放的文件"),
-                    "/",//初始目录
+                    AppConfig::gVideoFilePath,//初始目录
                     QStringLiteral("视频文件 (*.flv *.rmvb *.avi *.MP4 *.mkv);;")
                     +QStringLiteral("音频文件 (*.mp3 *.wma *.wav);;")
                     +QStringLiteral("所有文件 (*.*)"));
         if (!s.isEmpty())
         {
-            s.replace("/","\\");
+//            s.replace("/","\\");
 
             mPlayer->stop(true); //如果在播放则先停止
             mPlayer->startPlay(s.toStdString());
+
+            AppConfig::gVideoFilePath = s;
+            AppConfig::saveConfigInfoToFile();
         }
     }
     else if (QObject::sender() == ui->pushButton_volume)
@@ -224,114 +229,92 @@ void VideoPlayerWidget::slotBtnClick(bool isChecked)
 }
 
 ///打开文件失败
-void VideoPlayerWidget::onOpenVideoFileFailed(const int &code)
+void MainWindow::onOpenVideoFileFailed(const int &code)
 {
-    emit sig_OpenVideoFileFailed(code);
+    FunctionTransfer::runInMainThread([&]()
+    {
+        QMessageBox::critical(NULL, "tips", QString("open file failed %1").arg(code));
+    });
 }
 
 ///打开SDL失败的时候回调此函数
-void VideoPlayerWidget::onOpenSdlFailed(const int &code)
+void MainWindow::onOpenSdlFailed(const int &code)
 {
-    emit sig_OpenSdlFailed(code);
+    FunctionTransfer::runInMainThread([&]()
+    {
+        QMessageBox::critical(NULL, "tips", QString("open Sdl failed %1").arg(code));
+    });
 }
 
 ///获取到视频时长的时候调用此函数
-void VideoPlayerWidget::onTotalTimeChanged(const int64_t &uSec)
+void MainWindow::onTotalTimeChanged(const int64_t &uSec)
 {
-    emit sig_TotalTimeChanged(uSec);
+    FunctionTransfer::runInMainThread([&]()
+    {
+        qint64 Sec = uSec/1000000;
+
+        ui->horizontalSlider->setRange(0,Sec);
+
+    //    QString hStr = QString("00%1").arg(Sec/3600);
+        QString mStr = QString("00%1").arg(Sec/60);
+        QString sStr = QString("00%1").arg(Sec%60);
+
+        QString str = QString("%1:%2").arg(mStr.right(2)).arg(sStr.right(2));
+        ui->label_totaltime->setText(str);
+    });
 }
 
 ///播放器状态改变的时候回调此函数
-void VideoPlayerWidget::onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
+void MainWindow::onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-    emit sig_PlayerStateChanged(state, hasVideo, hasAudio);
-}
-
-void VideoPlayerWidget::slotOpenVideoFileFailed(const int &code)
-{
-    QMessageBox::critical(NULL, "tips", QString("open file failed %1").arg(code));
-}
-
-void VideoPlayerWidget::slotOpenSdlFailed(const int &code)
-{
-    QMessageBox::critical(NULL, "tips", QString("open Sdl failed %1").arg(code));
-}
-
-void VideoPlayerWidget::slotTotalTimeChanged(const qint64 &uSec)
-{
-    qint64 Sec = uSec/1000000;
-
-    ui->horizontalSlider->setRange(0,Sec);
-
-//    QString hStr = QString("00%1").arg(Sec/3600);
-    QString mStr = QString("00%1").arg(Sec/60);
-    QString sStr = QString("00%1").arg(Sec%60);
-
-    QString str = QString("%1:%2").arg(mStr.right(2)).arg(sStr.right(2));
-    ui->label_totaltime->setText(str);
-
-}
-
-void VideoPlayerWidget::slotStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
-{
-    if (state == VideoPlayer_Stop)
+    FunctionTransfer::runInMainThread([&]()
     {
-        ui->stackedWidget->setCurrentWidget(ui->page_open);
-
-        ui->pushButton_pause->hide();
-        ui->widget_videoPlayer->clear();
-
-        ui->horizontalSlider->setValue(0);
-        ui->label_currenttime->setText("00:00");
-        ui->label_totaltime->setText("00:00");
-
-        mTimer->stop();
-
-    }
-    else if (state == VideoPlayer_Playing)
-    {
-        if (hasVideo)
+        if (state == VideoPlayer_Stop)
         {
-            ui->stackedWidget->setCurrentWidget(ui->page_video);
+            ui->stackedWidget->setCurrentWidget(ui->page_open);
+
+            ui->pushButton_pause->hide();
+            ui->widget_videoPlayer->clear();
+
+            ui->horizontalSlider->setValue(0);
+            ui->label_currenttime->setText("00:00");
+            ui->label_totaltime->setText("00:00");
+
+            mTimer->stop();
+
         }
-        else
+        else if (state == VideoPlayer_Playing)
         {
-            ui->stackedWidget->setCurrentWidget(ui->page_audio);
+            if (hasVideo)
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_video);
+            }
+            else
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_audio);
+            }
+
+            ui->pushButton_play->hide();
+            ui->pushButton_pause->show();
+
+            mTimer->start();
         }
-
-        ui->pushButton_play->hide();
-        ui->pushButton_pause->show();
-
-        mTimer->start();
-    }
-    else if (state == VideoPlayer_Pause)
-    {
-        ui->pushButton_pause->hide();
-        ui->pushButton_play->show();
-    }
+        else if (state == VideoPlayer_Pause)
+        {
+            ui->pushButton_pause->hide();
+            ui->pushButton_play->show();
+        }
+    });
 }
 
-///显示rgb数据，此函数不宜做耗时操作，否则会影响播放的流畅性，传入的brgb32Buffer，在函数返回后既失效。
-void VideoPlayerWidget::onDisplayVideo(const uint8_t *brgb32Buffer, const int &width, const int &height)
+///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
+void MainWindow::onDisplayVideo(std::shared_ptr<VideoFrame> videoFrame)
 {
-//    qDebug()<<__FUNCTION__<<width<<height;
-
-    //把这个RGB数据 用QImage加载
-    QImage tmpImg((uchar *)brgb32Buffer, width, height, QImage::Format_RGB32);
-//  QImage image = tmpImg.copy(); //把图像复制一份 传递给界面显示
-    QImage image = tmpImg.convertToFormat(QImage::Format_RGB888,Qt::NoAlpha); //去掉透明的部分 有些奇葩的视频会透明
-
-    emit sig_DisplayVideo(image);
-}
-
-void VideoPlayerWidget::slotDisplayVideo(const QImage &image)
-{
-//    qDebug()<<__FUNCTION__<<image;
-    ui->widget_videoPlayer->inputOneFrame(image);
+    ui->widget_videoPlayer->inputOneFrame(videoFrame);
 }
 
 //图片显示部件时间过滤器处理
-bool VideoPlayerWidget::eventFilter(QObject *target, QEvent *event)
+bool MainWindow::eventFilter(QObject *target, QEvent *event)
 {
     if(target == ui->widget_container)
     {
