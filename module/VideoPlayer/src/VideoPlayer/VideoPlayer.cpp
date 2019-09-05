@@ -185,10 +185,10 @@ int VideoPlayer::openSDL()
     }
 
     /* 检查实际使用的配置（保存在spec,由SDL_OpenAudio()填充） */
-    if (spec.format != AUDIO_S16SYS)
+//    if (spec.format != AUDIO_S16SYS)
+    if (mAudioID <= 0)
     {
         mIsAudioThreadFinished = true;
-
         return -1;
     }
 fprintf(stderr, "mAudioID=%d\n\n\n\n\n\n", mAudioID);
