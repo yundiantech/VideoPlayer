@@ -26,7 +26,7 @@ public:
 
 public:
     ///@brief 制定函数f在main中执行
-    static void runInMainThread(std::function<void()> f);
+    static void runInMainThread(std::function<void()> f, bool isBlock = false);
 
 private:
     static Qt::HANDLE gMainThreadId;
@@ -37,10 +37,11 @@ private:
 Q_SIGNALS:
     ///@brief 在别的线程有函数对象传来
     void comming(std::function<void()> f);
+    void comming_noBlock(std::function<void()> f);
 
-public Q_SLOTS:
+private Q_SLOTS:
     ///@brief 执行函数对象
-    void exec(std::function<void()> f);
+    void slotExec(std::function<void()> f);
 
 };
 

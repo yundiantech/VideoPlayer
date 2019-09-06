@@ -35,11 +35,12 @@ bool VideoPlayer::initPlayer()
     av_register_all(); //初始化FFMPEG  调用了这个才能正常使用编码器和解码器
     avformat_network_init(); //支持打开网络文件
 
-    if (SDL_Init(SDL_INIT_AUDIO))
-    {
-        fprintf(stderr, "Could not initialize SDL - %s. \n", SDL_GetError());
-        return false;
-    }
+//SDL初始化需要放入子线程中，否则有些电脑会有问题。
+//    if (SDL_Init(SDL_INIT_AUDIO))
+//    {
+//        fprintf(stderr, "Could not initialize SDL - %s. \n", SDL_GetError());
+//        return false;
+//    }
 
     return true;
 }
@@ -211,6 +212,14 @@ void VideoPlayer::closeSDL()
 
 void VideoPlayer::readVideoFile()
 {
+    ///SDL初始化需要放入子线程中，否则有些电脑会有问题。
+    if (SDL_Init(SDL_INIT_AUDIO))
+    {
+        doOpenSdlFailed(-100);
+        fprintf(stderr, "Could not initialize SDL - %s. \n", SDL_GetError());
+        return;
+    }
+
     mIsReadThreadFinished = false;
     mIsReadFinished = false;
 
@@ -594,6 +603,8 @@ end:
 
     avformat_close_input(&pFormatCtx);
     avformat_free_context(pFormatCtx);
+
+    SDL_Quit();
 
     doPlayerStateChanged(VideoPlayer_Stop, mVideoStream != nullptr, mAudioStream != nullptr);
 

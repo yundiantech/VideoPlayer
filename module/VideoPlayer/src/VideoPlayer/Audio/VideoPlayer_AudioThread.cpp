@@ -151,6 +151,11 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
         int got_frame = 0;
         int size = avcodec_decode_audio4(aCodecCtx, aFrame, &got_frame, &packet);
 
+//保存重采样之前的一个声道的数据方法
+//size_t unpadded_linesize = aFrame->nb_samples * av_get_bytes_per_sample((AVSampleFormat) aFrame->format);
+//static FILE * fp = fopen("out.pcm", "wb");
+//fwrite(aFrame->extended_data[0], 1, unpadded_linesize, fp);
+
         av_packet_unref(&packet);
 
         if (got_frame)
@@ -160,7 +165,10 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
             if (aFrame_ReSample == NULL)
             {
                 aFrame_ReSample = av_frame_alloc();
+            }
 
+            if (aFrame_ReSample->nb_samples != aFrame->nb_samples)
+            {
                 aFrame_ReSample->nb_samples = av_rescale_rnd(swr_get_delay(swrCtx, out_sample_rate) + aFrame->nb_samples,
                             out_sample_rate, in_sample_rate, AV_ROUND_UP);
 
