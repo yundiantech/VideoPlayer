@@ -109,7 +109,7 @@ void ShowVideoWidget::setIsPlaying(bool value)
 {
     mIsPlaying = value;
 
-    FunctionTransfer::runInMainThread([&]()
+    FunctionTransfer::runInMainThread([=]()
     {
         if (!mIsPlaying)
         {
@@ -123,7 +123,7 @@ void ShowVideoWidget::setIsPlaying(bool value)
 void ShowVideoWidget::setPlayFailed(bool value)
 {
     mPlayFailed = value;
-    FunctionTransfer::runInMainThread([&]()
+    FunctionTransfer::runInMainThread([=]()
     {
         update();
     });
@@ -132,7 +132,7 @@ void ShowVideoWidget::setPlayFailed(bool value)
 void ShowVideoWidget::setCameraName(QString name)
 {
     mCameraName = name;
-    FunctionTransfer::runInMainThread([&]()
+    FunctionTransfer::runInMainThread([=]()
     {
         update();
     });
@@ -148,7 +148,7 @@ qDebug()<<__FUNCTION__<<w<<h<<this->isHidden();
 
     if (mIsOpenGLInited)
     {
-        FunctionTransfer::runInMainThread([&]()
+        FunctionTransfer::runInMainThread([=]()
         {
             resetGLVertex(this->width(), this->height());
         });
@@ -163,7 +163,7 @@ void ShowVideoWidget::setCloseAble(bool isCloseAble)
 
 void ShowVideoWidget::clear()
 {
-    FunctionTransfer::runInMainThread([&]()
+    FunctionTransfer::runInMainThread([=]()
     {
         mVideoFrame.reset();
 
@@ -229,7 +229,7 @@ void ShowVideoWidget::mouseMoveEvent(QMouseEvent *event)
 
 void ShowVideoWidget::inputOneFrame(VideoFramePtr videoFrame)
 {
-    FunctionTransfer::runInMainThread([&]()
+    FunctionTransfer::runInMainThread([=]()
     {
         int width = videoFrame.get()->width();
         int height = videoFrame.get()->height();
