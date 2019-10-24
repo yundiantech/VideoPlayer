@@ -6,7 +6,7 @@
 
 #include "VideoPlayer.h"
 
-#include "audio/PcmVolumeControl.h"
+#include "Audio/PcmVolumeControl.h"
 
 #include <stdio.h>
 
@@ -21,6 +21,8 @@ VideoPlayer::VideoPlayer()
 
     mAudioID = 0;
     mIsMute = false;
+
+    mIsNeedPause = false;
 
     mVolume = 1;
 }
@@ -53,6 +55,7 @@ bool VideoPlayer::startPlay(const std::string &filePath)
     }
 
     mIsQuit = false;
+    mIsPause = false;
 
     if (!filePath.empty())
         mFilePath = filePath;
@@ -98,6 +101,8 @@ bool VideoPlayer::play()
 
 bool VideoPlayer::pause()
 {
+    fprintf(stderr, "%s mIsPause=%d \n", __FUNCTION__, mIsPause);
+
     mIsPause = true;
 
     if (mPlayerState != VideoPlayer_Playing)
@@ -428,7 +433,7 @@ void VideoPlayer::readVideoFile()
     doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mVideoStartTime = av_gettime();
-fprintf(stderr, "%s mIsQuit=%d \n", __FUNCTION__, mIsQuit);
+fprintf(stderr, "%s mIsQuit=%d mIsPause=%d \n", __FUNCTION__, mIsQuit, mIsPause);
     while (1)
     {
         if (mIsQuit)

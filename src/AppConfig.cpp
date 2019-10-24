@@ -43,7 +43,7 @@ void Sleep(long mSeconds)
 
 QString AppConfig::APPID = "{a1db97ad-b8ed-11e9-a297-0235d2b38928}";
 int AppConfig::VERSION = 1;
-QString AppConfig::VERSION_NAME = "2.1.3";
+QString AppConfig::VERSION_NAME = "2.1.4";
 
 MainWindow *AppConfig::gMainWindow = NULL;
 QRect AppConfig::gMainWindowRect;

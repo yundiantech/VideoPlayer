@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     VideoPlayer::initPlayer();
 
     setWindowFlags(Qt::FramelessWindowHint);//|Qt::WindowStaysOnTopHint);  //使窗口的标题栏隐藏
-    setAttribute(Qt::WA_TranslucentBackground);
+//    setAttribute(Qt::WA_TranslucentBackground);
 
     //因为VideoPlayer::PlayerState是自定义的类型 要跨线程传递需要先注册一下
     qRegisterMetaType<VideoPlayerState>();

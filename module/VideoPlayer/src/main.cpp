@@ -8,19 +8,16 @@
 #include <QApplication>
 #include <QTextCodec>
 
-#include "videoplayer/VideoPlayerWidget.h"
+#include "VideoPlayer/VideoPlayer.h"
 
 #undef main
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    VideoPlayer *mPlayer = new VideoPlayer();
+//    mPlayer->setVideoPlayerCallBack(this);
 
-    QTextCodec *codec = QTextCodec::codecForName("GBK");
-    QTextCodec::setCodecForLocale(codec);
+    mPlayer->startPlay("F:/test.rmvb");
 
-    VideoPlayerWidget w;
-    w.show();
-
-    return a.exec();
+    return 0;
 }
 
