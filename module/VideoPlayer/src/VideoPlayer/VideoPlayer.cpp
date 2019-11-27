@@ -212,7 +212,7 @@ void VideoPlayer::closeSDL()
         SDL_CloseAudioDevice(mAudioID);
     }
 
-    mAudioID = -1;
+    mAudioID = 0;
 }
 
 void VideoPlayer::readVideoFile()
