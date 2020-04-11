@@ -167,7 +167,7 @@ void MainWindow::slotTimerTimeOut()
 			curTime = QString("%1:%2:%3").arg(hStr).arg(mStr.right(2)).arg(sStr.right(2));
 		}
 
-		ui.label_currenttime->setText(curTime);
+        ui->label_currenttime->setText(curTime);
     }
     else if (QObject::sender() == mTimer_CheckControlWidget)
     {
@@ -276,7 +276,7 @@ void MainWindow::onTotalTimeChanged(const int64_t &uSec)
 			totalTime = QString("%1:%2:%3").arg(hStr).arg(mStr.right(2)).arg(sStr.right(2));
 		}
 
-		ui.label_totaltime->setText(totalTime);
+        ui->label_totaltime->setText(totalTime);
     });
 }
 
