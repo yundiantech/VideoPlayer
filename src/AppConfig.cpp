@@ -50,7 +50,7 @@ QRect AppConfig::gMainWindowRect;
 
 QRect AppConfig::gScreenRect;
 
-bool AppConfig::gVideoKeepAspectRatio = false; //按比例显示
+bool AppConfig::gVideoKeepAspectRatio = true; //按比例显示
 bool AppConfig::gVideoHardDecoder = false; //硬解解码
 QString AppConfig::gVideoFilePath;
 
@@ -253,7 +253,7 @@ void AppConfig::loadConfigInfoFromFile()
             QJsonValue VideoKeepAspectRatioValue = object.value("VideoKeepAspectRatio");
             QJsonValue VideoFilePathValue = object.value("VideoFilePath");
 
-            AppConfig::gVideoKeepAspectRatio = VideoKeepAspectRatioValue.toBool();
+//            AppConfig::gVideoKeepAspectRatio = VideoKeepAspectRatioValue.toBool();
             AppConfig::gVideoFilePath = VideoFilePathValue.toString();
         }
     }

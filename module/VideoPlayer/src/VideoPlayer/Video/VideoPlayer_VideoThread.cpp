@@ -12,32 +12,22 @@ void VideoPlayer::decodeVideoThread()
 
     mIsVideoThreadFinished = false;
 
-//    int ret, got_picture;
     int numBytes;
+    int videoWidth  = 0;
+    int videoHeight =  0;
 
     double video_pts = 0; //当前视频的pts
     double audio_pts = 0; //音频pts
 
     ///解码视频相关
-    AVFrame *pFrame, *pFrameYUV;
-    uint8_t *out_buffer_yuv; //解码后的yuv数据
-    struct SwsContext *img_convert_ctx;  //用于解码后的视频格式转换
+    AVFrame *pFrame = nullptr;
+    AVFrame *pFrameYUV = nullptr;
+    uint8_t *yuv420pBuffer = nullptr; //解码后的yuv数据
+    struct SwsContext *imgConvertCtx = nullptr;  //用于解码后的视频格式转换
 
     AVCodecContext *pCodecCtx = mVideoStream->codec; //视频解码器
 
     pFrame = av_frame_alloc();
-    pFrameYUV = av_frame_alloc();
-
-    ///由于解码后的数据不一定都是yuv420p，因此需要将解码后的数据统一转换成YUV420P
-    img_convert_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
-            pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
-            AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
-
-    numBytes = avpicture_get_size(AV_PIX_FMT_YUV420P, pCodecCtx->width,pCodecCtx->height);
-
-    out_buffer_yuv = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-    avpicture_fill((AVPicture *) pFrameYUV, out_buffer_yuv, AV_PIX_FMT_YUV420P,
-            pCodecCtx->width, pCodecCtx->height);
 
     while(1)
     {
@@ -168,12 +158,49 @@ void VideoPlayer::decodeVideoThread()
                 }
             }
 
-            sws_scale(img_convert_ctx,
+            if (pCodecCtx->width != videoWidth || pCodecCtx->height != videoHeight)
+            {
+                videoWidth  = pFrame->width;
+                videoHeight = pFrame->height;
+
+                if (pFrameYUV != nullptr)
+                {
+                    av_free(pFrameYUV);
+                }
+
+                if (yuv420pBuffer != nullptr)
+                {
+                    av_free(yuv420pBuffer);
+                }
+
+                if (imgConvertCtx != nullptr)
+                {
+                    sws_freeContext(imgConvertCtx);
+                }
+
+                pFrameYUV = av_frame_alloc();
+
+                int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);  //按1字节进行内存对齐,得到的内存大小最接近实际大小
+            //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 0);  //按0字节进行内存对齐，得到的内存大小是0
+            //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 4);   //按4字节进行内存对齐，得到的内存大小稍微大一些
+
+                unsigned int numBytes = static_cast<unsigned int>(yuvSize);
+                yuv420pBuffer = static_cast<uint8_t *>(av_malloc(numBytes * sizeof(uint8_t)));
+                av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, yuv420pBuffer, AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);
+
+                ///由于解码后的数据不一定都是yuv420p，因此需要将解码后的数据统一转换成YUV420P
+                imgConvertCtx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
+                        pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
+                        AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
+
+            }
+
+            sws_scale(imgConvertCtx,
                     (uint8_t const * const *) pFrame->data,
                     pFrame->linesize, 0, pCodecCtx->height, pFrameYUV->data,
                     pFrameYUV->linesize);
 
-            doDisplayVideo(out_buffer_yuv, pCodecCtx->width, pCodecCtx->height);
+            doDisplayVideo(yuv420pBuffer, pCodecCtx->width, pCodecCtx->height);
 
             if (mIsNeedPause)
             {
@@ -186,10 +213,21 @@ void VideoPlayer::decodeVideoThread()
     }
 
     av_free(pFrame);
-    av_free(pFrameYUV);
-    av_free(out_buffer_yuv);
 
-    sws_freeContext(img_convert_ctx);
+    if (pFrameYUV != nullptr)
+    {
+        av_free(pFrameYUV);
+    }
+
+    if (yuv420pBuffer != nullptr)
+    {
+        av_free(yuv420pBuffer);
+    }
+
+    if (imgConvertCtx != nullptr)
+    {
+        sws_freeContext(imgConvertCtx);
+    }
 
     if (!mIsQuit)
     {

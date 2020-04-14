@@ -14,12 +14,13 @@
 
 extern "C"
 {
-    #include "libavcodec/avcodec.h"
-    #include "libavformat/avformat.h"
+    #include <libavcodec/avcodec.h>
+    #include <libavformat/avformat.h>
     #include <libavutil/time.h>
-    #include "libavutil/pixfmt.h"
-    #include "libswscale/swscale.h"
-    #include "libswresample/swresample.h"
+    #include <libavutil/pixfmt.h>
+    #include <libswscale/swscale.h>
+    #include <libswresample/swresample.h>
+    #include <libavutil/imgutils.h>
 
     #include <SDL.h>
     #include <SDL_audio.h>
