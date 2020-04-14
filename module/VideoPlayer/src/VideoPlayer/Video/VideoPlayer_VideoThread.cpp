@@ -12,7 +12,6 @@ void VideoPlayer::decodeVideoThread()
 
     mIsVideoThreadFinished = false;
 
-    int numBytes;
     int videoWidth  = 0;
     int videoHeight =  0;
 
