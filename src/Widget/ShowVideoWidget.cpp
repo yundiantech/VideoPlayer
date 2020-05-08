@@ -358,6 +358,10 @@ void ShowVideoWidget::initializeGL()
         0.0f,  0.0f,
         1.0f,  0.0f,
     };
+
+    ///设置读取的YUV数据为1字节对其，默认4字节对齐，
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
     //设置属性ATTRIB_VERTEX的顶点矩阵值以及格式
     glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, m_vertexVertices);
     //设置属性ATTRIB_TEXTURE的纹理矩阵值以及格式
