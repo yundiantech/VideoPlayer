@@ -1,6 +1,6 @@
-/**
- * Ò¶º£»Ô
- * QQÈº121376426
+ï»¿/**
+ * å¶æµ·è¾‰
+ * QQç¾¤121376426
  * http://blog.yundiantech.com/
  */
 
@@ -9,6 +9,8 @@
 #include "PcmVolumeControl.h"
 
 #include <stdio.h>
+
+#include <QDebug>
 
 void VideoPlayer::sdlAudioCallBackFunc(void *userdata, Uint8 *stream, int len)
 {
@@ -20,23 +22,23 @@ void VideoPlayer::sdlAudioCallBack(Uint8 *stream, int len)
 {
     int len1, audio_data_size;
 
-    /*   lenÊÇÓÉSDL´«ÈëµÄSDL»º³åÇøµÄ´óĞ¡£¬Èç¹ûÕâ¸ö»º³åÎ´Âú£¬ÎÒÃÇ¾ÍÒ»Ö±ÍùÀïÌî³äÊı¾İ */
+    /*   lenæ˜¯ç”±SDLä¼ å…¥çš„SDLç¼“å†²åŒºçš„å¤§å°ï¼Œå¦‚æœè¿™ä¸ªç¼“å†²æœªæ»¡ï¼Œæˆ‘ä»¬å°±ä¸€ç›´å¾€é‡Œå¡«å……æ•°æ® */
     while (len > 0)
     {
-        /*  audio_buf_index ºÍ audio_buf_size ±êÊ¾ÎÒÃÇ×Ô¼ºÓÃÀ´·ÅÖÃ½âÂë³öÀ´µÄÊı¾İµÄ»º³åÇø£¬*/
-        /*   ÕâĞ©Êı¾İ´ıcopyµ½SDL»º³åÇø£¬ µ±audio_buf_index >= audio_buf_sizeµÄÊ±ºòÒâÎ¶×ÅÎÒ*/
-        /*   ÃÇµÄ»º³åÎª¿Õ£¬Ã»ÓĞÊı¾İ¿É¹©copy£¬ÕâÊ±ºòĞèÒªµ÷ÓÃaudio_decode_frameÀ´½âÂë³ö¸ü
-         /*   ¶àµÄèåÊı¾İ */
+        /*  audio_buf_index å’Œ audio_buf_size æ ‡ç¤ºæˆ‘ä»¬è‡ªå·±ç”¨æ¥æ”¾ç½®è§£ç å‡ºæ¥çš„æ•°æ®çš„ç¼“å†²åŒºï¼Œ*/
+        /*   è¿™äº›æ•°æ®å¾…copyåˆ°SDLç¼“å†²åŒºï¼Œ å½“audio_buf_index >= audio_buf_sizeçš„æ—¶å€™æ„å‘³ç€æˆ‘*/
+        /*   ä»¬çš„ç¼“å†²ä¸ºç©ºï¼Œæ²¡æœ‰æ•°æ®å¯ä¾›copyï¼Œè¿™æ—¶å€™éœ€è¦è°ƒç”¨audio_decode_frameæ¥è§£ç å‡ºæ›´
+         /*   å¤šçš„æ¡¢æ•°æ® */
         if (audio_buf_index >= audio_buf_size)
         {
             audio_data_size = decodeAudioFrame();
 
-            /* audio_data_size < 0 ±êÊ¾Ã»ÄÜ½âÂë³öÊı¾İ£¬ÎÒÃÇÄ¬ÈÏ²¥·Å¾²Òô */
+            /* audio_data_size < 0 æ ‡ç¤ºæ²¡èƒ½è§£ç å‡ºæ•°æ®ï¼Œæˆ‘ä»¬é»˜è®¤æ’­æ”¾é™éŸ³ */
             if (audio_data_size <= 0)
             {
                 /* silence */
                 audio_buf_size = 1024;
-                /* ÇåÁã£¬¾²Òô */
+                /* æ¸…é›¶ï¼Œé™éŸ³ */
                 memset(audio_buf, 0, audio_buf_size);
             }
             else
@@ -45,7 +47,7 @@ void VideoPlayer::sdlAudioCallBack(Uint8 *stream, int len)
             }
             audio_buf_index = 0;
         }
-        /*  ²é¿´stream¿ÉÓÃ¿Õ¼ä£¬¾ö¶¨Ò»´Îcopy¶àÉÙÊı¾İ£¬Ê£ÏÂµÄÏÂ´Î¼ÌĞøcopy */
+        /*  æŸ¥çœ‹streamå¯ç”¨ç©ºé—´ï¼Œå†³å®šä¸€æ¬¡copyå¤šå°‘æ•°æ®ï¼Œå‰©ä¸‹çš„ä¸‹æ¬¡ç»§ç»­copy */
         len1 = audio_buf_size - audio_buf_index;
 
         if (len1 > len)
@@ -55,7 +57,7 @@ void VideoPlayer::sdlAudioCallBack(Uint8 *stream, int len)
 
         if (audio_buf == NULL) return;
 
-        if (mIsMute || mIsNeedPause) //¾²Òô »òÕß ÊÇÔÚÔİÍ£µÄÊ±ºòÌø×ªÁË
+        if (mIsMute || mIsNeedPause) //é™éŸ³ æˆ–è€… æ˜¯åœ¨æš‚åœçš„æ—¶å€™è·³è½¬äº†
         {
             memset(audio_buf + audio_buf_index, 0, len1);
         }
@@ -89,11 +91,11 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
         if (mIsQuit)
         {
             mIsAudioThreadFinished = true;
-            clearAudioQuene(); //Çå¿Õ¶ÓÁĞ
+            clearAudioQuene(); //æ¸…ç©ºé˜Ÿåˆ—
             break;
         }
 
-        if (mIsPause == true) //ÅĞ¶ÏÔİÍ£
+        if (mIsPause == true) //åˆ¤æ–­æš‚åœ
         {
             break;
         }
@@ -115,7 +117,7 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
 
         AVPacket packet = mAudioPacktList.front();
         mAudioPacktList.pop_front();
-
+qDebug()<<__FUNCTION__<<mAudioPacktList.size();
         mConditon_Audio->Unlock();
 
         AVPacket *pkt = &packet;
@@ -126,7 +128,7 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
             audio_clock = av_q2d(mAudioStream->time_base) * pkt->pts;
         }
 
-        //ÊÕµ½Õâ¸öÊı¾İ ËµÃ÷¸Õ¸ÕÖ´ĞĞ¹ıÌø×ª ÏÖÔÚĞèÒª°Ñ½âÂëÆ÷µÄÊı¾İ Çå³ıÒ»ÏÂ
+        //æ”¶åˆ°è¿™ä¸ªæ•°æ® è¯´æ˜åˆšåˆšæ‰§è¡Œè¿‡è·³è½¬ ç°åœ¨éœ€è¦æŠŠè§£ç å™¨çš„æ•°æ® æ¸…é™¤ä¸€ä¸‹
         if(strcmp((char*)pkt->data,FLUSH_DATA) == 0)
         {
             avcodec_flush_buffers(mAudioStream->codec);
@@ -136,7 +138,7 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
 
         if (seek_flag_audio)
         {
-            //·¢ÉúÁËÌø×ª ÔòÌø¹ı¹Ø¼üÖ¡µ½Ä¿µÄÊ±¼äµÄÕâ¼¸Ö¡
+            //å‘ç”Ÿäº†è·³è½¬ åˆ™è·³è¿‡å…³é”®å¸§åˆ°ç›®çš„æ—¶é—´çš„è¿™å‡ å¸§
            if (audio_clock < seek_time)
            {
                continue;
@@ -147,11 +149,11 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
            }
         }
 
-        //½âÂëAVPacket->AVFrame
+        //è§£ç AVPacket->AVFrame
         int got_frame = 0;
         int size = avcodec_decode_audio4(aCodecCtx, aFrame, &got_frame, &packet);
 
-//±£´æÖØ²ÉÑùÖ®Ç°µÄÒ»¸öÉùµÀµÄÊı¾İ·½·¨
+//ä¿å­˜é‡é‡‡æ ·ä¹‹å‰çš„ä¸€ä¸ªå£°é“çš„æ•°æ®æ–¹æ³•
 //size_t unpadded_linesize = aFrame->nb_samples * av_get_bytes_per_sample((AVSampleFormat) aFrame->format);
 //static FILE * fp = fopen("out.pcm", "wb");
 //fwrite(aFrame->extended_data[0], 1, unpadded_linesize, fp);
@@ -160,8 +162,8 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
 
         if (got_frame)
         {
-            /// ffmpeg½âÂëÖ®ºóµÃµ½µÄÒôÆµÊı¾İ²»ÊÇSDLÏëÒªµÄ£¬
-            /// Òò´ËÕâÀïĞèÒªÖØ²ÉÑù³É44100 Ë«ÉùµÀ AV_SAMPLE_FMT_S16
+            /// ffmpegè§£ç ä¹‹åå¾—åˆ°çš„éŸ³é¢‘æ•°æ®ä¸æ˜¯SDLæƒ³è¦çš„ï¼Œ
+            /// å› æ­¤è¿™é‡Œéœ€è¦é‡é‡‡æ ·æˆ44100 åŒå£°é“ AV_SAMPLE_FMT_S16
             if (aFrame_ReSample == NULL)
             {
                 aFrame_ReSample = av_frame_alloc();

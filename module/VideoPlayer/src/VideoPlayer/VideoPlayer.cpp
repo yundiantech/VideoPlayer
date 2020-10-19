@@ -249,7 +249,11 @@ void VideoPlayer::readVideoFile()
     //Allocate an AVFormatContext.
     pFormatCtx = avformat_alloc_context();
 
-    if (avformat_open_input(&pFormatCtx, file_path, nullptr, nullptr) != 0)
+    AVDictionary* opts = NULL;
+    av_dict_set(&opts, "rtsp_transport", "tcp", 0); //设置tcp or udp，默认一般优先tcp再尝试udp
+    av_dict_set(&opts, "stimeout", "60000000", 0);//设置超时3秒
+
+    if (avformat_open_input(&pFormatCtx, file_path, nullptr, &opts) != 0)
     {
         fprintf(stderr, "can't open the file. \n");
         doOpenVideoFileFailed();

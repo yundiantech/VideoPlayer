@@ -1,4 +1,4 @@
-#include "AppConfig.h"
+ï»¿#include "AppConfig.h"
 
 #include <QProcess>
 #include <QDesktopWidget>
@@ -43,15 +43,15 @@ void Sleep(long mSeconds)
 
 QString AppConfig::APPID = "{a1db97ad-b8ed-11e9-a297-0235d2b38928}";
 int AppConfig::VERSION = 1;
-QString AppConfig::VERSION_NAME = "2.1.4";
+QString AppConfig::VERSION_NAME = "2.1.5";
 
 MainWindow *AppConfig::gMainWindow = NULL;
 QRect AppConfig::gMainWindowRect;
 
 QRect AppConfig::gScreenRect;
 
-bool AppConfig::gVideoKeepAspectRatio = true; //°´±ÈÀıÏÔÊ¾
-bool AppConfig::gVideoHardDecoder = false; //Ó²½â½âÂë
+bool AppConfig::gVideoKeepAspectRatio = true; //æŒ‰æ¯”ä¾‹æ˜¾ç¤º
+bool AppConfig::gVideoHardDecoder = false; //ç¡¬è§£è§£ç 
 QString AppConfig::gVideoFilePath;
 
 QString AppConfig::AppDataPath_Main;
@@ -78,9 +78,9 @@ void AppConfig::InitAllDataPath()
 {
 
 #if defined(WIN32)
-    ///windowsÊı¾İ´æ´¢ÔÚCÅÌµÄÊı¾İÄ¿Â¼ÏÂ
+    ///windowsæ•°æ®å­˜å‚¨åœ¨Cç›˜çš„æ•°æ®ç›®å½•ä¸‹
     QFileInfo fileInfo(QCoreApplication::applicationFilePath());
-    QString exeFileName = fileInfo.baseName(); //µ±Ç°³ÌĞòÃû×Ö
+    QString exeFileName = fileInfo.baseName(); //å½“å‰ç¨‹åºåå­—
 
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (dataPath.right(exeFileName.length()) == exeFileName)
@@ -94,7 +94,7 @@ void AppConfig::InitAllDataPath()
     }
 
 #else
-    ///LinuxÔò·ÅÔÚ³ÌĞòËùÔÚÄ¿Â¼ÏÂµÄdataÄ¿Â¼ÏÂ
+    ///Linuxåˆ™æ”¾åœ¨ç¨‹åºæ‰€åœ¨ç›®å½•ä¸‹çš„dataç›®å½•ä¸‹
     QFileInfo fileInfo(QCoreApplication::applicationFilePath());
 
     QString dataPath = fileInfo.absoluteDir().path();
@@ -280,7 +280,7 @@ void AppConfig::saveConfigInfoToFile()
 //        QJsonObject object;
 //        object.insert("config", dataObject);
 
-        //×îÍâ²ãÊÇ´óÀ¨ºÅËùÒÔÊÇobject
+        //æœ€å¤–å±‚æ˜¯å¤§æ‹¬å·æ‰€ä»¥æ˜¯object
         json.setObject(dataObject);
 
         QString jsonStr = json.toJson(QJsonDocument::Compact);
@@ -313,9 +313,9 @@ void AppConfig::InitLogFile()
             qint64 t1 = fileInfo.created().toMSecsSinceEpoch();
             qint64 t2 = QDateTime::currentMSecsSinceEpoch();
 
-            qint64 t = (t2 - t1) / 1000; //ÎÄ¼ş´´½¨µ½ÏÖÔÚµÄÊ±¼ä£¨µ¥Î»£ºÃë£©
+            qint64 t = (t2 - t1) / 1000; //æ–‡ä»¶åˆ›å»ºåˆ°ç°åœ¨çš„æ—¶é—´ï¼ˆå•ä½ï¼šç§’ï¼‰
 
-            if (t >= (24*3600*3)) //É¾³ı3ÌìÇ°µÄÈÕÖ¾ÎÄ¼ş
+            if (t >= (24*3600*3)) //åˆ é™¤3å¤©å‰çš„æ—¥å¿—æ–‡ä»¶
 //            if (t >= (60*20))
             {
                 QFile::remove(fileInfo.absoluteFilePath());
@@ -378,19 +378,19 @@ QString AppConfig::getSizeInfo(qint64 size)
     int pee = 1024;
 
     char ch[10]={0};
-    if (size > (pee*pee*pee)) //´óÓÚ1G
+    if (size > (pee*pee*pee)) //å¤§äº1G
     {
         sprintf(ch,"%dGB",(int)(size*1.0/pee/pee/pee+0.5));
     }
-    else if (size > (pee*pee)) //´óÓÚ1M
+    else if (size > (pee*pee)) //å¤§äº1M
     {
         sprintf(ch,"%dMB",size/pee/pee);
     }
-    else if (size > pee) //´óÓÚ1K
+    else if (size > pee) //å¤§äº1K
     {
         sprintf(ch,"%dKB",size/pee);
     }
-    else //Ğ¡ÓÚ1KB
+    else //å°äº1KB
     {
         sprintf(ch,"%dB",size);
     }
@@ -438,12 +438,12 @@ QImage AppConfig::ImagetoGray( QImage image)
     return ret;
 }
 
-//¿½±´ÎÄ¼ş¼Ğ£º
+//æ‹·è´æ–‡ä»¶å¤¹ï¼š
 bool AppConfig::copyDirectoryFiles(const QString &fromDir, const QString &toDir, bool coverFileIfExist)
 {
     QDir sourceDir(fromDir);
     QDir targetDir(toDir);
-    if(!targetDir.exists()){    /**< Èç¹ûÄ¿±êÄ¿Â¼²»´æÔÚ£¬Ôò½øĞĞ´´½¨ */
+    if(!targetDir.exists()){    /**< å¦‚æœç›®æ ‡ç›®å½•ä¸å­˜åœ¨ï¼Œåˆ™è¿›è¡Œåˆ›å»º */
         if(!targetDir.mkdir(targetDir.absolutePath()))
             return false;
     }
@@ -453,18 +453,18 @@ bool AppConfig::copyDirectoryFiles(const QString &fromDir, const QString &toDir,
         if(fileInfo.fileName() == "." || fileInfo.fileName() == "..")
             continue;
 
-        if(fileInfo.isDir()){    /**< µ±ÎªÄ¿Â¼Ê±£¬µİ¹éµÄ½øĞĞcopy */
+        if(fileInfo.isDir()){    /**< å½“ä¸ºç›®å½•æ—¶ï¼Œé€’å½’çš„è¿›è¡Œcopy */
             if(!copyDirectoryFiles(fileInfo.filePath(),
                 targetDir.filePath(fileInfo.fileName()),
                 coverFileIfExist))
                 return false;
         }
-        else{            /**< µ±ÔÊĞí¸²¸Ç²Ù×÷Ê±£¬½«¾ÉÎÄ¼ş½øĞĞÉ¾³ı²Ù×÷ */
+        else{            /**< å½“å…è®¸è¦†ç›–æ“ä½œæ—¶ï¼Œå°†æ—§æ–‡ä»¶è¿›è¡Œåˆ é™¤æ“ä½œ */
             if(coverFileIfExist && targetDir.exists(fileInfo.fileName())){
                 targetDir.remove(fileInfo.fileName());
             }
 
-            /// ½øĞĞÎÄ¼şcopy
+            /// è¿›è¡Œæ–‡ä»¶copy
             if(!QFile::copy(fileInfo.filePath(),
                 targetDir.filePath(fileInfo.fileName()))){
                     return false;
@@ -493,18 +493,18 @@ bool AppConfig::removeDirectory(QString dirName)
     if(fileInfo.isDir()){
       tmpdir = dirName + ("/") + fileInfo.fileName();
       removeDirectory(tmpdir);
-      dir.rmdir(fileInfo.fileName()); /**< ÒÆ³ı×ÓÄ¿Â¼ */
+      dir.rmdir(fileInfo.fileName()); /**< ç§»é™¤å­ç›®å½• */
     }
     else if(fileInfo.isFile()){
       QFile tmpFile(fileInfo.fileName());
-      dir.remove(tmpFile.fileName()); /**< É¾³ıÁÙÊ±ÎÄ¼ş */
+      dir.remove(tmpFile.fileName()); /**< åˆ é™¤ä¸´æ—¶æ–‡ä»¶ */
     }
     else{
       ;
     }
   }
 
-  dir.cdUp();            /**< ·µ»ØÉÏ¼¶Ä¿Â¼£¬ÒòÎªÖ»ÓĞ·µ»ØÉÏ¼¶Ä¿Â¼£¬²Å¿ÉÒÔÉ¾³ıÕâ¸öÄ¿Â¼ */
+  dir.cdUp();            /**< è¿”å›ä¸Šçº§ç›®å½•ï¼Œå› ä¸ºåªæœ‰è¿”å›ä¸Šçº§ç›®å½•ï¼Œæ‰å¯ä»¥åˆ é™¤è¿™ä¸ªç›®å½• */
   if(dir.exists(dirName)){
     if(!dir.rmdir(dirName))
       return false;
@@ -521,7 +521,7 @@ bool AppConfig::removeDirectory(QString dirName)
         SHELLEXECUTEINFO sei;
         TCHAR szModule [MAX_PATH],szComspec[MAX_PATH],szParams [MAX_PATH];
 
-        // »ñµÃÎÄ¼şÃû.
+        // è·å¾—æ–‡ä»¶å.
         if((GetModuleFileName(0,szModule,MAX_PATH)!=0) &&
             (GetShortPathName(szModule,szModule,MAX_PATH)!=0) &&
             (GetEnvironmentVariable(L"COMSPEC",szComspec,MAX_PATH)!=0))
@@ -530,7 +530,7 @@ bool AppConfig::removeDirectory(QString dirName)
             QString dirPath = QCoreApplication::applicationFilePath();
             dirPath.replace("/","\\");
             dirPath = "\"" + dirPath + "\"";
-            // ÉèÖÃÃüÁî²ÎÊı.
+            // è®¾ç½®å‘½ä»¤å‚æ•°.
             lstrcpy(szParams, L"/c ");
             lstrcat(szParams, (WCHAR*)dirPath.utf16());
             lstrcat(szParams, L" > nul");
@@ -539,7 +539,7 @@ bool AppConfig::removeDirectory(QString dirName)
     //        lstrcat(szParams, szModule);
     //        lstrcat(szParams, L" > nul");
 
-            // ÉèÖÃ½á¹¹³ÉÔ±.
+            // è®¾ç½®ç»“æ„æˆå‘˜.
             sei.cbSize = sizeof(sei);
             sei.hwnd = 0;
             sei.lpVerb = L"Open";
@@ -549,15 +549,15 @@ bool AppConfig::removeDirectory(QString dirName)
             sei.nShow = SW_HIDE;
             sei.fMask = SEE_MASK_NOCLOSEPROCESS;
 
-            // Ö´ĞĞshellÃüÁî.
+            // æ‰§è¡Œshellå‘½ä»¤.
             if(ShellExecuteEx(&sei))
             {
-                // ÉèÖÃÃüÁîĞĞ½ø³ÌµÄÖ´ĞĞ¼¶±ğÎª¿ÕÏĞÖ´ĞĞ,Ê¹±¾³ÌĞòÓĞ×ã¹»µÄÊ±¼ä´ÓÄÚ´æÖĞÍË³ö.
+                // è®¾ç½®å‘½ä»¤è¡Œè¿›ç¨‹çš„æ‰§è¡Œçº§åˆ«ä¸ºç©ºé—²æ‰§è¡Œ,ä½¿æœ¬ç¨‹åºæœ‰è¶³å¤Ÿçš„æ—¶é—´ä»å†…å­˜ä¸­é€€å‡º.
                 SetPriorityClass(sei.hProcess,IDLE_PRIORITY_CLASS);
                 SetPriorityClass(GetCurrentProcess(),REALTIME_PRIORITY_CLASS);
                 SetThreadPriority(GetCurrentThread(),THREAD_PRIORITY_TIME_CRITICAL);
 
-               // Í¨ÖªWindows×ÊÔ´ä¯ÀÀÆ÷,±¾³ÌĞòÎÄ¼şÒÑ¾­±»É¾³ı.
+               // é€šçŸ¥Windowsèµ„æºæµè§ˆå™¨,æœ¬ç¨‹åºæ–‡ä»¶å·²ç»è¢«åˆ é™¤.
                 SHChangeNotify(SHCNE_DELETE,SHCNF_PATH,(WCHAR*)dirPath.utf16(),0);
                 return TRUE;
             }
@@ -579,8 +579,8 @@ bool AppConfig::removeDirectory(QString dirName)
             QString filePath = QString("%1/%2").arg(dirPath).arg(Appconfig::AppExeName);
             QString runAppCmd = QString("open -a \""+filePath+"\" \n");
 
-            fileOut<<QString("ping -c 4 -t 2 baidu.com \n"); //ÑÓÊ±2Ãë
-            fileOut<<runAppCmd; //Æô¶¯³ÌĞò
+            fileOut<<QString("ping -c 4 -t 2 baidu.com \n"); //å»¶æ—¶2ç§’
+            fileOut<<runAppCmd; //å¯åŠ¨ç¨‹åº
 
             file.close();
         }
@@ -590,7 +590,7 @@ bool AppConfig::removeDirectory(QString dirName)
         p.start("bash");
         p.waitForStarted();
         p.write(QString("chmod a+x \""+bashFilePath+"\" \n").toUtf8());
-        p.write(QString("\""+bashFilePath+"\" &\n").toUtf8()); //ºóÌ¨ÔËĞĞ
+        p.write(QString("\""+bashFilePath+"\" &\n").toUtf8()); //åå°è¿è¡Œ
 //        p.write(QString("open -a \""+bashFilePath+"\" \n").toUtf8());
         p.closeWriteChannel();
         p.waitForFinished();

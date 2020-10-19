@@ -19,6 +19,8 @@
 #include "AppConfig.h"
 #include "Base/FunctionTransfer.h"
 
+#include "Widget/SetVideoUrlDialog.h"
+
 Q_DECLARE_METATYPE(VideoPlayerState)
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -49,7 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->horizontalSlider_volume, SIGNAL(valueChanged(int)), this, SLOT(slotSliderMoved(int)));
 
     ui->page_video->setMouseTracking(true);
-    ui->page_video->installEventFilter(this);
+    ui->widget_videoPlayer->setMouseTracking(true);
+//    ui->page_video->installEventFilter(this);
+    ui->widget_videoPlayer->installEventFilter(this);
     ui->widget_container->installEventFilter(this);
 
     mPlayer = new VideoPlayer();
@@ -61,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mTimer_CheckControlWidget = new QTimer; //用于控制控制界面的出现和隐藏
     connect(mTimer_CheckControlWidget, &QTimer::timeout, this, &MainWindow::slotTimerTimeOut);
-    mTimer_CheckControlWidget->setInterval(1500);
+    mTimer_CheckControlWidget->setInterval(2500);
 
     mAnimation_ControlWidget  = new QPropertyAnimation(ui->widget_controller, "geometry");
 
@@ -77,6 +81,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+qDebug()<<__FUNCTION__;
+
     AppConfig::saveConfigInfoToFile();
     AppConfig::removeDirectory(AppConfig::AppDataPath_Tmp);
 
@@ -192,22 +198,24 @@ void MainWindow::slotBtnClick(bool isChecked)
     }
     else if (QObject::sender() == ui->pushButton_open || QObject::sender() == ui->toolButton_open)
     {
-        QString s = QFileDialog::getOpenFileName(
-                   this, QStringLiteral("选择要播放的文件"),
-                    AppConfig::gVideoFilePath,//初始目录
-                    QStringLiteral("视频文件 (*.flv *.rmvb *.avi *.MP4 *.mkv);;")
-                    +QStringLiteral("音频文件 (*.mp3 *.wma *.wav);;")
-                    +QStringLiteral("所有文件 (*.*)"));
-        if (!s.isEmpty())
+        SetVideoUrlDialog dialog;
+
+        dialog.setVideoUrl(AppConfig::gVideoFilePath);
+
+        if (dialog.exec() == QDialog::Accepted)
         {
-//            s.replace("/","\\");
+            QString s = dialog.getVideoUrl();
 
-            mPlayer->stop(true); //如果在播放则先停止
-            mPlayer->startPlay(s.toStdString());
+            if (!s.isEmpty())
+            {
+                mPlayer->stop(true); //如果在播放则先停止
+                mPlayer->startPlay(s.toStdString());
 
-            AppConfig::gVideoFilePath = s;
-            AppConfig::saveConfigInfoToFile();
+                AppConfig::gVideoFilePath = s;
+                AppConfig::saveConfigInfoToFile();
+            }
         }
+
     }
     else if (QObject::sender() == ui->pushButton_volume)
     {
@@ -351,9 +359,9 @@ bool MainWindow::eventFilter(QObject *target, QEvent *event)
             ui->widget_controller->resize(w, ui->widget_controller->height());
         }
     }
-    else if(target == ui->page_video)
+    else if(target == ui->page_video || target == ui->widget_videoPlayer)
     {
-        if(event->type() == QEvent::MouseMove)
+        if(event->type() == QEvent::MouseMove || event->type() == QEvent::MouseButtonPress)
         {
             if (!mTimer_CheckControlWidget->isActive())
             {
@@ -365,7 +373,7 @@ bool MainWindow::eventFilter(QObject *target, QEvent *event)
         }
         else if(event->type() == QEvent::Enter)
         {
-            ui->widget_controller->show();
+            showOutControlWidget();
         }
         else if(event->type() == QEvent::Leave)
         {

@@ -15,7 +15,7 @@ MOC_DIR = obj/Moc
 OBJECTS_DIR = obj/Obj
 
 
-#将输出文件直接放到源码目录下的bin目录下，将dll都放在了次目录中，用以解决运行后找不到dll的问
+#锟斤拷锟斤拷锟斤拷锟侥硷拷直锟接放碉拷源锟斤拷目录锟铰碉拷bin目录锟铰ｏ拷锟斤拷dll锟斤拷锟斤拷锟斤拷锟剿达拷目录锟叫ｏ拷锟斤拷锟皆斤拷锟斤拷锟斤拷锟叫猴拷锟揭诧拷锟斤拷dll锟斤拷锟斤拷
 #DESTDIR=$$PWD/bin/
 contains(QT_ARCH, i386) {
     message("32-bit")
@@ -29,12 +29,13 @@ QMAKE_CXXFLAGS += -std=c++11
 TARGET = VideoPlayer
 TEMPLATE = app
 
-#包含视频播放器的代码
+#锟斤拷锟斤拷锟斤拷频锟斤拷锟斤拷锟斤拷锟侥达拷锟斤拷
 include(module/VideoPlayer/VideoPlayer.pri)
-#包含可拖动窗体的代码
+#锟斤拷锟斤拷锟斤拷锟较讹拷锟斤拷锟斤拷锟侥达拷锟斤拷
 include(module/DragAbleWidget/DragAbleWidget.pri)
 
 SOURCES += \
+    src/Widget/SetVideoUrlDialog.cpp \
     src/main.cpp \
     src/AppConfig.cpp \
     src/Base/FunctionTransfer.cpp \
@@ -46,12 +47,14 @@ HEADERS  += \
     src/AppConfig.h \
     src/Base/FunctionTransfer.h \
     src/MainWindow.h \
+    src/Widget/SetVideoUrlDialog.h \
     src/Widget/ShowVideoWidget.h \
     src/Widget/VideoSlider.h
 
 
 FORMS    += \
     src/MainWindow.ui \
+    src/Widget/SetVideoUrlDialog.ui \
     src/Widget/ShowVideoWidget.ui
 
 RESOURCES += \
