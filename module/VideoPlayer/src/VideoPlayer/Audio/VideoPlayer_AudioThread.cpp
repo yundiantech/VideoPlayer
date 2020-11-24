@@ -117,7 +117,7 @@ int VideoPlayer::decodeAudioFrame(bool isBlock)
 
         AVPacket packet = mAudioPacktList.front();
         mAudioPacktList.pop_front();
-qDebug()<<__FUNCTION__<<mAudioPacktList.size();
+//qDebug()<<__FUNCTION__<<mAudioPacktList.size();
         mConditon_Audio->Unlock();
 
         AVPacket *pkt = &packet;
@@ -164,23 +164,50 @@ qDebug()<<__FUNCTION__<<mAudioPacktList.size();
         {
             /// ffmpeg解码之后得到的音频数据不是SDL想要的，
             /// 因此这里需要重采样成44100 双声道 AV_SAMPLE_FMT_S16
-            if (aFrame_ReSample == NULL)
+
+            ///
+            /// 需要保证重采样后音频的时间是相同的，不同采样率下同样时间采集的数据采样点个数肯定不一样。
+            /// 因此就需要重新计算采样点个数（使用下面的函数）
+            /// 将in_sample_rate的采样次数换算成out_sample_rate对应的采样次数
+            int nb_samples = av_rescale_rnd(swr_get_delay(swrCtx, out_sample_rate) + aFrame->nb_samples, out_sample_rate, in_sample_rate, AV_ROUND_UP);
+
+            if (aFrame_ReSample != nullptr)
             {
-                aFrame_ReSample = av_frame_alloc();
+                if (aFrame_ReSample->nb_samples != nb_samples)
+                {
+                    av_frame_free(&aFrame_ReSample);
+                    aFrame_ReSample = nullptr;
+                }
             }
 
-            if (aFrame_ReSample->nb_samples != aFrame->nb_samples)
+            ///解码一帧后才能获取到采样率等信息，因此将初始化放到这里
+            if (aFrame_ReSample == nullptr)
             {
-                aFrame_ReSample->nb_samples = av_rescale_rnd(swr_get_delay(swrCtx, out_sample_rate) + aFrame->nb_samples,
-                            out_sample_rate, in_sample_rate, AV_ROUND_UP);
+                aFrame_ReSample = av_frame_alloc();
 
-                av_samples_fill_arrays(aFrame_ReSample->data, aFrame_ReSample->linesize, audio_buf, audio_tgt_channels, aFrame_ReSample->nb_samples, out_sample_fmt, 0);
+                aFrame_ReSample->format = out_sample_fmt;
+                aFrame_ReSample->channel_layout = out_ch_layout;
+                aFrame_ReSample->sample_rate = out_sample_rate;
+                aFrame_ReSample->nb_samples = nb_samples;
 
+                int ret = av_samples_fill_arrays(aFrame_ReSample->data, aFrame_ReSample->linesize, audio_buf, audio_tgt_channels, aFrame_ReSample->nb_samples, out_sample_fmt, 0);
+//                int ret = av_frame_get_buffer(aFrame_ReSample, 0);
+                if (ret < 0)
+                {
+                    fprintf(stderr, "Error allocating an audio buffer\n");
+//                        exit(1);
+                }
             }
 
             int len2 = swr_convert(swrCtx, aFrame_ReSample->data, aFrame_ReSample->nb_samples, (const uint8_t**)aFrame->data, aFrame->nb_samples);
-            int resampled_data_size = len2 * audio_tgt_channels * av_get_bytes_per_sample(out_sample_fmt);
 
+///下面这两种方法计算的大小是一样的
+#if 0
+            int resampled_data_size = len2 * audio_tgt_channels * av_get_bytes_per_sample(out_sample_fmt);
+#else
+            int resampled_data_size = av_samples_get_buffer_size(NULL, audio_tgt_channels, aFrame_ReSample->nb_samples, out_sample_fmt, 1);
+#endif
+//qDebug()<<__FUNCTION__<<resampled_data_size<<aFrame_ReSample->nb_samples<<aFrame->nb_samples;
             audioBufferSize = resampled_data_size;
             break;
         }

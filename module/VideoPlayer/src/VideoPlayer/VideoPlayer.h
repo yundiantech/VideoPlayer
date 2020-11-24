@@ -142,6 +142,7 @@ private:
     int in_sample_rate;//输入的采样率
     int out_sample_rate;//输出的采样率
     int audio_tgt_channels; ///av_get_channel_layout_nb_channels(out_ch_layout);
+    int out_ch_layout;
     unsigned int audio_buf_size;
     unsigned int audio_buf_index;
     DECLARE_ALIGNED(16,uint8_t,audio_buf) [AVCODEC_MAX_AUDIO_FRAME_SIZE * 4];

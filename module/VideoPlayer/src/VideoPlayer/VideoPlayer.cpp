@@ -34,8 +34,15 @@ VideoPlayer::~VideoPlayer()
 
 bool VideoPlayer::initPlayer()
 {
-    av_register_all(); //初始化FFMPEG  调用了这个才能正常使用编码器和解码器
-    avformat_network_init(); //支持打开网络文件
+    static int isInited = false;
+
+    if (!isInited)
+    {
+        av_register_all(); //初始化FFMPEG  调用了这个才能正常使用编码器和解码器
+        avformat_network_init(); //支持打开网络文件
+
+        isInited = true;
+    }
 
 //SDL初始化需要放入子线程中，否则有些电脑会有问题。
 //    if (SDL_Init(SDL_INIT_AUDIO))
@@ -353,7 +360,7 @@ void VideoPlayer::readVideoFile()
             int in_ch_layout;
 
             //输出的声道布局
-            int out_ch_layout = av_get_default_channel_layout(audio_tgt_channels); ///AV_CH_LAYOUT_STEREO
+            out_ch_layout = av_get_default_channel_layout(audio_tgt_channels); ///AV_CH_LAYOUT_STEREO
 
             out_ch_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
 
