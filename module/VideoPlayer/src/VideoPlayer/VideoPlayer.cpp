@@ -245,6 +245,8 @@ void VideoPlayer::readVideoFile()
     aCodec = nullptr;
     aFrame = nullptr;
 
+    swrCtx = nullptr;
+
     mAudioStream = nullptr;
     mVideoStream = nullptr;
 
