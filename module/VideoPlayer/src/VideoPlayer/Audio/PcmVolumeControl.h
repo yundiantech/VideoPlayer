@@ -1,6 +1,6 @@
-/**
- * Ò¶º£»Ô
- * QQÈº121376426
+ï»¿/**
+ * å¶æµ·è¾‰
+ * QQç¾¤121376426
  * http://blog.yundiantech.com/
  */
 
@@ -12,7 +12,7 @@ class PcmVolumeControl
 public:
     PcmVolumeControl();
 
-    ///bufÎªĞèÒªµ÷½ÚÒôÁ¿µÄÒôÆµÊı¾İ¿éÊ×µØÖ·Ö¸Õë£¬sizeÎª³¤¶È£¬uRepeatÎªÖØ¸´´ÎÊı£¬Í¨³£ÉèÎª1£¬volÎªÔöÒæ±¶Êı,¿ÉÒÔĞ¡ÓÚ1
+    ///bufä¸ºéœ€è¦è°ƒèŠ‚éŸ³é‡çš„éŸ³é¢‘æ•°æ®å—é¦–åœ°å€æŒ‡é’ˆï¼Œsizeä¸ºé•¿åº¦ï¼ŒuRepeatä¸ºé‡å¤æ¬¡æ•°ï¼Œé€šå¸¸è®¾ä¸º1ï¼Œvolä¸ºå¢ç›Šå€æ•°,å¯ä»¥å°äº1
     static void RaiseVolume(char* buf, int size, int uRepeat, double vol);
 
 };

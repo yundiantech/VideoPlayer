@@ -1,6 +1,6 @@
-/**
- * Ò¶º£»Ô
- * QQÈº121376426
+ï»¿/**
+ * å¶æµ·è¾‰
+ * QQç¾¤121376426
  * http://blog.yundiantech.com/
  */
 
@@ -15,16 +15,16 @@ void VideoPlayer::decodeVideoThread()
     int videoWidth  = 0;
     int videoHeight =  0;
 
-    double video_pts = 0; //µ±Ç°ÊÓÆµµÄpts
-    double audio_pts = 0; //ÒôÆµpts
+    double video_pts = 0; //å½“å‰è§†é¢‘çš„pts
+    double audio_pts = 0; //éŸ³é¢‘pts
 
-    ///½âÂëÊÓÆµÏà¹Ø
+    ///è§£ç è§†é¢‘ç›¸å…³
     AVFrame *pFrame = nullptr;
     AVFrame *pFrameYUV = nullptr;
-    uint8_t *yuv420pBuffer = nullptr; //½âÂëºóµÄyuvÊı¾İ
-    struct SwsContext *imgConvertCtx = nullptr;  //ÓÃÓÚ½âÂëºóµÄÊÓÆµ¸ñÊ½×ª»»
+    uint8_t *yuv420pBuffer = nullptr; //è§£ç åçš„yuvæ•°æ®
+    struct SwsContext *imgConvertCtx = nullptr;  //ç”¨äºè§£ç åçš„è§†é¢‘æ ¼å¼è½¬æ¢
 
-    AVCodecContext *pCodecCtx = mVideoStream->codec; //ÊÓÆµ½âÂëÆ÷
+    AVCodecContext *pCodecCtx = mVideoStream->codec; //è§†é¢‘è§£ç å™¨
 
     pFrame = av_frame_alloc();
 
@@ -32,11 +32,11 @@ void VideoPlayer::decodeVideoThread()
     {
         if (mIsQuit)
         {
-            clearVideoQuene(); //Çå¿Õ¶ÓÁĞ
+            clearVideoQuene(); //æ¸…ç©ºé˜Ÿåˆ—
             break;
         }
 
-        if (mIsPause == true) //ÅĞ¶ÏÔİÍ£
+        if (mIsPause == true) //åˆ¤æ–­æš‚åœ
         {
             mSleep(10);
             continue;
@@ -49,12 +49,12 @@ void VideoPlayer::decodeVideoThread()
             mConditon_Video->Unlock();
             if (mIsReadFinished)
             {
-                //¶ÓÁĞÀïÃæÃ»ÓĞÊı¾İÁËÇÒ¶ÁÈ¡Íê±ÏÁË
+                //é˜Ÿåˆ—é‡Œé¢æ²¡æœ‰æ•°æ®äº†ä¸”è¯»å–å®Œæ¯•äº†
                 break;
             }
             else
             {
-                mSleep(1); //¶ÓÁĞÖ»ÊÇÔİÊ±Ã»ÓĞÊı¾İ¶øÒÑ
+                mSleep(1); //é˜Ÿåˆ—åªæ˜¯æš‚æ—¶æ²¡æœ‰æ•°æ®è€Œå·²
                 continue;
             }
         }
@@ -66,7 +66,7 @@ void VideoPlayer::decodeVideoThread()
 
         AVPacket *packet = &pkt1;
 
-        //ÊÕµ½Õâ¸öÊı¾İ ËµÃ÷¸Õ¸ÕÖ´ĞĞ¹ıÌø×ª ÏÖÔÚĞèÒª°Ñ½âÂëÆ÷µÄÊı¾İ Çå³ıÒ»ÏÂ
+        //æ”¶åˆ°è¿™ä¸ªæ•°æ® è¯´æ˜åˆšåˆšæ‰§è¡Œè¿‡è·³è½¬ ç°åœ¨éœ€è¦æŠŠè§£ç å™¨çš„æ•°æ® æ¸…é™¤ä¸€ä¸‹
         if(strcmp((char*)packet->data, FLUSH_DATA) == 0)
         {
             avcodec_flush_buffers(mVideoStream->codec);
@@ -101,7 +101,7 @@ void VideoPlayer::decodeVideoThread()
     //OUTPUT("%s %f \n", __FUNCTION__, video_pts);
             if (seek_flag_video)
             {
-                //·¢ÉúÁËÌø×ª ÔòÌø¹ı¹Ø¼üÖ¡µ½Ä¿µÄÊ±¼äµÄÕâ¼¸Ö¡
+                //å‘ç”Ÿäº†è·³è½¬ åˆ™è·³è¿‡å…³é”®å¸§åˆ°ç›®çš„æ—¶é—´çš„è¿™å‡ å¸§
                if (video_pts < seek_time)
                {
                    av_packet_unref(packet);
@@ -113,7 +113,7 @@ void VideoPlayer::decodeVideoThread()
                }
             }
 
-            ///ÒôÊÓÆµÍ¬²½£¬ÊµÏÖµÄÔ­Àí¾ÍÊÇ£¬ÅĞ¶ÏÊÇ·ñµ½ÏÔÊ¾´ËÖ¡Í¼ÏñµÄÊ±¼äÁË£¬Ã»µ½ÔòĞİÃß5ms£¬È»ºó¼ÌĞøÅĞ¶Ï
+            ///éŸ³è§†é¢‘åŒæ­¥ï¼Œå®ç°çš„åŸç†å°±æ˜¯ï¼Œåˆ¤æ–­æ˜¯å¦åˆ°æ˜¾ç¤ºæ­¤å¸§å›¾åƒçš„æ—¶é—´äº†ï¼Œæ²¡åˆ°åˆ™ä¼‘çœ 5msï¼Œç„¶åç»§ç»­åˆ¤æ–­
             while(1)
             {
                 if (mIsQuit)
@@ -124,25 +124,25 @@ void VideoPlayer::decodeVideoThread()
                 if (mAudioStream != NULL && !mIsAudioThreadFinished)
                 {
                     if (mIsReadFinished && mAudioPacktList.size() <= 0)
-                    {//¶ÁÈ¡ÍêÁË ÇÒÒôÆµÊı¾İÒ²²¥·ÅÍêÁË ¾ÍÊ£ÏÂÊÓÆµÊı¾İÁË  Ö±½ÓÏÔÊ¾³öÀ´ÁË ²»ÓÃÍ¬²½ÁË
+                    {//è¯»å–å®Œäº† ä¸”éŸ³é¢‘æ•°æ®ä¹Ÿæ’­æ”¾å®Œäº† å°±å‰©ä¸‹è§†é¢‘æ•°æ®äº†  ç›´æ¥æ˜¾ç¤ºå‡ºæ¥äº† ä¸ç”¨åŒæ­¥äº†
                         break;
                     }
 
-                    ///ÓĞÒôÆµµÄÇé¿öÏÂ£¬½«ÊÓÆµÍ¬²½µ½ÒôÆµ
-                    ///¸úÒôÆµµÄpts×ö¶Ô±È£¬±ÈÊÓÆµ¿ìÔò×öÑÓÊ±
+                    ///æœ‰éŸ³é¢‘çš„æƒ…å†µä¸‹ï¼Œå°†è§†é¢‘åŒæ­¥åˆ°éŸ³é¢‘
+                    ///è·ŸéŸ³é¢‘çš„ptsåšå¯¹æ¯”ï¼Œæ¯”è§†é¢‘å¿«åˆ™åšå»¶æ—¶
                     audio_pts = audio_clock;
                 }
                 else
                 {
-                    ///Ã»ÓĞÒôÆµµÄÇé¿öÏÂ£¬Ö±½ÓÍ¬²½µ½Íâ²¿Ê±ÖÓ
+                    ///æ²¡æœ‰éŸ³é¢‘çš„æƒ…å†µä¸‹ï¼Œç›´æ¥åŒæ­¥åˆ°å¤–éƒ¨æ—¶é’Ÿ
                     audio_pts = (av_gettime() - mVideoStartTime) / 1000000.0;
                     audio_clock = audio_pts;
                 }
 
     //OUTPUT("%s %f %f \n", __FUNCTION__, video_pts, audio_pts);
-                //Ö÷ÒªÊÇ Ìø×ªµÄÊ±ºò ÎÒÃÇ°Ñvideo_clockÉèÖÃ³É0ÁË
-                //Òò´ËÕâÀïĞèÒª¸üĞÂvideo_pts
-                //·ñÔòµ±´ÓºóÃæÌø×ªµ½Ç°ÃæµÄÊ±ºò »á¿¨ÔÚÕâÀï
+                //ä¸»è¦æ˜¯ è·³è½¬çš„æ—¶å€™ æˆ‘ä»¬æŠŠvideo_clockè®¾ç½®æˆ0äº†
+                //å› æ­¤è¿™é‡Œéœ€è¦æ›´æ–°video_pts
+                //å¦åˆ™å½“ä»åé¢è·³è½¬åˆ°å‰é¢çš„æ—¶å€™ ä¼šå¡åœ¨è¿™é‡Œ
                 video_pts = video_clock;
 
                 if (video_pts <= audio_pts) break;
@@ -179,15 +179,15 @@ void VideoPlayer::decodeVideoThread()
 
                 pFrameYUV = av_frame_alloc();
 
-                int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);  //°´1×Ö½Ú½øĞĞÄÚ´æ¶ÔÆë,µÃµ½µÄÄÚ´æ´óĞ¡×î½Ó½üÊµ¼Ê´óĞ¡
-            //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 0);  //°´0×Ö½Ú½øĞĞÄÚ´æ¶ÔÆë£¬µÃµ½µÄÄÚ´æ´óĞ¡ÊÇ0
-            //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 4);   //°´4×Ö½Ú½øĞĞÄÚ´æ¶ÔÆë£¬µÃµ½µÄÄÚ´æ´óĞ¡ÉÔÎ¢´óÒ»Ğ©
+                int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);  //æŒ‰1å­—èŠ‚è¿›è¡Œå†…å­˜å¯¹é½,å¾—åˆ°çš„å†…å­˜å¤§å°æœ€æ¥è¿‘å®é™…å¤§å°
+            //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 0);  //æŒ‰0å­—èŠ‚è¿›è¡Œå†…å­˜å¯¹é½ï¼Œå¾—åˆ°çš„å†…å­˜å¤§å°æ˜¯0
+            //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 4);   //æŒ‰4å­—èŠ‚è¿›è¡Œå†…å­˜å¯¹é½ï¼Œå¾—åˆ°çš„å†…å­˜å¤§å°ç¨å¾®å¤§ä¸€äº›
 
                 unsigned int numBytes = static_cast<unsigned int>(yuvSize);
                 yuv420pBuffer = static_cast<uint8_t *>(av_malloc(numBytes * sizeof(uint8_t)));
                 av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, yuv420pBuffer, AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);
 
-                ///ÓÉÓÚ½âÂëºóµÄÊı¾İ²»Ò»¶¨¶¼ÊÇyuv420p£¬Òò´ËĞèÒª½«½âÂëºóµÄÊı¾İÍ³Ò»×ª»»³ÉYUV420P
+                ///ç”±äºè§£ç åçš„æ•°æ®ä¸ä¸€å®šéƒ½æ˜¯yuv420pï¼Œå› æ­¤éœ€è¦å°†è§£ç åçš„æ•°æ®ç»Ÿä¸€è½¬æ¢æˆYUV420P
                 imgConvertCtx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
                         pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
                         AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);

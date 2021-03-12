@@ -1,4 +1,4 @@
-#ifndef FUNCTIONTRANSFER_H
+ï»¿#ifndef FUNCTIONTRANSFER_H
 #define FUNCTIONTRANSFER_H
 
 #include  <functional>
@@ -17,7 +17,7 @@ class FunctionTransfer : public QObject
     Q_OBJECT
 public:
 
-    ///@brief ¹¹Ôìº¯Êı
+    ///@brief æ„é€ å‡½æ•°
     explicit FunctionTransfer(QObject *parent = 0);
     ~FunctionTransfer();
 
@@ -25,22 +25,22 @@ public:
     static bool isMainThread();
 
 public:
-    ///@brief ÖÆ¶¨º¯ÊıfÔÚmainÖĞÖ´ĞĞ
+    ///@brief åˆ¶å®šå‡½æ•°fåœ¨mainä¸­æ‰§è¡Œ
     static void runInMainThread(std::function<void()> f, bool isBlock = false);
 
 private:
     static Qt::HANDLE gMainThreadId;
 
-    //ÔÚÈ«¾ÖÊı¾İÇøÊµÀı»¯Ò»¸öFunctionTransferµÄÊµÀı£¬¸ÃÊµÀıËùÔÚµÄÏß³Ì¾ÍÊÇÖ÷Ïß³Ì¡£
+    //åœ¨å…¨å±€æ•°æ®åŒºå®ä¾‹åŒ–ä¸€ä¸ªFunctionTransferçš„å®ä¾‹ï¼Œè¯¥å®ä¾‹æ‰€åœ¨çš„çº¿ç¨‹å°±æ˜¯ä¸»çº¿ç¨‹ã€‚
     static FunctionTransfer *main_thread_forward;
 
 Q_SIGNALS:
-    ///@brief ÔÚ±ğµÄÏß³ÌÓĞº¯Êı¶ÔÏó´«À´
+    ///@brief åœ¨åˆ«çš„çº¿ç¨‹æœ‰å‡½æ•°å¯¹è±¡ä¼ æ¥
     void comming(std::function<void()> f);
     void comming_noBlock(std::function<void()> f);
 
 private Q_SLOTS:
-    ///@brief Ö´ĞĞº¯Êı¶ÔÏó
+    ///@brief æ‰§è¡Œå‡½æ•°å¯¹è±¡
     void slotExec(std::function<void()> f);
 
 };

@@ -1,4 +1,4 @@
-#ifndef VIDEOPLAYEREVENTHANDLE_H
+ï»¿#ifndef VIDEOPLAYEREVENTHANDLE_H
 #define VIDEOPLAYEREVENTHANDLE_H
 
 #include "types.h"
@@ -9,19 +9,19 @@ class VideoPlayerCallBack
 public:
     ~VideoPlayerCallBack();
 
-    ///´ò¿ªÎÄ¼şÊ§°Ü
+    ///æ‰“å¼€æ–‡ä»¶å¤±è´¥
     virtual void onOpenVideoFileFailed(const int &code = 0) = 0;
 
-    ///´ò¿ªsdlÊ§°ÜµÄÊ±ºò»Øµ÷´Ëº¯Êı
+    ///æ‰“å¼€sdlå¤±è´¥çš„æ—¶å€™å›è°ƒæ­¤å‡½æ•°
     virtual void onOpenSdlFailed(const int &code) = 0;
 
-    ///»ñÈ¡µ½ÊÓÆµÊ±³¤µÄÊ±ºòµ÷ÓÃ´Ëº¯Êı
+    ///è·å–åˆ°è§†é¢‘æ—¶é•¿çš„æ—¶å€™è°ƒç”¨æ­¤å‡½æ•°
     virtual void onTotalTimeChanged(const int64_t &uSec) = 0;
 
-    ///²¥·ÅÆ÷×´Ì¬¸Ä±äµÄÊ±ºò»Øµ÷´Ëº¯Êı
+    ///æ’­æ”¾å™¨çŠ¶æ€æ”¹å˜çš„æ—¶å€™å›è°ƒæ­¤å‡½æ•°
     virtual void onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio) = 0;
 
-    ///²¥·ÅÊÓÆµ£¬´Ëº¯Êı²»ÒË×öºÄÊ±²Ù×÷£¬·ñÔò»áÓ°Ïì²¥·ÅµÄÁ÷³©ĞÔ¡£
+    ///æ’­æ”¾è§†é¢‘ï¼Œæ­¤å‡½æ•°ä¸å®œåšè€—æ—¶æ“ä½œï¼Œå¦åˆ™ä¼šå½±å“æ’­æ”¾çš„æµç•…æ€§ã€‚
     virtual void onDisplayVideo(VideoFramePtr videoFrame) = 0;
 
 };

@@ -1,4 +1,4 @@
-#include "types.h"
+ï»¿#include "types.h"
 
 #include <time.h>
 
@@ -32,7 +32,7 @@ void mSleep(int mSecond)
 int64_t getTimeStamp_MilliSecond()
 {
 
-    int mSecond = 0; //µ±Ç°ºÁÃëÊı
+    int mSecond = 0; //å½“å‰æ¯«ç§’æ•°
 
 #if defined(WIN32)
 

@@ -1,8 +1,8 @@
-#ifndef COND_H
+ï»¿#ifndef COND_H
 #define COND_H
 
-/// ×¢ÒâMingwµÄ»°Ê¹ÓÃµÄÊÇlinuxÏÂµÄapi pthread
-/// Ã»ÓĞ_MSC_VERÕâ¸öºê ÎÒÃÇ¾ÍÈÏÎªËûÓÃµÄÊÇmingw±àÒëÆ÷
+/// æ³¨æ„Mingwçš„è¯ä½¿ç”¨çš„æ˜¯linuxä¸‹çš„api pthread
+/// æ²¡æœ‰_MSC_VERè¿™ä¸ªå® æˆ‘ä»¬å°±è®¤ä¸ºä»–ç”¨çš„æ˜¯mingwç¼–è¯‘å™¨
 
 #ifndef _MSC_VER
 #define MINGW
@@ -22,22 +22,22 @@ public:
     Cond();
     ~Cond();
 
-    //ÉÏËø
+    //ä¸Šé”
     int Lock();
 
-    //½âËø
+    //è§£é”
     int Unlock();
 
     //
     int Wait();
 
-    //¹Ì¶¨Ê±¼äµÈ´ı
+    //å›ºå®šæ—¶é—´ç­‰å¾…
     int TimedWait(int second);
 
     //
     int Signal();
 
-    //»½ĞÑËùÓĞË¯ÃßÏß³Ì
+    //å”¤é†’æ‰€æœ‰ç¡çœ çº¿ç¨‹
     int Broadcast();
 
 private:

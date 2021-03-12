@@ -1,4 +1,4 @@
-#ifndef TYPES_H
+ï»¿#ifndef TYPES_H
 #define TYPES_H
 
 #include <stdio.h>
@@ -29,6 +29,6 @@ enum VideoPlayerState
 
 void mSleep(int mSecond);
 
-int64_t getTimeStamp_MilliSecond(); //»ñÈ¡Ê±¼ä´Á£¨ºÁÃë£©
+int64_t getTimeStamp_MilliSecond(); //è·å–æ—¶é—´æˆ³ï¼ˆæ¯«ç§’ï¼‰
 
 #endif // TYPES_H

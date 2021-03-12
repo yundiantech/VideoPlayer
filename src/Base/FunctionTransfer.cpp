@@ -1,4 +1,4 @@
-#include "FunctionTransfer.h"
+ï»¿#include "FunctionTransfer.h"
 
 #include <QThread>
 #include <QDebug>
@@ -11,7 +11,7 @@ Q_DECLARE_METATYPE(std::function<void()>)
 FunctionTransfer::FunctionTransfer(QObject *parent) :
     QObject(parent)
 {
-    //ÒòÎªstd::function<void()>ÊÇ×Ô¶¨ÒåµÄÀàĞÍ Òª¿çÏß³Ì´«µİĞèÒªÏÈ×¢²áÒ»ÏÂ
+    //å› ä¸ºstd::function<void()>æ˜¯è‡ªå®šä¹‰çš„ç±»å‹ è¦è·¨çº¿ç¨‹ä¼ é€’éœ€è¦å…ˆæ³¨å†Œä¸€ä¸‹
     qRegisterMetaType<std::function<void()>>();
 
     connect(this, SIGNAL(comming(std::function<void()>)), this, SLOT(slotExec(std::function<void()>)), Qt::BlockingQueuedConnection);

@@ -1,4 +1,4 @@
-#ifndef VIDEOFRAME_H
+﻿#ifndef VIDEOFRAME_H
 #define VIDEOFRAME_H
 
 #include <stdint.h>
