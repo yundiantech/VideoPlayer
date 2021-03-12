@@ -593,10 +593,10 @@ bool AppConfig::removeDirectory(QString dirName)
     }
 #endif
 
-void AppConfig::mSleep(int mSecond)
+void AppConfig::mSleep(int mSeconds)
 {
 #if defined(WIN32)
-    Sleep(mSecond);
+    Sleep(mSeconds);
 #else
     usleep(mSeconds * 1000);
 #endif
