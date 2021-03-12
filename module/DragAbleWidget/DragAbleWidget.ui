@@ -36,18 +36,18 @@
 {
 	border:3px solid  rgb(46, 165, 255);
 	background-color: rgba(255, 255, 255, 0);
-	border-radius:5px;
+	border-radius:0px;
 }
 
 QWidget#widget_back
 {
-border-radius:3px;
+border-radius:0px;
 }
 
 QWidget#widget_title
 {
-	border-top-right-radius:5px;
-	border-top-left-radius:5px;
+	border-top-right-radius:0px;
+	border-top-left-radius:0px;
 }
 
 QWidget#widget_container
@@ -280,7 +280,7 @@ font-family:&quot;微软雅黑&quot;;</string>
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="../resources/resources.qrc">
+                      <iconset resource="../../resources/resources.qrc">
                        <normaloff>:/image/showminisizebtn.png</normaloff>:/image/showminisizebtn.png</iconset>
                      </property>
                      <property name="iconSize">
@@ -324,7 +324,7 @@ font-family:&quot;微软雅黑&quot;;</string>
                       <string/>
                      </property>
                      <property name="icon">
-                      <iconset resource="../resources/resources.qrc">
+                      <iconset resource="../../resources/resources.qrc">
                        <normaloff>:/image/showmaxsizebtn.png</normaloff>:/image/showmaxsizebtn.png</iconset>
                      </property>
                      <property name="iconSize">
@@ -359,7 +359,7 @@ font-family:&quot;微软雅黑&quot;;</string>
                    <string/>
                   </property>
                   <property name="icon">
-                   <iconset resource="../resources/resources.qrc">
+                   <iconset resource="../../resources/resources.qrc">
                     <normaloff>:/image/close_normal.png</normaloff>:/image/close_normal.png</iconset>
                   </property>
                   <property name="iconSize">
@@ -403,7 +403,7 @@ font-family:&quot;微软雅黑&quot;;</string>
   </layout>
  </widget>
  <resources>
-  <include location="../resources/resources.qrc"/>
+  <include location="../../resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>

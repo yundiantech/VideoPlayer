@@ -3,8 +3,8 @@
 IDI_ICON1       ICON      "main.ico"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION    1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION    2,1,6,0
+ PRODUCTVERSION 2,1,6,0
  FILEFLAGS      0x0L
  FILEFLAGSMASK  0x3fL
  FILEOS         VOS_NT_WINDOWS32
@@ -17,12 +17,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "云天之巅 blog.yundiantech.com"
             VALUE "FileDescription", "我的播放器"
-            VALUE "FileVersion", "1.0.0"
+            VALUE "FileVersion", "2.1.6"
             VALUE "LegalCopyright", "云天之巅 blog.yundiantech.com"
             VALUE "InternalName", "我的播放器"
             VALUE "OriginalFilename", "我的播放器"
             VALUE "ProductName", "我的播放器"
-            VALUE "ProductVersion", "1.0.0"
+            VALUE "ProductVersion", "2.1.6"
         END
     END
     BLOCK "VarFileInfo"

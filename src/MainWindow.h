@@ -8,12 +8,16 @@
 #define MAINWINDOW_H
 
 #include <QWidget>
+#include <QListWidgetItem>
 
 #include <QImage>
 #include <QPaintEvent>
 #include <QTimer>
 #include <QPushButton>
 #include <QPropertyAnimation>
+
+#include <QMenu>
+#include <QAction>
 
 #include "VideoPlayer/VideoPlayer.h"
 #include "DragAbleWidget.h"
@@ -31,7 +35,15 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void addVideoFiles(const QStringList &videoFileList);
+    void addVideoFile(const QString &filePath);
+    void clear();
+
+    void startPlay(); //播放第一个
+    void stopPlay();
+
 protected:
+    void closeEvent(QCloseEvent *event);
     bool eventFilter(QObject *target, QEvent *event);
 
 private:
@@ -46,12 +58,39 @@ private:
     void showOutControlWidget(); //显示底部控制控件
     void hideControlWidget();    //隐藏底部控制控件
 
+
+    QMenu* mPopMenu;
+
+    QAction *mAddVideoAction;
+    QAction *mEditVideoAction;
+    QAction *mDeleteVideoAction;
+    QAction *mClearVideoAction;
+
+    void doAdd();
+    void doAddStream();
+    void doDelete();
+    void doClear();
+
+    void setVideoNums(const int &nums);
+
+    QList<QString> mVideoFileList;
+
+    int mCurrentIndex;
+    QListWidgetItem *mCurrentItem;
+    bool mIsNeedPlayNext;
+
+    void playVideo(const int &index);
+    void playVideoFile(const QString &filePath);
+
 private slots:
     ///播放器相关的槽函数
     void slotSliderMoved(int value);
     void slotTimerTimeOut();
     void slotBtnClick(bool isChecked);
+    void slotItemDoubleClicked(QListWidgetItem *item);
 
+    void slotCustomContextMenuRequested();
+    void slotActionClick();
 
     ///以下函数，是播放器的回调函数，用于输出信息给界面
 protected:

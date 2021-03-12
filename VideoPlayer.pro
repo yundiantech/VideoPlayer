@@ -36,6 +36,7 @@ include(module/DragAbleWidget/DragAbleWidget.pri)
 
 SOURCES += \
     src/Widget/SetVideoUrlDialog.cpp \
+    src/Widget/mymessagebox_withTitle.cpp \
     src/main.cpp \
     src/AppConfig.cpp \
     src/Base/FunctionTransfer.cpp \
@@ -49,13 +50,15 @@ HEADERS  += \
     src/MainWindow.h \
     src/Widget/SetVideoUrlDialog.h \
     src/Widget/ShowVideoWidget.h \
-    src/Widget/VideoSlider.h
+    src/Widget/VideoSlider.h \
+    src/Widget/mymessagebox_withTitle.h
 
 
 FORMS    += \
     src/MainWindow.ui \
     src/Widget/SetVideoUrlDialog.ui \
-    src/Widget/ShowVideoWidget.ui
+    src/Widget/ShowVideoWidget.ui \
+    src/Widget/mymessagebox_withTitle.ui
 
 RESOURCES += \
     resources/resources.qrc

@@ -105,16 +105,22 @@ void DragAbleWidget::mousePressEvent(QMouseEvent *event)
         }
     }
 
-    switch(event->button()) {
+    switch(event->button())
+    {
     case Qt::LeftButton:
         if (isMax || this->isFullScreen()) break;
         isLeftPressDown = true;
         checkCursorDirect(event->globalPos());
 
-        if(dir != NONE) {
+        if(dir != NONE)
+        {
             this->mouseGrabber();
-        } else {
-            dragPosition = event->globalPos() - this->frameGeometry().topLeft();
+            mIsResizeMode = true;
+        }
+        else
+        {
+            dragPosition  = event->globalPos() - this->frameGeometry().topLeft();
+            mIsResizeMode = false;
         }
         break;
 //    case Qt::RightButton:
@@ -141,11 +147,23 @@ void DragAbleWidget::mouseMoveEvent(QMouseEvent *event)
     QPoint tl = mapToGlobal(rect.topLeft());
     QPoint rb = mapToGlobal(rect.bottomRight());
 
-    if(!isLeftPressDown) {
+    if (isMax || this->isFullScreen()) return;
+    if (!isLeftPressDown)
+    {
         checkCursorDirect(gloPoint);
-    } else {
+        return;
+    }
 
-        if(dir != NONE) {
+//    if(!isLeftPressDown)
+//    {
+//        checkCursorDirect(gloPoint);
+//    }
+//    else
+    {
+
+//        if(dir != NONE)
+        if (mIsResizeMode)
+        {
             QRect rMove(tl, rb);
 
             switch(dir) {

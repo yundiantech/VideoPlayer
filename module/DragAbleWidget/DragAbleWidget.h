@@ -45,10 +45,12 @@ protected:
     void mousePressEvent(QMouseEvent *event);
 
 private:
-    bool isMax; //是否最大化
+    bool isMax = false; //是否最大化
     QRect mLocation;
 
-    bool isLeftPressDown;  // 判断左键是否按下
+    bool mIsResizeMode = false;
+
+    bool isLeftPressDown = false;  // 判断左键是否按下
     QPoint dragPosition;   // 窗口移动拖动时需要记住的点
     int dir;        // 窗口大小改变时，记录改变方向
 
