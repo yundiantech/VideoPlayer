@@ -177,7 +177,8 @@ int VideoPlayer::openSDL()
     ///后期使用ffmpeg解码完音频后，需要重采样成和这个一样的格式，否则播放会有杂音
     SDL_AudioSpec wanted_spec, spec;
     int wanted_nb_channels = 2;
-    int samplerate = 44100;
+//    int samplerate = 44100;
+    int samplerate = out_sample_rate;
 
     wanted_spec.channels = wanted_nb_channels;
     wanted_spec.samples = FFMAX(512, 2 << av_log2(wanted_spec.freq / 30));
