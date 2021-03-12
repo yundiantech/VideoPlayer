@@ -98,7 +98,7 @@ private:
     float mVolume; //音量 0~1 超过1 表示放大倍数
 
     /// 跳转相关的变量
-    int             seek_req; //跳转标志
+    int             seek_req = 0; //跳转标志
     int64_t         seek_pos; //跳转的位置 -- 微秒
     int             seek_flag_audio;//跳转标志 -- 用于音频线程中
     int             seek_flag_video;//跳转标志 -- 用于视频线程中

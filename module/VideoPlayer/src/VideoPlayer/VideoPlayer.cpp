@@ -180,10 +180,11 @@ int VideoPlayer::openSDL()
     int samplerate = 44100;
 
     wanted_spec.channels = wanted_nb_channels;
+    wanted_spec.samples = FFMAX(512, 2 << av_log2(wanted_spec.freq / 30));
     wanted_spec.freq = samplerate;
     wanted_spec.format = AUDIO_S16SYS; // 具体含义请查看“SDL宏定义”部分
     wanted_spec.silence = 0;            // 0指示静音
-    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;  // 自定义SDL缓冲区大小
+//    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;  // 自定义SDL缓冲区大小
     wanted_spec.callback = sdlAudioCallBackFunc;  // 回调函数
     wanted_spec.userdata = this;                  // 传给上面回调函数的外带数据
 
@@ -380,7 +381,9 @@ void VideoPlayer::readVideoFile()
             in_ch_layout = aCodecCtx->channel_layout;
 
             //输出的采样率
-            out_sample_rate = 44100;
+//            out_sample_rate = 44100;
+            out_sample_rate = aCodecCtx->sample_rate;
+
             //输出的声道布局
 
             audio_tgt_channels = 2; ///av_get_channel_layout_nb_channels(out_ch_layout);
