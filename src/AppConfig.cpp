@@ -33,12 +33,6 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <unistd.h>
-
-void Sleep(long mSeconds)
-{
-    usleep(mSeconds * 1000);
-}
-
 #endif
 
 QString AppConfig::APPID = "{a1db97ad-b8ed-11e9-a297-0235d2b38928}";
@@ -601,5 +595,9 @@ bool AppConfig::removeDirectory(QString dirName)
 
 void AppConfig::mSleep(int mSecond)
 {
+#if defined(WIN32)
     Sleep(mSecond);
+#else
+    usleep(mSeconds * 1000);
+#endif
 }

@@ -1,6 +1,6 @@
 ﻿
-#include "showVideoWidget.h"
-#include "ui_showVideoWidget.h"
+#include "ShowVideoWidget.h"
+#include "ui_ShowVideoWidget.h"
 
 #include <QPainter>
 #include <QDebug>
