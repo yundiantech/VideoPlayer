@@ -6,6 +6,222 @@
 
 #include "VideoPlayer/VideoPlayer.h"
 
+#if CONFIG_AVFILTER
+static const char **vfilters_list = NULL;
+static int nb_vfilters = 0;
+static char *afilters = NULL;
+#endif
+static int autorotate = 1;
+static int find_stream_info = 1;
+static int filter_nbthreads = 0;
+
+static const struct TextureFormatEntry {
+    enum AVPixelFormat format;
+    int texture_fmt;
+} sdl_texture_format_map[] = {
+    { AV_PIX_FMT_RGB8,           SDL_PIXELFORMAT_RGB332 },
+    { AV_PIX_FMT_RGB444,         SDL_PIXELFORMAT_RGB444 },
+    { AV_PIX_FMT_RGB555,         SDL_PIXELFORMAT_RGB555 },
+    { AV_PIX_FMT_BGR555,         SDL_PIXELFORMAT_BGR555 },
+    { AV_PIX_FMT_RGB565,         SDL_PIXELFORMAT_RGB565 },
+    { AV_PIX_FMT_BGR565,         SDL_PIXELFORMAT_BGR565 },
+    { AV_PIX_FMT_RGB24,          SDL_PIXELFORMAT_RGB24 },
+    { AV_PIX_FMT_BGR24,          SDL_PIXELFORMAT_BGR24 },
+    { AV_PIX_FMT_0RGB32,         SDL_PIXELFORMAT_RGB888 },
+    { AV_PIX_FMT_0BGR32,         SDL_PIXELFORMAT_BGR888 },
+    { AV_PIX_FMT_NE(RGB0, 0BGR), SDL_PIXELFORMAT_RGBX8888 },
+    { AV_PIX_FMT_NE(BGR0, 0RGB), SDL_PIXELFORMAT_BGRX8888 },
+    { AV_PIX_FMT_RGB32,          SDL_PIXELFORMAT_ARGB8888 },
+    { AV_PIX_FMT_RGB32_1,        SDL_PIXELFORMAT_RGBA8888 },
+    { AV_PIX_FMT_BGR32,          SDL_PIXELFORMAT_ABGR8888 },
+    { AV_PIX_FMT_BGR32_1,        SDL_PIXELFORMAT_BGRA8888 },
+    { AV_PIX_FMT_YUV420P,        SDL_PIXELFORMAT_IYUV },
+    { AV_PIX_FMT_YUYV422,        SDL_PIXELFORMAT_YUY2 },
+    { AV_PIX_FMT_UYVY422,        SDL_PIXELFORMAT_UYVY },
+    { AV_PIX_FMT_NONE,           SDL_PIXELFORMAT_UNKNOWN },
+};
+
+#if CONFIG_AVFILTER
+int VideoPlayer::configure_filtergraph(AVFilterGraph *graph, const char *filtergraph, AVFilterContext *source_ctx, AVFilterContext *sink_ctx)
+{
+    int ret, i;
+    int nb_filters = graph->nb_filters;
+    AVFilterInOut *outputs = NULL, *inputs = NULL;
+
+    if (filtergraph) {
+        outputs = avfilter_inout_alloc();
+        inputs  = avfilter_inout_alloc();
+        if (!outputs || !inputs) {
+            ret = AVERROR(ENOMEM);
+            goto fail;
+        }
+
+        outputs->name       = av_strdup("in");
+        outputs->filter_ctx = source_ctx;
+        outputs->pad_idx    = 0;
+        outputs->next       = NULL;
+
+        inputs->name        = av_strdup("out");
+        inputs->filter_ctx  = sink_ctx;
+        inputs->pad_idx     = 0;
+        inputs->next        = NULL;
+
+        if ((ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL)) < 0)
+            goto fail;
+    } else {
+        if ((ret = avfilter_link(source_ctx, 0, sink_ctx, 0)) < 0)
+            goto fail;
+    }
+
+    /* Reorder the filters to ensure that inputs of the custom filters are merged first */
+    for (i = 0; i < graph->nb_filters - nb_filters; i++)
+        FFSWAP(AVFilterContext*, graph->filters[i], graph->filters[i + nb_filters]);
+
+    ret = avfilter_graph_config(graph, NULL);
+fail:
+    avfilter_inout_free(&outputs);
+    avfilter_inout_free(&inputs);
+    return ret;
+}
+
+double get_rotation(AVStream *st)
+{
+    uint8_t* displaymatrix = av_stream_get_side_data(st,
+                                                     AV_PKT_DATA_DISPLAYMATRIX, NULL);
+    double theta = 0;
+    if (displaymatrix)
+        theta = -av_display_rotation_get((int32_t*) displaymatrix);
+
+    theta -= 360*floor(theta/360 + 0.9/360);
+
+    if (fabs(theta - 90*round(theta/90)) > 2)
+        av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
+               "If you want to help, upload a sample "
+               "of this file to ftp://upload.ffmpeg.org/incoming/ "
+               "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+
+    return theta;
+}
+
+int VideoPlayer::configure_video_filters(AVFilterGraph *graph, const char *vfilters, AVFrame *frame)
+{
+    enum AVPixelFormat pix_fmts[FF_ARRAY_ELEMS(sdl_texture_format_map)];
+    char sws_flags_str[512] = "";
+    char buffersrc_args[256];
+    int ret;
+    AVFilterContext *filt_src = NULL, *filt_out = NULL, *last_filter = NULL;
+    AVCodecParameters *codecpar = this->mVideoStream->codecpar;
+    AVRational fr = av_guess_frame_rate(this->pFormatCtx, this->mVideoStream, NULL);
+    AVDictionaryEntry *e = NULL;
+    int nb_pix_fmts = 0;
+
+//    int i, j;
+//    for (i = 0; i < renderer_info.num_texture_formats; i++)
+//    {
+//        for (j = 0; j < FF_ARRAY_ELEMS(sdl_texture_format_map) - 1; j++)
+//        {
+//            if (renderer_info.texture_formats[i] == sdl_texture_format_map[j].texture_fmt)
+//            {
+//                pix_fmts[nb_pix_fmts++] = sdl_texture_format_map[j].format;
+//                break;
+//            }
+//        }
+//    }
+    pix_fmts[nb_pix_fmts] = AV_PIX_FMT_NONE;
+
+//    while ((e = av_dict_get(sws_dict, "", e, AV_DICT_IGNORE_SUFFIX)))
+//    {
+//        if (!strcmp(e->key, "sws_flags"))
+//        {
+//            av_strlcatf(sws_flags_str, sizeof(sws_flags_str), "%s=%s:", "flags", e->value);
+//        }
+//        else
+//        {
+//            av_strlcatf(sws_flags_str, sizeof(sws_flags_str), "%s=%s:", e->key, e->value);
+//        }
+//    }
+
+    if (strlen(sws_flags_str))
+        sws_flags_str[strlen(sws_flags_str)-1] = '\0';
+
+    graph->scale_sws_opts = av_strdup(sws_flags_str);
+
+    snprintf(buffersrc_args, sizeof(buffersrc_args),
+             "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+             frame->width, frame->height, frame->format,
+             this->mVideoStream->time_base.num, this->mVideoStream->time_base.den,
+             codecpar->sample_aspect_ratio.num, FFMAX(codecpar->sample_aspect_ratio.den, 1));
+
+    if (fr.num && fr.den)
+        av_strlcatf(buffersrc_args, sizeof(buffersrc_args), ":frame_rate=%d/%d", fr.num, fr.den);
+
+    if ((ret = avfilter_graph_create_filter(&filt_src,
+                                            avfilter_get_by_name("buffer"),
+                                            "ffplay_buffer", buffersrc_args, NULL,
+                                            graph)) < 0)
+    {
+        goto fail;
+    }
+
+    ret = avfilter_graph_create_filter(&filt_out,
+                                       avfilter_get_by_name("buffersink"),
+                                       "ffplay_buffersink", NULL, NULL, graph);
+    if (ret < 0)
+        goto fail;
+
+    if ((ret = av_opt_set_int_list(filt_out, "pix_fmts", pix_fmts,  AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN)) < 0)
+        goto fail;
+
+    last_filter = filt_out;
+
+/* Note: this macro adds a filter before the lastly added filter, so the
+ * processing order of the filters is in reverse */
+#define INSERT_FILT(name, arg) do {                                          \
+    AVFilterContext *filt_ctx;                                               \
+                                                                             \
+    ret = avfilter_graph_create_filter(&filt_ctx,                            \
+                                       avfilter_get_by_name(name),           \
+                                       "ffplay_" name, arg, NULL, graph);    \
+    if (ret < 0)                                                             \
+        goto fail;                                                           \
+                                                                             \
+    ret = avfilter_link(filt_ctx, 0, last_filter, 0);                        \
+    if (ret < 0)                                                             \
+        goto fail;                                                           \
+                                                                             \
+    last_filter = filt_ctx;                                                  \
+} while (0)
+
+    if (autorotate) {
+        double theta  = get_rotation(this->mVideoStream);
+//        theta = 90.0f; //测试用
+fprintf(stderr, "%s get_rotation：%d \n", __FUNCTION__, theta);
+        if (fabs(theta - 90) < 1.0) {
+            INSERT_FILT("transpose", "clock");
+        } else if (fabs(theta - 180) < 1.0) {
+            INSERT_FILT("hflip", NULL);
+            INSERT_FILT("vflip", NULL);
+        } else if (fabs(theta - 270) < 1.0) {
+            INSERT_FILT("transpose", "cclock");
+        } else if (fabs(theta) > 1.0) {
+            char rotate_buf[64];
+            snprintf(rotate_buf, sizeof(rotate_buf), "%f*PI/180", theta);
+            INSERT_FILT("rotate", rotate_buf);
+        }
+    }
+
+    if ((ret = configure_filtergraph(graph, vfilters, filt_src, last_filter)) < 0)
+        goto fail;
+
+    this->in_video_filter  = filt_src;
+    this->out_video_filter = filt_out;
+
+fail:
+    return ret;
+}
+
+#endif  /* CONFIG_AVFILTER */
+
 void VideoPlayer::decodeVideoThread()
 {
     fprintf(stderr, "%s start \n", __FUNCTION__);
@@ -27,6 +243,17 @@ void VideoPlayer::decodeVideoThread()
     AVCodecContext *pCodecCtx = mVideoStream->codec; //视频解码器
 
     pFrame = av_frame_alloc();
+
+#if CONFIG_AVFILTER
+    AVFilterGraph *graph = NULL;
+    AVFilterContext *filt_out = NULL, *filt_in = NULL;
+    int last_w = 0;
+    int last_h = 0;
+//    AVPixelFormat last_format = -2;
+    int last_format = -2;
+//    int last_serial = -1;
+    int last_vfilter_idx = 0;
+#endif
 
     while(1)
     {
@@ -157,7 +384,76 @@ void VideoPlayer::decodeVideoThread()
                 }
             }
 
-            if (pCodecCtx->width != videoWidth || pCodecCtx->height != videoHeight)
+#if CONFIG_AVFILTER
+        if (   last_w != pFrame->width
+            || last_h != pFrame->height
+            || last_format != pFrame->format
+//            || last_serial != is->viddec.pkt_serial
+            || last_vfilter_idx != vfilter_idx)
+        {
+//            av_log(NULL, AV_LOG_DEBUG,
+//                   "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s serial:%d\n",
+//                   last_w, last_h,
+//                   (const char *)av_x_if_null(av_get_pix_fmt_name(last_format), "none"), last_serial, pFrame->width, pFrame->height,
+//                   (const char *)av_x_if_null(av_get_pix_fmt_name(pFrame->format), "none"), is->viddec.pkt_serial);
+
+            avfilter_graph_free(&graph);
+            graph = avfilter_graph_alloc();
+            if (!graph)
+            {
+//                ret = AVERROR(ENOMEM);
+//                goto the_end;
+                continue;
+            }
+            graph->nb_threads = filter_nbthreads;
+
+            int ret = configure_video_filters(graph, vfilters_list ? vfilters_list[vfilter_idx] : NULL, pFrame);
+            if (ret < 0)
+            {
+//                SDL_Event event;
+//                event.type = FF_QUIT_EVENT;
+//                event.user.data1 = is;
+//                SDL_PushEvent(&event);
+//                goto the_end;
+                continue;
+            }
+            filt_in  = in_video_filter;
+            filt_out = out_video_filter;
+            last_w = pFrame->width;
+            last_h = pFrame->height;
+            last_format = pFrame->format;
+//            last_serial = is->viddec.pkt_serial;
+            last_vfilter_idx = vfilter_idx;
+//            frame_rate = av_buffersink_get_frame_rate(filt_out);
+        }
+
+        int ret = av_buffersrc_add_frame(filt_in, pFrame);
+        if (ret < 0)
+        {
+//            goto the_end;
+            continue;
+        }
+
+        while (ret >= 0)
+        {
+//            is->frame_last_returned_time = av_gettime_relative() / 1000000.0;
+
+            ret = av_buffersink_get_frame_flags(filt_out, pFrame, 0);
+            if (ret < 0)
+            {
+//                if (ret == AVERROR_EOF)
+//                    is->viddec.finished = is->viddec.pkt_serial;
+                ret = 0;
+                break;
+            }
+
+//            frame_last_filter_delay = av_gettime_relative() / 1000000.0 - is->frame_last_returned_time;
+//            if (fabs(is->frame_last_filter_delay) > AV_NOSYNC_THRESHOLD / 10.0)
+//                is->frame_last_filter_delay = 0;
+//            tb = av_buffersink_get_time_base(filt_out);
+#endif
+
+            if (pFrame->width != videoWidth || pFrame->height != videoHeight)
             {
                 videoWidth  = pFrame->width;
                 videoHeight = pFrame->height;
@@ -179,28 +475,33 @@ void VideoPlayer::decodeVideoThread()
 
                 pFrameYUV = av_frame_alloc();
 
-                int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);  //按1字节进行内存对齐,得到的内存大小最接近实际大小
+                int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, videoWidth, videoHeight, 1);  //按1字节进行内存对齐,得到的内存大小最接近实际大小
             //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 0);  //按0字节进行内存对齐，得到的内存大小是0
             //    int yuvSize = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 4);   //按4字节进行内存对齐，得到的内存大小稍微大一些
 
                 unsigned int numBytes = static_cast<unsigned int>(yuvSize);
                 yuv420pBuffer = static_cast<uint8_t *>(av_malloc(numBytes * sizeof(uint8_t)));
-                av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, yuv420pBuffer, AV_PIX_FMT_YUV420P, pCodecCtx->width, pCodecCtx->height, 1);
+                av_image_fill_arrays(pFrameYUV->data, pFrameYUV->linesize, yuv420pBuffer, AV_PIX_FMT_YUV420P, videoWidth, videoHeight, 1);
 
                 ///由于解码后的数据不一定都是yuv420p，因此需要将解码后的数据统一转换成YUV420P
-                imgConvertCtx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
-                        pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
+                imgConvertCtx = sws_getContext(videoWidth, videoHeight,
+                        (AVPixelFormat)pFrame->format, videoWidth, videoHeight,
                         AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 
             }
 
             sws_scale(imgConvertCtx,
                     (uint8_t const * const *) pFrame->data,
-                    pFrame->linesize, 0, pCodecCtx->height, pFrameYUV->data,
+                    pFrame->linesize, 0, videoHeight, pFrameYUV->data,
                     pFrameYUV->linesize);
 
-            doDisplayVideo(yuv420pBuffer, pCodecCtx->width, pCodecCtx->height);
+            doDisplayVideo(yuv420pBuffer, videoWidth, videoHeight);
 
+#if CONFIG_AVFILTER
+//            if (is->videoq.serial != is->viddec.pkt_serial)
+//                break;
+        }
+#endif
             if (mIsNeedPause)
             {
                 mIsPause = true;
@@ -210,6 +511,10 @@ void VideoPlayer::decodeVideoThread()
         }
         av_packet_unref(packet);
     }
+
+#if CONFIG_AVFILTER
+    avfilter_graph_free(&graph);
+#endif
 
     av_free(pFrame);
 

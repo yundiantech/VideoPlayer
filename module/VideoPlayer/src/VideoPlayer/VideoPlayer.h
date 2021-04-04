@@ -18,9 +18,15 @@ extern "C"
     #include <libavformat/avformat.h>
     #include <libavutil/time.h>
     #include <libavutil/pixfmt.h>
+    #include <libavutil/display.h>
+    #include <libavutil/avstring.h>
+    #include <libavutil/opt.h>
     #include <libswscale/swscale.h>
     #include <libswresample/swresample.h>
     #include <libavutil/imgutils.h>
+    #include <libavfilter/avfilter.h>
+    #include <libavfilter/buffersink.h>
+    #include <libavfilter/buffersrc.h>
 
     #include <SDL.h>
     #include <SDL_audio.h>
@@ -29,6 +35,9 @@ extern "C"
     #include <SDL_main.h>
     #include <SDL_config.h>
 }
+
+///启用滤镜，用于旋转带角度的视频
+#define CONFIG_AVFILTER 1
 
 #include "types.h"
 #include "Mutex/Cond.h"
@@ -148,6 +157,15 @@ private:
     DECLARE_ALIGNED(16,uint8_t,audio_buf) [AVCODEC_MAX_AUDIO_FRAME_SIZE * 4];
 
 
+#if CONFIG_AVFILTER
+    int vfilter_idx;
+    AVFilterContext *in_video_filter;   // the first filter in the video chain
+    AVFilterContext *out_video_filter;  // the last filter in the video chain
+    AVFilterContext *in_audio_filter;   // the first filter in the audio chain
+    AVFilterContext *out_audio_filter;  // the last filter in the audio chain
+    AVFilterGraph *agraph;              // audio filter graph
+#endif
+
     ///视频帧队列
     Cond *mConditon_Video;
     std::list<AVPacket> mVideoPacktList;
@@ -166,6 +184,8 @@ private:
     int openSDL();
     void closeSDL();
 
+    int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph, AVFilterContext *source_ctx, AVFilterContext *sink_ctx);
+    int configure_video_filters(AVFilterGraph *graph, const char *vfilters, AVFrame *frame);
 
     ///回调函数相关，主要用于输出信息给界面
 private:

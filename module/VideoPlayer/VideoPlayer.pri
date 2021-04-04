@@ -1,6 +1,8 @@
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++11
 
+INCLUDEPATH += $$PWD/src
+
 SOURCES +=  \
     $$PWD/src/Mutex/Cond.cpp \
     $$PWD/src/Mutex/Mutex.cpp \
