@@ -156,8 +156,15 @@ private:
     unsigned int audio_buf_index;
     DECLARE_ALIGNED(16,uint8_t,audio_buf) [AVCODEC_MAX_AUDIO_FRAME_SIZE * 4];
 
+    int autorotate = 1;
+    int find_stream_info = 1;
+    int filter_nbthreads = 0;
 
 #if CONFIG_AVFILTER
+    const char **vfilters_list = NULL;
+    int nb_vfilters = 0;
+    char *afilters = NULL;
+
     int vfilter_idx;
     AVFilterContext *in_video_filter;   // the first filter in the video chain
     AVFilterContext *out_video_filter;  // the last filter in the video chain
