@@ -6,15 +6,6 @@
 
 #include "VideoPlayer/VideoPlayer.h"
 
-#if CONFIG_AVFILTER
-static const char **vfilters_list = NULL;
-static int nb_vfilters = 0;
-static char *afilters = NULL;
-#endif
-static int autorotate = 1;
-static int find_stream_info = 1;
-static int filter_nbthreads = 0;
-
 //static const struct TextureFormatEntry {
 //    enum AVPixelFormat format;
 //    int texture_fmt;
