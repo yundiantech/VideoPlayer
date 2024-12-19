@@ -1,0 +1,1 @@
+copy module/VideoPlayer/lib/ffmpeg/bin/win64/avcodec-58.dll bin/win64

@@ -5,3 +5,4 @@ bin64/data
 module/VideoPlayer/lib/linux/ffmpeg
 module/VideoPlayer/lib/linux/SDL2
 bin64/VideoPlayer
+build/

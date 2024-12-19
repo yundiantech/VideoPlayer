@@ -1,0 +1,30 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        { 
+            "name": "VideoPlayer(Debug_x64)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/win64/Debug/VideoPlayer.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/bin/win64/",
+            "environment": [{"name":"PATH","value":"C:/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin"}],
+            "console": "externalTerminal"
+        },
+        { 
+            "name": "VideoPlayer(Release_x64)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/win64/Release/VideoPlayer.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/bin/win64/",
+            "environment": [{"name":"PATH","value":"C:/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin"}],
+            "console": "externalTerminal"
+        }
+    ]
+}

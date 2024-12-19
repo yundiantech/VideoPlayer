@@ -1,5 +1,7 @@
 INCLUDEPATH += $$PWD
 
+include($$PWD/ffmpeg/ffmpeg.pri)
+
 win32{
 
     INCLUDEPATH += $$PWD/win/ffmpeg/include \
