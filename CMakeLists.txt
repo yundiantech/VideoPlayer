@@ -33,7 +33,7 @@ elseif(WIN32)
 
     message("current platform: Windows ")
 
-    set(QT_DIR_ROOT D:/Qt/Qt5.13.2/5.13.2)
+    set(QT_DIR_ROOT C:/Qt/Qt5.13.2/5.13.2)
     
     if(CMAKE_CL_64)    #CMAKE的内建变量，如果是true，就说明编译器的64位的，自然可以编译64bit的程序
         # set(CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)

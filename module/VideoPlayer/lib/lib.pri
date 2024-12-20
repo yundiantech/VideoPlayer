@@ -1,25 +1,26 @@
 INCLUDEPATH += $$PWD
 
 include($$PWD/ffmpeg/ffmpeg.pri)
+include($$PWD/SDL2/SDL2.pri)
 
-win32{
+#win32{
 
-    INCLUDEPATH += $$PWD/win/ffmpeg/include \
-                   $$PWD/win/SDL2/include
+#    INCLUDEPATH += $$PWD/win/ffmpeg/include \
+#                   $$PWD/win/SDL2/include
 
-    contains(QT_ARCH, i386) {
-        message("32-bit")
+#    contains(QT_ARCH, i386) {
+#        message("32-bit")
 
-        LIBS += -L$$PWD/win/ffmpeg/lib/x86 -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
-        LIBS += -L$$PWD/win/SDL2/lib/x86 -lSDL2
-    } else {
-        message("64-bit")
+#        LIBS += -L$$PWD/win/ffmpeg/lib/x86 -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
+#        LIBS += -L$$PWD/win/SDL2/lib/x86 -lSDL2
+#    } else {
+#        message("64-bit")
 
-        LIBS += -L$$PWD/win/ffmpeg/lib/x64 -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
-        LIBS += -L$$PWD/win/SDL2/lib/x64 -lSDL2
-    }
+#        LIBS += -L$$PWD/win/ffmpeg/lib/x64 -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
+#        LIBS += -L$$PWD/win/SDL2/lib/x64 -lSDL2
+#    }
 
-}
+#}
 
 unix{
 
