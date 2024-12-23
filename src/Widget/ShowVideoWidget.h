@@ -11,8 +11,7 @@
 #include <QOpenGLTexture>
 #include <QFile>
 
-#include "Base/FunctionTransfer.h"
-#include "VideoPlayer/Video/VideoFrame.h"
+#include "frame/VideoFrame/VideoFrame.h"
 
 namespace Ui {
 class ShowVideoWidget;

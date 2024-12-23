@@ -17,9 +17,10 @@
 
 enum VideoPlayerState
 {
-    VideoPlayer_Playing,
+    VideoPlayer_Playing = 0,
     VideoPlayer_Pause,
-    VideoPlayer_Stop
+    VideoPlayer_Stop,
+    VideoPlayer_ReadError,
 };
 
 #if defined(WIN32)

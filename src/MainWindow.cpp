@@ -17,7 +17,6 @@
 #include <QMessageBox>
 
 #include "AppConfig.h"
-#include "Base/FunctionTransfer.h"
 
 #include "Widget/SetVideoUrlDialog.h"
 #include "Widget/mymessagebox_withTitle.h"
@@ -29,8 +28,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this->getContainWidget());
-
-    FunctionTransfer::init(QThread::currentThreadId());
 
     ///初始化播放器
     VideoPlayer::initPlayer();
@@ -114,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
             static QPoint lastPoint = QPoint(0, 0);
 
-            FunctionTransfer::runInMainThread([=]()
+            QMetaObject::invokeMethod(this, [=]()
             {
                 QPoint point = QCursor::pos();
 
@@ -141,8 +138,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-qDebug()<<__FUNCTION__;
-
     AppConfig::saveConfigInfoToFile();
     AppConfig::removeDirectory(AppConfig::AppDataPath_Tmp);
 
@@ -587,7 +582,7 @@ void MainWindow::slotActionClick()
 ///打开文件失败
 void MainWindow::onOpenVideoFileFailed(const int &code)
 {
-    FunctionTransfer::runInMainThread([=]()
+    QMetaObject::invokeMethod(this, [=]()
     {
         QMessageBox::critical(NULL, "tips", QString("open file failed %1").arg(code));
     });
@@ -596,7 +591,7 @@ void MainWindow::onOpenVideoFileFailed(const int &code)
 ///打开SDL失败的时候回调此函数
 void MainWindow::onOpenSdlFailed(const int &code)
 {
-    FunctionTransfer::runInMainThread([=]()
+    QMetaObject::invokeMethod(this, [=]()
     {
         QMessageBox::critical(NULL, "tips", QString("open Sdl failed %1").arg(code));
     });
@@ -605,7 +600,7 @@ void MainWindow::onOpenSdlFailed(const int &code)
 ///获取到视频时长的时候调用此函数
 void MainWindow::onTotalTimeChanged(const int64_t &uSec)
 {
-    FunctionTransfer::runInMainThread([=]()
+    QMetaObject::invokeMethod(this, [=]()
     {
         qint64 Sec = uSec/1000000;
 
@@ -631,7 +626,7 @@ void MainWindow::onTotalTimeChanged(const int64_t &uSec)
 ///播放器状态改变的时候回调此函数
 void MainWindow::onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-    FunctionTransfer::runInMainThread([=]()
+    QMetaObject::invokeMethod(this, [=]()
     {
 qDebug()<<__FUNCTION__<<state<<mIsNeedPlayNext;
         if (state == VideoPlayer_Stop)

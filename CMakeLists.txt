@@ -114,9 +114,9 @@ file(GLOB_RECURSE ALL_SOURCE
 #     ${CMAKE_CURRENT_SOURCE_DIR}/module/DragAbleWidget/*.cpp)
 # list (APPEND ALL_SOURCE ${TMP_SOURCE})
 
-file(GLOB_RECURSE ALL_HEAD
-        src/*.hpp
-        src/*.h)
+# file(GLOB_RECURSE ALL_HEAD
+#         src/*.hpp
+#         src/*.h)
 
 qt5_add_resources(qrc_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/resources/resources.qrc)
 message("ALL_SOURCE:"${ALL_SOURCE})

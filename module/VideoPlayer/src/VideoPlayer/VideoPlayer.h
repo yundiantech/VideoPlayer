@@ -28,12 +28,12 @@ extern "C"
     #include <libavfilter/buffersink.h>
     #include <libavfilter/buffersrc.h>
 
-    #include <SDL.h>
-    #include <SDL_audio.h>
-    #include <SDL_types.h>
-    #include <SDL_name.h>
-    #include <SDL_main.h>
-    #include <SDL_config.h>
+//    #include <SDL.h>
+//    #include <SDL_audio.h>
+//    #include <SDL_types.h>
+//    #include <SDL_name.h>
+//    #include <SDL_main.h>
+//    #include <SDL_config.h>
 }
 
 ///启用滤镜，用于旋转带角度的视频
@@ -42,6 +42,8 @@ extern "C"
 #include "types.h"
 #include "Mutex/Cond.h"
 #include "EventHandle/VideoPlayerEventHandle.h"
+#include "PcmPlayer/PcmPlayer.h"
+#include "util/thread.h"
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
@@ -57,7 +59,7 @@ extern "C"
  * 播放器类，纯c++实现，方便移植，与界面的交互通过回调函数的方式实现
  */
 
-class VideoPlayer
+class VideoPlayer : public Thread
 {
 public:
     VideoPlayer();
@@ -74,27 +76,31 @@ public:
 
     bool startPlay(const std::string &filePath);
 
-    bool replay(); //重新播放
+    bool replay(bool isWait = false); //重新播放
 
     bool play(); //播放（用于暂停后，重新开始播放）
     bool pause(); //暂停播放
-    bool stop(bool isWait = false); //停止播放-参数表示是否等待所有的线程执行完毕再返回
+    bool stop(bool isWait = true); //停止播放-参数表示是否等待所有的线程执行完毕再返回
 
     void seek(int64_t pos); //单位是微秒
 
-    void setMute(bool isMute){mIsMute = isMute;}
+    void setMute(bool isMute);
     void setVolume(float value);
     float getVolume(){return mVolume;}
 
     int64_t getTotalTime(); //单位微秒
     double getCurrentTime(); //单位秒
 
+    ///用于判断是否打开超时或读取超时
+    bool mIsOpenStream; //是否正在打开流（用于回调函数中判断是打开流还是读取流）
+    int64_t mCallStartTime = 0;
+
 protected:
-    void readVideoFile(); //读取视频文件
+    void run(); //读取视频文件
     void decodeVideoThread();
 
-    static void sdlAudioCallBackFunc(void *userdata, Uint8 *stream, int len);
-    void sdlAudioCallBack(Uint8 *stream, int len);
+//    static void sdlAudioCallBackFunc(void *userdata, Uint8 *stream, int len);
+//    void sdlAudioCallBack(Uint8 *stream, int len);
     int decodeAudioFrame(bool isBlock = false);
 
 private:
@@ -121,11 +127,12 @@ private:
     bool mIsReadThreadFinished;
     bool mIsVideoThreadFinished; //视频解码线程
     bool mIsAudioThreadFinished; //音频播放线程
+    bool mIsReadError = false; //是否读取失败
 
     ///音视频同步相关
     uint64_t mVideoStartTime; //开始播放视频的时间
     uint64_t mPauseStartTime; //暂停开始的时间
-    double audio_clock; ///音频时钟
+    double audio_clock; ///音频时钟(秒-小数)
     double video_clock; ///<pts of last decoded frame / predicted pts of next decoded frame
     AVStream *mVideoStream; //视频流
     AVStream *mAudioStream; //音频流
@@ -148,13 +155,14 @@ private:
 
     enum AVSampleFormat in_sample_fmt; //输入的采样格式
     enum AVSampleFormat out_sample_fmt;//输出的采样格式 16bit PCM
-    int in_sample_rate;//输入的采样率
-    int out_sample_rate;//输出的采样率
+    int m_in_sample_rate;//输入的采样率
+    int m_out_sample_rate;//输出的采样率
     int audio_tgt_channels; ///av_get_channel_layout_nb_channels(out_ch_layout);
     int out_ch_layout;
     unsigned int audio_buf_size;
     unsigned int audio_buf_index;
-    DECLARE_ALIGNED(16,uint8_t,audio_buf) [AVCODEC_MAX_AUDIO_FRAME_SIZE * 4];
+//    DECLARE_ALIGNED(16,uint8_t,audio_buf) [AVCODEC_MAX_AUDIO_FRAME_SIZE * 4];
+    uint8_t audio_buf[AVCODEC_MAX_AUDIO_FRAME_SIZE * 4];
 
     int autorotate = 1;
     int find_stream_info = 1;
@@ -185,11 +193,12 @@ private:
     bool inputAudioQuene(const AVPacket &pkt);
     void clearAudioQuene();
 
-    ///本播放器中SDL仅用于播放音频，不用做别的用途
-    ///SDL播放音频相关
-    SDL_AudioDeviceID mAudioID;
-    int openSDL();
-    void closeSDL();
+//    ///本播放器中SDL仅用于播放音频，不用做别的用途
+//    ///SDL播放音频相关
+//    SDL_AudioDeviceID mAudioID;
+//    int openSDL();
+//    void closeSDL();
+    PcmPlayer *mPcmPlayer = nullptr;
 
     int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph, AVFilterContext *source_ctx, AVFilterContext *sink_ctx);
     int configure_video_filters(AVFilterGraph *graph, const char *vfilters, AVFrame *frame);

@@ -6,7 +6,7 @@
 
 #include "VideoPlayer.h"
 
-#include "Audio/PcmVolumeControl.h"
+#include "PcmPlayer/PcmPlayer_SDL.h"
 
 #include <stdio.h>
 
@@ -19,12 +19,16 @@ VideoPlayer::VideoPlayer()
 
     mVideoPlayerCallBack = nullptr;
 
-    mAudioID = 0;
+//    mAudioID = 0;
     mIsMute = false;
 
     mIsNeedPause = false;
 
     mVolume = 1;
+
+    mPcmPlayer = new PcmPlayer_SDL();
+
+    this->setSingleMode(true);
 }
 
 VideoPlayer::~VideoPlayer()
@@ -38,7 +42,7 @@ bool VideoPlayer::initPlayer()
 
     if (!isInited)
     {
-        av_register_all(); //初始化FFMPEG  调用了这个才能正常使用编码器和解码器
+//        av_register_all(); //初始化FFMPEG  调用了这个才能正常使用编码器和解码器
         avformat_network_init(); //支持打开网络文件
 
         isInited = true;
@@ -68,19 +72,20 @@ bool VideoPlayer::startPlay(const std::string &filePath)
         mFilePath = filePath;
 
     //启动新的线程实现读取视频文件
-    std::thread([&](VideoPlayer *pointer)
-    {
-        pointer->readVideoFile();
+//    std::thread([&](VideoPlayer *pointer)
+//    {
+//        pointer->readVideoFile();
 
-    }, this).detach();
+//    }, this).detach();
+    this->start();
 
     return true;
 
 }
 
-bool VideoPlayer::replay()
+bool VideoPlayer::replay(bool isWait)
 {
-    stop();
+    stop(isWait);
 
     startPlay(mFilePath);
 
@@ -140,7 +145,8 @@ bool VideoPlayer::stop(bool isWait)
     {
         while(!mIsReadThreadFinished)
         {
-            mSleep(3);
+            fprintf(stderr, "mIsReadThreadFinished=%d \n", mIsReadThreadFinished);
+            mSleep(100);
         }
     }
 
@@ -156,9 +162,16 @@ void VideoPlayer::seek(int64_t pos)
     }
 }
 
+void VideoPlayer::setMute(bool isMute)
+{
+    mIsMute = isMute;
+    mPcmPlayer->setMute(isMute);
+}
+
 void VideoPlayer::setVolume(float value)
 {
     mVolume = value;
+    mPcmPlayer->setVolume(value);
 }
 
 double VideoPlayer::getCurrentTime()
@@ -171,71 +184,100 @@ int64_t VideoPlayer::getTotalTime()
     return pFormatCtx->duration;
 }
 
-int VideoPlayer::openSDL()
+//int VideoPlayer::openSDL()
+//{
+//    ///打开SDL，并设置播放的格式为:AUDIO_S16LSB 双声道，44100hz
+//    ///后期使用ffmpeg解码完音频后，需要重采样成和这个一样的格式，否则播放会有杂音
+//    SDL_AudioSpec wanted_spec, spec;
+//    int wanted_nb_channels = 2;
+////    int samplerate = 44100;
+//    int samplerate = m_out_sample_rate;
+
+//    wanted_spec.channels = wanted_nb_channels;
+//    wanted_spec.freq = samplerate;
+//    wanted_spec.samples = FFMAX(512, 2 << av_log2(wanted_spec.freq / 30));
+//    wanted_spec.format = AUDIO_S16SYS; // 具体含义请查看“SDL宏定义”部分
+//    wanted_spec.silence = 0;            // 0指示静音
+////    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;  // 自定义SDL缓冲区大小
+//    wanted_spec.callback = sdlAudioCallBackFunc;  // 回调函数
+//    wanted_spec.userdata = this;                  // 传给上面回调函数的外带数据
+
+//    int num = SDL_GetNumAudioDevices(0);
+//    for (int i=0;i<num;i++)
+//    {
+//        mAudioID = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(i,0), false, &wanted_spec, &spec,0);
+//        if (mAudioID > 0)
+//        {
+//            break;
+//        }
+//    }
+
+//    /* 检查实际使用的配置（保存在spec,由SDL_OpenAudio()填充） */
+////    if (spec.format != AUDIO_S16SYS)
+//    if (mAudioID <= 0)
+//    {
+//        mIsAudioThreadFinished = true;
+//        return -1;
+//    }
+//fprintf(stderr, "mAudioID=%d\n\n\n\n\n\n", mAudioID);
+//    return 0;
+//}
+
+//void VideoPlayer::closeSDL()
+//{
+//    if (mAudioID > 0)
+//    {
+//        SDL_LockAudioDevice(mAudioID);
+//        SDL_PauseAudioDevice(mAudioID, 1);
+//        SDL_UnlockAudioDevice(mAudioID);
+
+//        SDL_CloseAudioDevice(mAudioID);
+//    }
+
+//    mAudioID = 0;
+//}
+
+
+static int CheckInterrupt(void* ctx)
 {
-    ///打开SDL，并设置播放的格式为:AUDIO_S16LSB 双声道，44100hz
-    ///后期使用ffmpeg解码完音频后，需要重采样成和这个一样的格式，否则播放会有杂音
-    SDL_AudioSpec wanted_spec, spec;
-    int wanted_nb_channels = 2;
-//    int samplerate = 44100;
-    int samplerate = out_sample_rate;
+    VideoPlayer *pointer = (VideoPlayer*)ctx;
 
-    wanted_spec.channels = wanted_nb_channels;
-    wanted_spec.samples = FFMAX(512, 2 << av_log2(wanted_spec.freq / 30));
-    wanted_spec.freq = samplerate;
-    wanted_spec.format = AUDIO_S16SYS; // 具体含义请查看“SDL宏定义”部分
-    wanted_spec.silence = 0;            // 0指示静音
-//    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;  // 自定义SDL缓冲区大小
-    wanted_spec.callback = sdlAudioCallBackFunc;  // 回调函数
-    wanted_spec.userdata = this;                  // 传给上面回调函数的外带数据
+    int ret = 0;
 
-    int num = SDL_GetNumAudioDevices(0);
-    for (int i=0;i<num;i++)
+    if (pointer->mIsOpenStream)
     {
-        mAudioID = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(i,0), false, &wanted_spec, &spec,0);
-        if (mAudioID > 0)
+        ///打开超时10秒
+        if ((av_gettime()-pointer->mCallStartTime) >= 10000000)
         {
-            break;
+            ret = 1;
         }
     }
-
-    /* 检查实际使用的配置（保存在spec,由SDL_OpenAudio()填充） */
-//    if (spec.format != AUDIO_S16SYS)
-    if (mAudioID <= 0)
+    else
     {
-        mIsAudioThreadFinished = true;
-        return -1;
+        ///读取超时10秒
+        if ((av_gettime()-pointer->mCallStartTime) >= 10000000)
+        {
+            ret = 1;
+        }
     }
-fprintf(stderr, "mAudioID=%d\n\n\n\n\n\n", mAudioID);
-    return 0;
+//fprintf(stderr,"%s mIsOpenStream=%d ret=%d \n", __FUNCTION__, pointer->mIsOpenStream, ret);
+
+    return ret;
 }
 
-void VideoPlayer::closeSDL()
+void VideoPlayer::run()
 {
-    if (mAudioID > 0)
-    {
-        SDL_LockAudioDevice(mAudioID);
-        SDL_PauseAudioDevice(mAudioID, 1);
-        SDL_UnlockAudioDevice(mAudioID);
-
-        SDL_CloseAudioDevice(mAudioID);
-    }
-
-    mAudioID = 0;
-}
-
-void VideoPlayer::readVideoFile()
-{
-    ///SDL初始化需要放入子线程中，否则有些电脑会有问题。
-    if (SDL_Init(SDL_INIT_AUDIO))
-    {
-        doOpenSdlFailed(-100);
-        fprintf(stderr, "Could not initialize SDL - %s. \n", SDL_GetError());
-        return;
-    }
+//    ///SDL初始化需要放入子线程中，否则有些电脑会有问题。
+//    if (SDL_Init(SDL_INIT_AUDIO))
+//    {
+//        doOpenSdlFailed(-100);
+//        fprintf(stderr, "Could not initialize SDL - %s. \n", SDL_GetError());
+//        return;
+//    }
 
     mIsReadThreadFinished = false;
     mIsReadFinished = false;
+    mIsReadError = false;
 
     const char * file_path = mFilePath.c_str();
 
@@ -260,13 +302,20 @@ void VideoPlayer::readVideoFile()
     //Allocate an AVFormatContext.
     pFormatCtx = avformat_alloc_context();
 
-    AVDictionary* opts = NULL;
-    av_dict_set(&opts, "rtsp_transport", "tcp", 0); //设置tcp or udp，默认一般优先tcp再尝试udp
-    av_dict_set(&opts, "stimeout", "60000000", 0);//设置超时3秒
+    pFormatCtx->interrupt_callback.callback = CheckInterrupt;//超时回调
+    pFormatCtx->interrupt_callback.opaque = this;
 
+    AVDictionary* opts = NULL;
+    av_dict_set(&opts, "rtsp_transport", "udp", 0); //设置tcp or udp，默认一般优先tcp再尝试udp
+//    av_dict_set(&opts, "rtsp_transport", "tcp", 0); //设置tcp or udp，默认一般优先tcp再尝试udp
+    av_dict_set(&opts, "stimeout", "5000000", 0);//设置超时5秒
+
+    mCallStartTime = av_gettime();
+    mIsOpenStream  = true;
     if (avformat_open_input(&pFormatCtx, file_path, nullptr, &opts) != 0)
     {
         fprintf(stderr, "can't open the file. \n");
+        mIsReadError = true;
         doOpenVideoFileFailed();
         goto end;
     }
@@ -274,6 +323,7 @@ void VideoPlayer::readVideoFile()
     if (avformat_find_stream_info(pFormatCtx, nullptr) < 0)
     {
         fprintf(stderr, "Could't find stream infomation.\n");
+        mIsReadError = true;
         doOpenVideoFileFailed();
         goto end;
     }
@@ -284,11 +334,11 @@ void VideoPlayer::readVideoFile()
     ///循环查找视频中包含的流信息，
     for (int i = 0; i < pFormatCtx->nb_streams; i++)
     {
-        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
         {
             videoStream = i;
         }
-        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO  && audioStream < 0)
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO  && audioStream < 0)
         {
             audioStream = i;
         }
@@ -299,9 +349,14 @@ void VideoPlayer::readVideoFile()
     ///打开视频解码器，并启动视频线程
     if (videoStream >= 0)
     {
+        AVStream *video_stream = pFormatCtx->streams[videoStream];
+
         ///查找视频解码器
-        pCodecCtx = pFormatCtx->streams[videoStream]->codec;
-        pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+        pCodec = (AVCodec*)avcodec_find_decoder(video_stream->codecpar->codec_id);
+        pCodecCtx = avcodec_alloc_context3(pCodec);
+        pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+
+        avcodec_parameters_to_context(pCodecCtx, video_stream->codecpar);
 
         if (pCodec == nullptr)
         {
@@ -318,7 +373,7 @@ void VideoPlayer::readVideoFile()
             goto end;
         }
 
-        mVideoStream = pFormatCtx->streams[videoStream];
+        mVideoStream = video_stream;
 
         ///创建一个线程专门用来解码视频
         std::thread([&](VideoPlayer *pointer)
@@ -331,9 +386,10 @@ void VideoPlayer::readVideoFile()
 
     if (audioStream >= 0)
     {
+        AVStream *audio_stream = pFormatCtx->streams[audioStream];
+
         ///查找音频解码器
-        aCodecCtx = pFormatCtx->streams[audioStream]->codec;
-        aCodec = avcodec_find_decoder(aCodecCtx->codec_id);
+        aCodec = (AVCodec*)avcodec_find_decoder(audio_stream->codecpar->codec_id);
 
         if (aCodec == NULL)
         {
@@ -342,6 +398,10 @@ void VideoPlayer::readVideoFile()
         }
         else
         {
+            /* Allocate a codec context for the decoder */
+            aCodecCtx = avcodec_alloc_context3(aCodec);
+            avcodec_parameters_to_context(aCodecCtx, audio_stream->codecpar);
+
             ///打开音频解码器
             if (avcodec_open2(aCodecCtx, aCodec, nullptr) < 0)
             {
@@ -377,13 +437,13 @@ void VideoPlayer::readVideoFile()
             //输出的采样格式 16bit PCM
             out_sample_fmt = AV_SAMPLE_FMT_S16;
             //输入的采样率
-            in_sample_rate = aCodecCtx->sample_rate;
+            m_in_sample_rate = aCodecCtx->sample_rate;
             //输入的声道布局
             in_ch_layout = aCodecCtx->channel_layout;
 
             //输出的采样率
-//            out_sample_rate = 44100;
-            out_sample_rate = aCodecCtx->sample_rate;
+//            m_out_sample_rate = 44100;
+            m_out_sample_rate = aCodecCtx->sample_rate;
 
             //输出的声道布局
 
@@ -399,8 +459,8 @@ void VideoPlayer::readVideoFile()
                 in_ch_layout = av_get_default_channel_layout(aCodecCtx->channels);
             }
 
-            swrCtx = swr_alloc_set_opts(nullptr, out_ch_layout, out_sample_fmt, out_sample_rate,
-                                                 in_ch_layout, in_sample_fmt, in_sample_rate, 0, nullptr);
+            swrCtx = swr_alloc_set_opts(nullptr, out_ch_layout, out_sample_fmt, m_out_sample_rate,
+                                                 in_ch_layout, in_sample_fmt, m_in_sample_rate, 0, nullptr);
 
             /** Open the resampler with the specified parameters. */
             int ret = swr_init(swrCtx);
@@ -417,7 +477,7 @@ void VideoPlayer::readVideoFile()
             }
 
             //存储pcm数据
-            int out_linesize = out_sample_rate * audio_tgt_channels;
+            int out_linesize = m_out_sample_rate * audio_tgt_channels;
 
     //        out_linesize = av_samples_get_buffer_size(NULL, audio_tgt_channels, av_get_bytes_per_sample(out_sample_fmt), out_sample_fmt, 1);
             out_linesize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
@@ -425,32 +485,32 @@ void VideoPlayer::readVideoFile()
 
             mAudioStream = pFormatCtx->streams[audioStream];
 
-            ///打开SDL播放声音
-            int code = openSDL();
+//            ///打开SDL播放声音
+//            int code = openSDL();
 
-            if (code == 0)
-            {
-                SDL_LockAudioDevice(mAudioID);
-                SDL_PauseAudioDevice(mAudioID,0);
-                SDL_UnlockAudioDevice(mAudioID);
+//            if (code == 0)
+//            {
+//                SDL_LockAudioDevice(mAudioID);
+//                SDL_PauseAudioDevice(mAudioID,0);
+//                SDL_UnlockAudioDevice(mAudioID);
 
                 mIsAudioThreadFinished = false;
-            }
-            else
-            {
-                doOpenSdlFailed(code);
-            }
+//            }
+//            else
+//            {
+//                doOpenSdlFailed(code);
+//            }
         }
 
     }
 
-//    av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
+    av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
 
     mPlayerState = VideoPlayer_Playing;
     doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mVideoStartTime = av_gettime();
-fprintf(stderr, "%s mIsQuit=%d mIsPause=%d \n", __FUNCTION__, mIsQuit, mIsPause);
+//fprintf(stderr, "%s mIsQuit=%d mIsPause=%d file_path=%s \n", __FUNCTION__, mIsQuit, mIsPause, file_path);
     while (1)
     {
         if (mIsQuit)
@@ -477,7 +537,7 @@ fprintf(stderr, "%s mIsQuit=%d mIsPause=%d \n", __FUNCTION__, mIsQuit, mIsPause)
 
             if (av_seek_frame(pFormatCtx, stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
             {
-                fprintf(stderr, "%s: error while seeking\n",pFormatCtx->filename);
+                fprintf(stderr, "%s: error while seeking\n", file_path);
             }
             else
             {
@@ -531,25 +591,31 @@ fprintf(stderr, "%s mIsQuit=%d mIsPause=%d \n", __FUNCTION__, mIsQuit, mIsPause)
         }
 
         AVPacket packet;
+//qDebug("%s av_read_frame .... \n", __FUNCTION__);
+
+        mCallStartTime = av_gettime();
+        mIsOpenStream  = false;
+
         if (av_read_frame(pFormatCtx, &packet) < 0)
         {
             mIsReadFinished = true;
-
-            if (mIsQuit)
-            {
-                break; //解码线程也执行完了 可以退出了
-            }
+            mIsReadError = true;
+// qDebug("%s av_read_frame failed \n", __FUNCTION__);
+//            if (mIsQuit)
+//            {
+//                break; //解码线程也执行完了 可以退出了
+//            }
 
             mSleep(10);
             continue;
         }
-
+//qDebug("%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
         if (packet.stream_index == videoStream)
         {
             inputVideoQuene(packet);
             //这里我们将数据存入队列 因此不调用 av_free_packet 释放
         }
-        else if( packet.stream_index == audioStream )
+        else if(packet.stream_index == audioStream)
         {
             if (mIsAudioThreadFinished)
             { ///SDL没有打开，则音频数据直接释放
@@ -559,6 +625,9 @@ fprintf(stderr, "%s mIsQuit=%d mIsPause=%d \n", __FUNCTION__, mIsQuit, mIsPause)
             {
                 inputAudioQuene(packet);
                 //这里我们将数据存入队列 因此不调用 av_free_packet 释放
+
+                //音频解码不开线程，因此这里直接调用解码操作
+                decodeAudioFrame(false);
             }
 
         }
@@ -583,15 +652,18 @@ end:
 
     if (mPlayerState != VideoPlayer_Stop) //不是外部调用的stop 是正常播放结束
     {
-        stop();
+        stop(false);
     }
 
+    mIsAudioThreadFinished = true;
     while((mVideoStream != nullptr && !mIsVideoThreadFinished) || (mAudioStream != nullptr && !mIsAudioThreadFinished))
     {
+fprintf(stderr, "%s:%d mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d \n", __FILE__, __LINE__, mIsVideoThreadFinished, mIsAudioThreadFinished);
         mSleep(10);
     } //确保视频线程结束后 再销毁队列
 
-    closeSDL();
+//    closeSDL();
+    mPcmPlayer->stopPlay();
 
     if (swrCtx != nullptr)
     {
@@ -628,7 +700,14 @@ end:
 
     SDL_Quit();
 
-    doPlayerStateChanged(VideoPlayer_Stop, mVideoStream != nullptr, mAudioStream != nullptr);
+    if (mIsReadError && !mIsQuit)
+    {
+        doPlayerStateChanged(VideoPlayer_ReadError, mVideoStream != nullptr, mAudioStream != nullptr);
+    }
+    else
+    {
+        doPlayerStateChanged(VideoPlayer_Stop, mVideoStream != nullptr, mAudioStream != nullptr);
+    }
 
     mIsReadThreadFinished = true;
 
@@ -637,10 +716,10 @@ fprintf(stderr, "%s finished \n", __FUNCTION__);
 
 bool VideoPlayer::inputVideoQuene(const AVPacket &pkt)
 {
-    if (av_dup_packet((AVPacket*)&pkt) < 0)
-    {
-        return false;
-    }
+//    if (av_dup_packet((AVPacket*)&pkt) < 0)
+//    {
+//        return false;
+//    }
 
     mConditon_Video->Lock();
     mVideoPacktList.push_back(pkt);
@@ -664,10 +743,10 @@ void VideoPlayer::clearVideoQuene()
 
 bool VideoPlayer::inputAudioQuene(const AVPacket &pkt)
 {
-    if (av_dup_packet((AVPacket*)&pkt) < 0)
-    {
-        return false;
-    }
+//    if (av_dup_packet((AVPacket*)&pkt) < 0)
+//    {
+//        return false;
+//    }
 
     mConditon_Audio->Lock();
     mAudioPacktList.push_back(pkt);
@@ -728,7 +807,7 @@ void VideoPlayer::doTotalTimeChanged(const int64_t &uSec)
 ///播放器状态改变的时候回调此函数
 void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
 {
-    fprintf(stderr, "%s \n", __FUNCTION__);
+    fprintf(stderr, "%s state=%d\n", __FUNCTION__, state);
 
     if (mVideoPlayerCallBack != nullptr)
     {
@@ -740,7 +819,7 @@ void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool
 ///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
 void VideoPlayer::doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, const int &height)
 {
-//    fprintf(stderr, "%s \n", __FUNCTION__);
+//    fprintf(stderr, "%s width=%d height=%d \n", __FUNCTION__, width, height);
     if (mVideoPlayerCallBack != nullptr)
     {
         VideoFramePtr videoFrame = std::make_shared<VideoFrame>();

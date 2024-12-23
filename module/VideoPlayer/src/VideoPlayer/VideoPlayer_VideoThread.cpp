@@ -231,7 +231,7 @@ void VideoPlayer::decodeVideoThread()
     uint8_t *yuv420pBuffer = nullptr; //解码后的yuv数据
     struct SwsContext *imgConvertCtx = nullptr;  //用于解码后的视频格式转换
 
-    AVCodecContext *pCodecCtx = mVideoStream->codec; //视频解码器
+//    AVCodecContext *pCodecCtx = mVideoStream->codec; //视频解码器
 
     pFrame = av_frame_alloc();
 
@@ -245,6 +245,8 @@ void VideoPlayer::decodeVideoThread()
 //    int last_serial = -1;
     int last_vfilter_idx = 0;
 #endif
+
+    bool is_key_frame_getted = false;
 
     while(1)
     {
@@ -261,7 +263,7 @@ void VideoPlayer::decodeVideoThread()
         }
 
         mConditon_Video->Lock();
-
+//fprintf(stderr, "mVideoPacktList.size()=%d \n", mVideoPacktList.size());
         if (mVideoPacktList.size() <= 0)
         {
             mConditon_Video->Unlock();
@@ -287,7 +289,7 @@ void VideoPlayer::decodeVideoThread()
         //收到这个数据 说明刚刚执行过跳转 现在需要把解码器的数据 清除一下
         if(strcmp((char*)packet->data, FLUSH_DATA) == 0)
         {
-            avcodec_flush_buffers(mVideoStream->codec);
+            avcodec_flush_buffers(pCodecCtx);
             av_packet_unref(packet);
             continue;
         }
@@ -339,7 +341,7 @@ void VideoPlayer::decodeVideoThread()
                     break;
                 }
 
-                if (mAudioStream != NULL && !mIsAudioThreadFinished)
+                if (mAudioStream != NULL && !mIsAudioThreadFinished && mPcmPlayer->deviceOpened())
                 {
                     if (mIsReadFinished && mAudioPacktList.size() <= 0)
                     {//读取完了 且音频数据也播放完了 就剩下视频数据了  直接显示出来了 不用同步了
@@ -352,7 +354,7 @@ void VideoPlayer::decodeVideoThread()
                 }
                 else
                 {
-                    ///没有音频的情况下，直接同步到外部时钟
+                    ///没有音频或者音频设备打开失败的情况下，直接同步到外部时钟
                     audio_pts = (av_gettime() - mVideoStartTime) / 1000000.0;
                     audio_clock = audio_pts;
                 }
@@ -486,7 +488,16 @@ void VideoPlayer::decodeVideoThread()
                     pFrame->linesize, 0, videoHeight, pFrameYUV->data,
                     pFrameYUV->linesize);
 
-            doDisplayVideo(yuv420pBuffer, videoWidth, videoHeight);
+//qDebug()<<"(packet->flags & AV_PKT_FLAG_KEY)"<<(packet->flags & AV_PKT_FLAG_KEY);
+            if (!is_key_frame_getted && (packet->flags & AV_PKT_FLAG_KEY)) // is keyframe
+            {
+                is_key_frame_getted = true;
+            }
+
+            if (is_key_frame_getted)
+            {
+                doDisplayVideo(yuv420pBuffer, videoWidth, videoHeight);
+            }
 
 #if CONFIG_AVFILTER
 //            if (is->videoq.serial != is->viddec.pkt_serial)
