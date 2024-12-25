@@ -102,7 +102,7 @@ bool VideoPlayer::play()
         return false;
     }
 
-    uint64_t pauseTime = av_gettime() - mVideoStartTime; //暂停了多长时间
+    uint64_t pauseTime = av_gettime() - mPauseStartTime; //暂停了多长时间
     mVideoStartTime += pauseTime; //将暂停的时间加到开始播放的时间上，保证同步不受暂停的影响
 
     m_state = VideoPlayer::Playing;
