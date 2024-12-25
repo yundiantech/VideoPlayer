@@ -21,7 +21,7 @@
 #include "Widget/SetVideoUrlDialog.h"
 #include "Widget/mymessagebox_withTitle.h"
 
-Q_DECLARE_METATYPE(VideoPlayerState)
+Q_DECLARE_METATYPE(VideoPlayer::State)
 
 MainWindow::MainWindow(QWidget *parent) :
     DragAbleWidget(parent),
@@ -36,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //    setAttribute(Qt::WA_TranslucentBackground);
 
     //因为VideoPlayer::PlayerState是自定义的类型 要跨线程传递需要先注册一下
-    qRegisterMetaType<VideoPlayerState>();
+    qRegisterMetaType<VideoPlayer::State>();
 
     mPopMenu = new QMenu(this);
 
@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mIsNeedPlayNext = false;
 
     mPlayer = new VideoPlayer();
-    mPlayer->setVideoPlayerCallBack(this);
+    mPlayer->setEventHandle(this);
 
     mTimer = new QTimer; //定时器-获取当前视频时间
     connect(mTimer, &QTimer::timeout, this, &MainWindow::slotTimerTimeOut);
@@ -624,12 +624,12 @@ void MainWindow::onTotalTimeChanged(const int64_t &uSec)
 }
 
 ///播放器状态改变的时候回调此函数
-void MainWindow::onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
+void MainWindow::onPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio)
 {
     QMetaObject::invokeMethod(this, [=]()
     {
 qDebug()<<__FUNCTION__<<state<<mIsNeedPlayNext;
-        if (state == VideoPlayer_Stop)
+        if (state == VideoPlayer::Stop)
         {
             ui->stackedWidget->setCurrentWidget(ui->page_open);
 
@@ -650,7 +650,7 @@ qDebug()<<__FUNCTION__<<state<<mIsNeedPlayNext;
 
             mIsNeedPlayNext = true;
         }
-        else if (state == VideoPlayer_Playing)
+        else if (state == VideoPlayer::Playing)
         {
             if (hasVideo)
             {
@@ -668,7 +668,7 @@ qDebug()<<__FUNCTION__<<state<<mIsNeedPlayNext;
 
             mIsNeedPlayNext = true;
         }
-        else if (state == VideoPlayer_Pause)
+        else if (state == VideoPlayer::Pause)
         {
             ui->pushButton_pause->hide();
             ui->pushButton_play->show();

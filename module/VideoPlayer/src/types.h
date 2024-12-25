@@ -15,14 +15,6 @@
     #include <unistd.h>
 #endif
 
-enum VideoPlayerState
-{
-    VideoPlayer_Playing = 0,
-    VideoPlayer_Pause,
-    VideoPlayer_Stop,
-    VideoPlayer_ReadError,
-};
-
 #if defined(WIN32)
 #else
     void Sleep(long mSeconds);

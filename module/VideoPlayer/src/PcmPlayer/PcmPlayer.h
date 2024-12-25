@@ -3,8 +3,8 @@
 
 #include <thread>
 #include <list>
+#include <mutex>
 
-#include "Mutex/Cond.h"
 #include "frame/AudioFrame/PCMFrame.h"
 
 struct AudioDevice
@@ -24,8 +24,10 @@ public:
     bool startPlay();
     bool stopPlay();
 
-    int inputPCMFrame(PCMFramePtr framePtr);
+    int inputPCMFrame(PCMFramePtr frame);
     int getPcmFrameSize();
+    bool isFrameFull(); //缓存是否满了
+    void clearFrame();
 
     uint32_t getCurrentPts(){return m_current_pts;}
 
@@ -36,14 +38,20 @@ public:
     bool deviceOpened(){return m_device_opened;}
 
 protected:
-    Cond *mCond;
-    std::list<PCMFramePtr> mPcmFrameList;
+    std::mutex m_mutex_audio;
+    std::condition_variable m_cond_audio;
+    std::list<PCMFramePtr> m_pcm_frame_list;
+    
+    /// 用于存放上一次未处理完的数据
+    uint8_t m_last_frame_buffer[10240];
+    int m_last_frame_buffer_size = 0;
 
     uint32_t m_current_pts = 0; //当前播放帧的时间戳
     bool m_device_opened = false; //设备是否已经打开了
     uint64_t m_last_try_open_device_time = 0; //上一次尝试打开音频设备的时间
     int m_sample_rate = 0;
     int m_channel = 0;
+    int m_cache_size = 81920; //缓存大小
 
     ///音量相关变量
     bool  m_is_mute = false;

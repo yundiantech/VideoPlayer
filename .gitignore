@@ -8,3 +8,9 @@ bin64/VideoPlayer
 build/
 module/VideoPlayer/lib/SDL2
 module/VideoPlayer/lib/ffmpeg
+bin/win64/VideoPlayer.exe
+bin/win64/Debug/VideoPlayer.exe
+bin/win64/Debug/VideoPlayer.ilk
+bin/win64/Debug/VideoPlayer.pdb
+bin/win64/Release/VideoPlayer.exe
+.vscode/settings.json

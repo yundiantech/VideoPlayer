@@ -27,7 +27,7 @@ class MainWindow;
 }
 
 ///这个是播放器的主界面 包括那些按钮和进度条之类的
-class MainWindow : public DragAbleWidget, public VideoPlayerCallBack
+class MainWindow : public DragAbleWidget, public VideoPlayer::EventHandle
 {
     Q_OBJECT
 
@@ -104,7 +104,7 @@ protected:
     void onTotalTimeChanged(const int64_t &uSec);
 
     ///播放器状态改变的时候回调此函数
-    void onPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio);
+    void onPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio);
 
     ///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
     void onDisplayVideo(VideoFramePtr videoFrame);

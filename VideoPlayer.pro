@@ -39,14 +39,12 @@ SOURCES += \
     src/Widget/mymessagebox_withTitle.cpp \
     src/main.cpp \
     src/AppConfig.cpp \
-    src/Base/FunctionTransfer.cpp \
     src/MainWindow.cpp \
     src/Widget/ShowVideoWidget.cpp \
     src/Widget/VideoSlider.cpp
 
 HEADERS  += \
     src/AppConfig.h \
-    src/Base/FunctionTransfer.h \
     src/MainWindow.h \
     src/Widget/SetVideoUrlDialog.h \
     src/Widget/ShowVideoWidget.h \

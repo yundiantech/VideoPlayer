@@ -9,26 +9,29 @@
 #include "PcmPlayer/PcmPlayer_SDL.h"
 
 #include <stdio.h>
-
+#include <iostream>
+#include <QDebug>
 VideoPlayer::VideoPlayer()
 {
-    mConditon_Video = new Cond;
-    mConditon_Audio = new Cond;
+    m_state = VideoPlayer::Stop;
 
-    mPlayerState = VideoPlayer_Stop;
-
-    mVideoPlayerCallBack = nullptr;
-
-//    mAudioID = 0;
     mIsMute = false;
 
     mIsNeedPause = false;
 
     mVolume = 1;
 
-    mPcmPlayer = new PcmPlayer_SDL();
+    m_pcm_player = new PcmPlayer_SDL();
 
     this->setSingleMode(true);
+
+    m_thread_video = new Thread();
+    m_thread_video->setSingleMode(true);
+    m_thread_video->setThreadFunc(std::bind(&VideoPlayer::decodeVideoThread, this));
+
+    m_thread_audio = new Thread();
+    m_thread_audio->setSingleMode(true);
+    m_thread_audio->setThreadFunc(std::bind(&VideoPlayer::decodeAudioThread, this));
 }
 
 VideoPlayer::~VideoPlayer()
@@ -60,7 +63,7 @@ bool VideoPlayer::initPlayer()
 
 bool VideoPlayer::startPlay(const std::string &filePath)
 {
-    if (mPlayerState != VideoPlayer_Stop)
+    if (m_state != VideoPlayer::Stop)
     {
         return false;
     }
@@ -69,14 +72,11 @@ bool VideoPlayer::startPlay(const std::string &filePath)
     mIsPause = false;
 
     if (!filePath.empty())
-        mFilePath = filePath;
+    {
+        m_file_path = filePath;
+    }
 
     //启动新的线程实现读取视频文件
-//    std::thread([&](VideoPlayer *pointer)
-//    {
-//        pointer->readVideoFile();
-
-//    }, this).detach();
     this->start();
 
     return true;
@@ -87,7 +87,7 @@ bool VideoPlayer::replay(bool isWait)
 {
     stop(isWait);
 
-    startPlay(mFilePath);
+    startPlay(m_file_path);
 
     return true;
 }
@@ -97,7 +97,7 @@ bool VideoPlayer::play()
     mIsNeedPause = false;
     mIsPause = false;
 
-    if (mPlayerState != VideoPlayer_Pause)
+    if (m_state != VideoPlayer::Pause)
     {
         return false;
     }
@@ -105,8 +105,8 @@ bool VideoPlayer::play()
     uint64_t pauseTime = av_gettime() - mVideoStartTime; //暂停了多长时间
     mVideoStartTime += pauseTime; //将暂停的时间加到开始播放的时间上，保证同步不受暂停的影响
 
-    mPlayerState = VideoPlayer_Playing;
-    doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
+    m_state = VideoPlayer::Playing;
+    doPlayerStateChanged(VideoPlayer::Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
@@ -117,29 +117,33 @@ bool VideoPlayer::pause()
 
     mIsPause = true;
 
-    if (mPlayerState != VideoPlayer_Playing)
+    if (m_state != VideoPlayer::Playing)
     {
         return false;
     }
 
     mPauseStartTime = av_gettime();
 
-    mPlayerState = VideoPlayer_Pause;
+    m_state = VideoPlayer::Pause;
 
-    emit doPlayerStateChanged(VideoPlayer_Pause, mVideoStream != nullptr, mAudioStream != nullptr);
+    emit doPlayerStateChanged(VideoPlayer::Pause, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
 
 bool VideoPlayer::stop(bool isWait)
 {
-    if (mPlayerState == VideoPlayer_Stop)
+    if (m_state == VideoPlayer::Stop)
     {
         return false;
     }
 
-    mPlayerState = VideoPlayer_Stop;
+    m_state = VideoPlayer::Stop;
     mIsQuit = true;
+
+    ///唤醒等待中的线程
+    m_cond_video.notify_all();
+    m_cond_audio.notify_all();
 
     if (isWait)
     {
@@ -165,13 +169,13 @@ void VideoPlayer::seek(int64_t pos)
 void VideoPlayer::setMute(bool isMute)
 {
     mIsMute = isMute;
-    mPcmPlayer->setMute(isMute);
+    m_pcm_player->setMute(isMute);
 }
 
 void VideoPlayer::setVolume(float value)
 {
     mVolume = value;
-    mPcmPlayer->setVolume(value);
+    m_pcm_player->setVolume(value);
 }
 
 double VideoPlayer::getCurrentTime()
@@ -279,7 +283,7 @@ void VideoPlayer::run()
     mIsReadFinished = false;
     mIsReadError = false;
 
-    const char * file_path = mFilePath.c_str();
+    const char * file_path = m_file_path.c_str();
 
     pFormatCtx = nullptr;
     pCodecCtx = nullptr;
@@ -375,12 +379,8 @@ void VideoPlayer::run()
 
         mVideoStream = video_stream;
 
-        ///创建一个线程专门用来解码视频
-        std::thread([&](VideoPlayer *pointer)
-        {
-            pointer->decodeVideoThread();
-
-        }, this).detach();
+        ///启动视频解码线程
+        m_thread_video->start();
 
     }
 
@@ -502,15 +502,35 @@ void VideoPlayer::run()
 //            }
         }
 
+        ///启动音频解码线程
+        m_thread_audio->start();
     }
 
     av_dump_format(pFormatCtx, 0, file_path, 0); //输出视频信息
 
-    mPlayerState = VideoPlayer_Playing;
-    doPlayerStateChanged(VideoPlayer_Playing, mVideoStream != nullptr, mAudioStream != nullptr);
+    m_state = VideoPlayer::Playing;
+    doPlayerStateChanged(VideoPlayer::Playing, mVideoStream != nullptr, mAudioStream != nullptr);
 
     mVideoStartTime = av_gettime();
-//fprintf(stderr, "%s mIsQuit=%d mIsPause=%d file_path=%s \n", __FUNCTION__, mIsQuit, mIsPause, file_path);
+fprintf(stderr, "%s mIsQuit=%d mIsPause=%d file_path=%s \n", __FUNCTION__, mIsQuit, mIsPause, file_path);
+
+    if (m_file_path.find("rtmp://") != std::string::npos
+        || m_file_path.find("rtsp://") != std::string::npos) 
+    {
+        m_is_live_mode = true;
+    }
+    else
+    {
+        m_is_live_mode = false;
+    }
+
+    video_clock = 0;
+    audio_clock = 0;
+    seek_req = 0;
+    seek_time = 0;
+    seek_flag_audio = 0;
+    seek_flag_video = 0;
+
     while (1)
     {
         if (mIsQuit)
@@ -534,12 +554,35 @@ void VideoPlayer::run()
             {
                 seek_target = av_rescale_q(seek_target, aVRational, pFormatCtx->streams[stream_index]->time_base);
             }
+std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCtx->streams[videoStream]->time_base.den
+         <<" audio:"<<pFormatCtx->streams[audioStream]->duration<<" "<<pFormatCtx->streams[audioStream]->time_base.den<<std::endl;
 
+            bool seek_succeed = false;
             if (av_seek_frame(pFormatCtx, stream_index, seek_target, AVSEEK_FLAG_BACKWARD) < 0)
             {
-                fprintf(stderr, "%s: error while seeking\n", file_path);
+                fprintf(stderr, "%s: error while seeking. stream_index=%d \n", file_path, stream_index);
+                if (audioStream >= 0 && stream_index != audioStream)
+                {
+                    stream_index = audioStream;
+                    seek_target = av_rescale_q(seek_target, aVRational, pFormatCtx->streams[stream_index]->time_base);
+                    if (av_seek_frame(pFormatCtx, stream_index, seek_target, AVSEEK_FLAG_ANY) < 0)
+                    {
+                        fprintf(stderr, "%s: error while seeking. stream_index=%d \n", file_path, stream_index);
+                    }
+                    else
+                    {
+                        seek_succeed = true;
+                        fprintf(stderr, "%s: seeking success. stream_index=%d \n", file_path, stream_index);
+                    }
+                }
             }
             else
+            {
+                seek_succeed = true;
+                fprintf(stderr, "%s: seeking success. stream_index=%d \n", file_path, stream_index);
+            }
+
+            if (seek_succeed)
             {
                 if (audioStream >= 0)
                 {
@@ -578,7 +621,8 @@ void VideoPlayer::run()
 
         //这里做了个限制  当队列里面的数据超过某个大小的时候 就暂停读取  防止一下子就把视频读完了，导致的空间分配不足
         //这个值可以稍微写大一些
-        if (mAudioPacktList.size() > MAX_AUDIO_SIZE || mVideoPacktList.size() > MAX_VIDEO_SIZE)
+// fprintf(stderr, "%s %d m_audio_pkt_list.size()=%d m_video_pkt_list.size()=%d \n", __FILE__, __LINE__, m_audio_pkt_list.size(), m_video_pkt_list.size());
+        if (m_audio_pkt_list.size() >= MAX_AUDIO_SIZE || m_video_pkt_list.size() >= MAX_VIDEO_SIZE)
         {
             mSleep(10);
             continue;
@@ -595,12 +639,12 @@ void VideoPlayer::run()
 
         mCallStartTime = av_gettime();
         mIsOpenStream  = false;
-
+// qDebug()<<__FUNCTION__<<video_clock<<audio_clock;
         if (av_read_frame(pFormatCtx, &packet) < 0)
         {
             mIsReadFinished = true;
             mIsReadError = true;
-// qDebug("%s av_read_frame failed \n", __FUNCTION__);
+qDebug("%s av_read_frame failed \n", __FUNCTION__);
 //            if (mIsQuit)
 //            {
 //                break; //解码线程也执行完了 可以退出了
@@ -609,7 +653,8 @@ void VideoPlayer::run()
             mSleep(10);
             continue;
         }
-//qDebug("%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
+// qDebug("%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
+// fprintf(stderr, "%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
         if (packet.stream_index == videoStream)
         {
             inputVideoQuene(packet);
@@ -625,9 +670,6 @@ void VideoPlayer::run()
             {
                 inputAudioQuene(packet);
                 //这里我们将数据存入队列 因此不调用 av_free_packet 释放
-
-                //音频解码不开线程，因此这里直接调用解码操作
-                decodeAudioFrame(false);
             }
 
         }
@@ -636,6 +678,7 @@ void VideoPlayer::run()
             // Free the packet that was allocated by av_read_frame
             av_packet_unref(&packet);
         }
+// fprintf(stderr, "%s:%d \n", __FILE__, __LINE__);
     }
 
     ///文件读取结束 跳出循环的情况
@@ -650,20 +693,22 @@ end:
     clearAudioQuene();
     clearVideoQuene();
 
-    if (mPlayerState != VideoPlayer_Stop) //不是外部调用的stop 是正常播放结束
+    if (m_state != VideoPlayer::Stop) //不是外部调用的stop 是正常播放结束
     {
         stop(false);
     }
 
-    mIsAudioThreadFinished = true;
+    ///唤醒等待中的线程
+    m_cond_video.notify_all();
+    m_cond_audio.notify_all();
     while((mVideoStream != nullptr && !mIsVideoThreadFinished) || (mAudioStream != nullptr && !mIsAudioThreadFinished))
     {
 fprintf(stderr, "%s:%d mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d \n", __FILE__, __LINE__, mIsVideoThreadFinished, mIsAudioThreadFinished);
         mSleep(10);
     } //确保视频线程结束后 再销毁队列
 
-//    closeSDL();
-    mPcmPlayer->stopPlay();
+    m_pcm_player->stopPlay();
+    m_pcm_player->clearFrame();
 
     if (swrCtx != nullptr)
     {
@@ -702,11 +747,11 @@ fprintf(stderr, "%s:%d mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d \n", 
 
     if (mIsReadError && !mIsQuit)
     {
-        doPlayerStateChanged(VideoPlayer_ReadError, mVideoStream != nullptr, mAudioStream != nullptr);
+        doPlayerStateChanged(VideoPlayer::ReadError, mVideoStream != nullptr, mAudioStream != nullptr);
     }
     else
     {
-        doPlayerStateChanged(VideoPlayer_Stop, mVideoStream != nullptr, mAudioStream != nullptr);
+        doPlayerStateChanged(VideoPlayer::Stop, mVideoStream != nullptr, mAudioStream != nullptr);
     }
 
     mIsReadThreadFinished = true;
@@ -721,24 +766,22 @@ bool VideoPlayer::inputVideoQuene(const AVPacket &pkt)
 //        return false;
 //    }
 
-    mConditon_Video->Lock();
-    mVideoPacktList.push_back(pkt);
-    mConditon_Video->Signal();
-    mConditon_Video->Unlock();
+    std::lock_guard<std::mutex> lck(m_mutex_video);
+    m_video_pkt_list.push_back(pkt);
+    m_cond_video.notify_all();
 
     return true;
 }
 
 void VideoPlayer::clearVideoQuene()
 {
-    mConditon_Video->Lock();
-    for (AVPacket pkt : mVideoPacktList)
+    std::lock_guard<std::mutex> lck(m_mutex_video);
+    for (AVPacket pkt : m_video_pkt_list)
     {
 //        av_free_packet(&pkt);
         av_packet_unref(&pkt);
     }
-    mVideoPacktList.clear();
-    mConditon_Video->Unlock();
+    m_video_pkt_list.clear();
 }
 
 bool VideoPlayer::inputAudioQuene(const AVPacket &pkt)
@@ -747,25 +790,23 @@ bool VideoPlayer::inputAudioQuene(const AVPacket &pkt)
 //    {
 //        return false;
 //    }
-
-    mConditon_Audio->Lock();
-    mAudioPacktList.push_back(pkt);
-    mConditon_Audio->Signal();
-    mConditon_Audio->Unlock();
+    std::lock_guard<std::mutex> lck(m_mutex_audio);
+    m_audio_pkt_list.push_back(pkt);
+    m_cond_audio.notify_all();
 
     return true;
 }
 
 void VideoPlayer::clearAudioQuene()
 {
-    mConditon_Audio->Lock();
-    for (AVPacket pkt : mAudioPacktList)
+    std::lock_guard<std::mutex> lck(m_mutex_audio);
+    for (AVPacket pkt : m_audio_pkt_list)
     {
 //        av_free_packet(&pkt);
         av_packet_unref(&pkt);
     }
-    mAudioPacktList.clear();
-    mConditon_Audio->Unlock();
+    m_audio_pkt_list.clear();
+    m_pcm_player->clearFrame();
 }
 
 ///当使用界面类继承了本类之后，以下函数不会执行
@@ -775,9 +816,9 @@ void VideoPlayer::doOpenVideoFileFailed(const int &code)
 {
     fprintf(stderr, "%s \n", __FUNCTION__);
 
-    if (mVideoPlayerCallBack != nullptr)
+    if (m_event_handle != nullptr)
     {
-        mVideoPlayerCallBack->onOpenVideoFileFailed(code);
+        m_event_handle->onOpenVideoFileFailed(code);
     }
 
 }
@@ -787,9 +828,9 @@ void VideoPlayer::doOpenSdlFailed(const int &code)
 {
     fprintf(stderr, "%s \n", __FUNCTION__);
 
-    if (mVideoPlayerCallBack != nullptr)
+    if (m_event_handle != nullptr)
     {
-        mVideoPlayerCallBack->onOpenSdlFailed(code);
+        m_event_handle->onOpenSdlFailed(code);
     }
 }
 
@@ -798,20 +839,20 @@ void VideoPlayer::doTotalTimeChanged(const int64_t &uSec)
 {
     fprintf(stderr, "%s \n", __FUNCTION__);
 
-    if (mVideoPlayerCallBack != nullptr)
+    if (m_event_handle != nullptr)
     {
-        mVideoPlayerCallBack->onTotalTimeChanged(uSec);
+        m_event_handle->onTotalTimeChanged(uSec);
     }
 }
 
 ///播放器状态改变的时候回调此函数
-void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio)
+void VideoPlayer::doPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio)
 {
     fprintf(stderr, "%s state=%d\n", __FUNCTION__, state);
 
-    if (mVideoPlayerCallBack != nullptr)
+    if (m_event_handle != nullptr)
     {
-        mVideoPlayerCallBack->onPlayerStateChanged(state, hasVideo, hasAudio);
+        m_event_handle->onPlayerStateChanged(state, hasVideo, hasAudio);
     }
 
 }
@@ -820,7 +861,7 @@ void VideoPlayer::doPlayerStateChanged(const VideoPlayerState &state, const bool
 void VideoPlayer::doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, const int &height)
 {
 //    fprintf(stderr, "%s width=%d height=%d \n", __FUNCTION__, width, height);
-    if (mVideoPlayerCallBack != nullptr)
+    if (m_event_handle != nullptr)
     {
         VideoFramePtr videoFrame = std::make_shared<VideoFrame>();
 
@@ -829,6 +870,6 @@ void VideoPlayer::doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, 
         ptr->initBuffer(width, height);
         ptr->setYUVbuf(yuv420Buffer);
 
-        mVideoPlayerCallBack->onDisplayVideo(videoFrame);
+        m_event_handle->onDisplayVideo(videoFrame);
     }
 }

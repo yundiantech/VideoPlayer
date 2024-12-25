@@ -33,15 +33,28 @@ elseif(WIN32)
 
     message("current platform: Windows ")
 
-    set(QT_DIR_ROOT C:/Qt/Qt5.13.2/5.13.2)
+    #指定Qt安装目录
+    set(QT_DIR_ROOT 
+            C:/Qt/Qt5.13.2/5.13.2
+            D:/Qt/Qt5.13.2/5.13.2)
     
     if(CMAKE_CL_64)    #CMAKE的内建变量，如果是true，就说明编译器的64位的，自然可以编译64bit的程序
+        set(QT_DIR_NAME msvc2017_64)
+
         # set(CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
-        list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
+        # list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
     else()
-        # set(CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017)
-        list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017)
+        set(QT_DIR_NAME msvc2017)
     endif()
+
+    foreach(item ${QT_DIR_ROOT})
+        set(QT_DIR_PATH ${item}/${QT_DIR_NAME})
+        message(STATUS "item is ${QT_DIR_PATH}")
+        if(EXISTS ${QT_DIR_PATH})
+            list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_PATH})
+        endif()
+    endforeach()
+
 else()
 
     message("current platform: unkonw ")
@@ -61,7 +74,7 @@ endif()
 
 
 # find_package(<库名> <版本号> EXACT COMPONENTS <组件名1> ... <组件名n> REQUIRED)
-find_package(Qt5 5.13.2 COMPONENTS Widgets Network WebSockets Concurrent REQUIRED)
+find_package(Qt5 5.13.2 COMPONENTS Widgets Network Concurrent REQUIRED)
  
 #CMAKE_ARCHIVE_OUTPUT_DIRECTORY：默认存放静态库的文件夹位置；
 #CMAKE_LIBRARY_OUTPUT_DIRECTORY：默认存放动态库的文件夹位置；
@@ -84,13 +97,7 @@ endif()
 # set the include files
 set(PRO_CODE_INC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/SendRtmp_Dll/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/SendRtmp_TestDll/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/ipc_operation/media_utils
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/sdk_api_operation
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/t31-sample
         ${CMAKE_CURRENT_SOURCE_DIR}/src/module
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/module/Audio
         ${CMAKE_CURRENT_SOURCE_DIR}/module/DragAbleWidget
         )
 include_directories(${PRO_CODE_INC})
@@ -100,7 +107,6 @@ file(GLOB_RECURSE ALL_SOURCE
         ${CMAKE_CURRENT_SOURCE_DIR}/module/DragAbleWidget/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/Base/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Widget/*.cpp
         )
   
@@ -118,10 +124,10 @@ file(GLOB_RECURSE ALL_SOURCE
 #         src/*.hpp
 #         src/*.h)
 
-qt5_add_resources(qrc_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/resources/resources.qrc)
-message("ALL_SOURCE:"${ALL_SOURCE})
-# add_executable(${PROJECT_NAME} ${ALL_SOURCE} ${qrc_FILES})
-add_executable(${PROJECT_NAME} ${ALL_SOURCE})
+qt5_add_resources(qrc_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc)
+# message("ALL_SOURCE:"${ALL_SOURCE})
+add_executable(${PROJECT_NAME} ${ALL_SOURCE} ${qrc_FILES})
+# add_executable(${PROJECT_NAME} ${ALL_SOURCE})
 
 #### add videoplayer module ###
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/module/VideoPlayer)
@@ -135,7 +141,7 @@ include_directories(${PRO_CODE_INC})
 
 target_link_libraries(${PROJECT_NAME}
         WS2_32.lib AdvAPI32.lib winmm.lib User32.lib GDI32.lib Strmiids.lib
-        Qt5::Core Qt5::Widgets Qt5::Network Qt5::WebSockets  Qt5::Concurrent)
+        Qt5::Core Qt5::Widgets Qt5::Network  Qt5::Concurrent)
 #target_link_libraries(${PROJECT_NAME}
 #        -lavformat
 #        -lavcodec

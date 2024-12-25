@@ -1,12 +1,14 @@
 ﻿#include "PcmPlayer.h"
 
-#include "PcmVolumeControl.h"
-
 #include <stdio.h>
+#include <math.h>
+#include <algorithm>
+
+#include "PcmVolumeControl.h"
 
 PcmPlayer::PcmPlayer()
 {
-    mCond = new Cond();
+
 }
 
 PcmPlayer::~PcmPlayer()
@@ -23,6 +25,9 @@ bool PcmPlayer::startPlay()
 
     bool is_succeed = openDevice();
     m_device_opened = is_succeed;
+
+    m_cache_size = 0.15 * m_sample_rate * m_channel; //计算150ms的缓存大小
+
     return is_succeed;
 }
 
@@ -33,27 +38,24 @@ bool PcmPlayer::stopPlay()
     return isSucceed;
 }
 
-int PcmPlayer::inputPCMFrame(PCMFramePtr framePtr)
+int PcmPlayer::inputPCMFrame(PCMFramePtr frame)
 {
     int frame_size = 0;
 
-    if (m_device_opened)
+    if (m_device_opened) //音频设备打开的情况下才处理播放
     {
-        //音频设备打开的情况下才处理播放
-
-        mCond->Lock();
-        mPcmFrameList.push_back(framePtr);
-        frame_size = mPcmFrameList.size();
-        mCond->Unlock();
-        mCond->Signal();
+        std::lock_guard<std::mutex> lck(m_mutex_audio);
+        m_pcm_frame_list.push_back(frame);
+        frame_size = m_pcm_frame_list.size();
+        m_cond_audio.notify_all();
 
     //    qDebug()<<m_sample_rate<<m_channel<<m_device_opened<<framePtr->sampleRate()<<framePtr->channels();
 
-        int channels = framePtr->channels();
-        int sample_rate = framePtr->sampleRate();
+        int channels = frame->channels();
+        int sample_rate = frame->sampleRate();
 
         ///用于实现 播放队列太大的时候，提高播放采样率，用于直播消延时
-        static int use_sample_rate = framePtr->sampleRate();
+        static int use_sample_rate = frame->sampleRate();
         if (frame_size > 20)
         {
         //    use_sample_rate = 32000;
@@ -83,6 +85,7 @@ int PcmPlayer::inputPCMFrame(PCMFramePtr framePtr)
         if ((tick - m_last_try_open_device_time) > 3000)
         {
             //音频设备未打开，则每隔3秒尝试打开一次
+            fprintf(stderr, "try to open audio device ... \n");
             stopPlay();
             startPlay();
         }
@@ -92,44 +95,71 @@ int PcmPlayer::inputPCMFrame(PCMFramePtr framePtr)
 
 int PcmPlayer::getPcmFrameSize()
 {
-//    mCond->Lock();
-    int size = mPcmFrameList.size();
-//    mCond->Unlock();
-
+    int size = m_pcm_frame_list.size();
+// printf("%s:%d size=%d \n", __FILE__, __LINE__, size);
     return size;
+}
+
+// bool PcmPlayer::isFrameFull()
+// {
+//     return (m_ring_buffer->GetValidSize() > m_cache_size);
+// }
+
+void PcmPlayer::clearFrame()
+{
+    std::lock_guard<std::mutex> lck(m_mutex_audio);
+    m_pcm_frame_list.clear();
 }
 
 void PcmPlayer::playAudioBuffer(void *stream, int len)
 {
-    PCMFramePtr pcmFramePtr = nullptr;
 //fprintf(stderr, "%s %d %d \n", __FUNCTION__, len, mPcmFrameList.size());
-    mCond->Lock();
-    if (!mPcmFrameList.empty())
+
+    while (m_last_frame_buffer_size < len)
     {
-        pcmFramePtr = mPcmFrameList.front();
-        mPcmFrameList.pop_front();
+        std::unique_lock<std::mutex> lck(m_mutex_audio);
+
+        while (m_pcm_frame_list.empty())
+        {
+            if (m_cond_audio.wait_for(lck, std::chrono::milliseconds (500)) == std::cv_status::timeout)
+            {
+                break;
+            }
+        }
+
+        if (m_pcm_frame_list.empty())
+        {
+            break;
+        }
+
+        PCMFramePtr pcm_frame = m_pcm_frame_list.front();
+        m_pcm_frame_list.pop_front();
+
+        memcpy(m_last_frame_buffer + m_last_frame_buffer_size, pcm_frame->getBuffer(), pcm_frame->getSize());
+        m_last_frame_buffer_size += pcm_frame->getSize();
+
+        m_current_pts = pcm_frame->pts();
     }
-    mCond->Unlock();
 
-    if (pcmFramePtr != nullptr)
+    if (m_last_frame_buffer_size > 0)
     {
-        /// 这里我的PCM数据都是AV_SAMPLE_FMT_S16 44100 双声道的，且采样都是1024，因此pcmFramePtr->getSize()和len值相等都为4096.
-        /// 所以这里直接拷贝过去就好了。
 //        fprintf(stderr, "%s %d %d \n", __FUNCTION__, pcmFramePtr->getSize(), len);
-
+        int buffer_size = std::min(m_last_frame_buffer_size, len);
         if (m_is_mute)// || mIsNeedPause) //静音 或者 是在暂停的时候跳转了
         {
-            memset(stream, 0x0, pcmFramePtr->getSize());
+            memset(stream, 0x0, len);
         }
         else
         {
-            PcmVolumeControl::RaiseVolume((char*)pcmFramePtr->getBuffer(), pcmFramePtr->getSize(), 1, m_volume);
-            memcpy(stream, (uint8_t *)pcmFramePtr->getBuffer(), pcmFramePtr->getSize());
+            PcmVolumeControl::RaiseVolume((char*)m_last_frame_buffer, buffer_size, 1, m_volume);
+            memcpy(stream, m_last_frame_buffer, buffer_size);
         }
 
-        len -= pcmFramePtr->getSize();
-
-        m_current_pts = pcmFramePtr->pts();
+        m_last_frame_buffer_size -= buffer_size;
+        if (m_last_frame_buffer_size > 0)
+        {
+            memmove(m_last_frame_buffer, m_last_frame_buffer+buffer_size, m_last_frame_buffer_size);
+        }
     }
 
 }

@@ -40,10 +40,9 @@ extern "C"
 #define CONFIG_AVFILTER 1
 
 #include "types.h"
-#include "Mutex/Cond.h"
-#include "EventHandle/VideoPlayerEventHandle.h"
 #include "PcmPlayer/PcmPlayer.h"
 #include "util/thread.h"
+#include "frame/VideoFrame/VideoFrame.h"
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 #define AVCODEC_MAX_AUDIO_FRAME_SIZE 192000 // 1 second of 48khz 32bit audio
@@ -62,6 +61,34 @@ extern "C"
 class VideoPlayer : public Thread
 {
 public:
+    enum State
+    {
+        Playing = 0,
+        Pause,
+        Stop,
+        ReadError,
+    };
+
+    class EventHandle
+    {
+    public:
+        ///打开文件失败
+        virtual void onOpenVideoFileFailed(const int &code = 0) = 0;
+
+        ///打开sdl失败的时候回调此函数
+        virtual void onOpenSdlFailed(const int &code) = 0;
+
+        ///获取到视频时长的时候调用此函数
+        virtual void onTotalTimeChanged(const int64_t &uSec) = 0;
+
+        ///播放器状态改变的时候回调此函数
+        virtual void onPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio) = 0;
+
+        ///播放视频，此函数不宜做耗时操作，否则会影响播放的流畅性。
+        virtual void onDisplayVideo(VideoFramePtr videoFrame) = 0;
+    };
+
+public:
     VideoPlayer();
     ~VideoPlayer();
 
@@ -72,7 +99,7 @@ public:
      * @brief setVideoPlayerCallBack 设置播放器回调函数
      * @param pointer
      */
-    void setVideoPlayerCallBack(VideoPlayerCallBack *pointer){mVideoPlayerCallBack=pointer;}
+    void setEventHandle(VideoPlayer::EventHandle *handle){m_event_handle=handle;}
 
     bool startPlay(const std::string &filePath);
 
@@ -97,16 +124,18 @@ public:
 
 protected:
     void run(); //读取视频文件
-    void decodeVideoThread();
+    void decodeVideoThread(); //解码视频的线程
+    void decodeAudioThread(); //解码音频的线程
 
 //    static void sdlAudioCallBackFunc(void *userdata, Uint8 *stream, int len);
 //    void sdlAudioCallBack(Uint8 *stream, int len);
-    int decodeAudioFrame(bool isBlock = false);
+    // int decodeAudioFrame(bool isBlock = false);
 
 private:
-    std::string mFilePath; //视频文件路径
+    std::string m_file_path; //视频文件路径
+    bool m_is_live_mode = false; //是否为直播流
 
-    VideoPlayerState mPlayerState; //播放状态
+    State m_state; //播放状态
 
     ///音量相关变量
     bool  mIsMute;
@@ -182,23 +211,28 @@ private:
 #endif
 
     ///视频帧队列
-    Cond *mConditon_Video;
-    std::list<AVPacket> mVideoPacktList;
+    Thread *m_thread_video = nullptr;
+    std::mutex m_mutex_video;
+    std::condition_variable m_cond_video;
+    std::list<AVPacket> m_video_pkt_list;
     bool inputVideoQuene(const AVPacket &pkt);
     void clearVideoQuene();
 
     ///音频帧队列
-    Cond *mConditon_Audio;
-    std::list<AVPacket> mAudioPacktList;
+    Thread *m_thread_audio = nullptr;
+    std::mutex m_mutex_audio;
+    std::condition_variable m_cond_audio;
+    std::list<AVPacket> m_audio_pkt_list;
     bool inputAudioQuene(const AVPacket &pkt);
     void clearAudioQuene();
+    
 
 //    ///本播放器中SDL仅用于播放音频，不用做别的用途
 //    ///SDL播放音频相关
 //    SDL_AudioDeviceID mAudioID;
 //    int openSDL();
 //    void closeSDL();
-    PcmPlayer *mPcmPlayer = nullptr;
+    PcmPlayer *m_pcm_player = nullptr;
 
     int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph, AVFilterContext *source_ctx, AVFilterContext *sink_ctx);
     int configure_video_filters(AVFilterGraph *graph, const char *vfilters, AVFrame *frame);
@@ -206,7 +240,7 @@ private:
     ///回调函数相关，主要用于输出信息给界面
 private:
     ///回调函数
-    VideoPlayerCallBack *mVideoPlayerCallBack;
+    EventHandle *m_event_handle = nullptr;
 
     ///打开文件失败
     void doOpenVideoFileFailed(const int &code = 0);
@@ -218,7 +252,7 @@ private:
     void doTotalTimeChanged(const int64_t &uSec);
 
     ///播放器状态改变的时候回调此函数
-    void doPlayerStateChanged(const VideoPlayerState &state, const bool &hasVideo, const bool &hasAudio);
+    void doPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio);
 
     ///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
     void doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, const int &height);
