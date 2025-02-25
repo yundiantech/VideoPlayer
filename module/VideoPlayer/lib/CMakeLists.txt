@@ -8,9 +8,12 @@ set(SDL2_BRANCH_NAME   "V2.0.2")
 
 if(UNIX)
     message("current platform: Linux ")
-    # set(FFMPEG_BRANCH_NAME "V4.3.1-Linux")
+    set(FFMPEG_BRANCH_NAME "V4.3.1-linux")
+    set(SDL2_BRANCH_NAME   "V2.0.12-linux")
 elseif(WIN32)
     message("current platform: Windows ")
+    set(FFMPEG_BRANCH_NAME "V4.3.1-windows")
+    set(SDL2_BRANCH_NAME   "V2.0.2-windows")
 endif() # WIN32
 
 ### 拉取用到的库文件 ###

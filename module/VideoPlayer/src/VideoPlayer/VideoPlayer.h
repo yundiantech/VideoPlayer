@@ -7,9 +7,6 @@
 #ifndef VIDEOPLAYER_H
 #define VIDEOPLAYER_H
 
-#include <QObject>
-#include <QImage>
-
 #include <thread>
 
 extern "C"
@@ -58,7 +55,7 @@ extern "C"
  * 播放器类，纯c++实现，方便移植，与界面的交互通过回调函数的方式实现
  */
 
-class VideoPlayer : public Thread
+class VideoPlayer : public Util::Thread
 {
 public:
     enum State

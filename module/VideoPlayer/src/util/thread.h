@@ -3,8 +3,11 @@
 
 #include <thread>
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <condition_variable>
+
+namespace Util {
 
 class Thread
 {
@@ -61,5 +64,7 @@ protected:
     std::function<void()> m_run_func = nullptr; //可以重载上面的run也可以传入这个run_func，二者选一
 
 };
+
+}
 
 #endif // THREAD_H

@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <QDebug>
+
 VideoPlayer::VideoPlayer()
 {
     m_state = VideoPlayer::Stop;
@@ -126,7 +126,7 @@ bool VideoPlayer::pause()
 
     m_state = VideoPlayer::Pause;
 
-    emit doPlayerStateChanged(VideoPlayer::Pause, mVideoStream != nullptr, mAudioStream != nullptr);
+    doPlayerStateChanged(VideoPlayer::Pause, mVideoStream != nullptr, mAudioStream != nullptr);
 
     return true;
 }
@@ -644,7 +644,7 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
         {
             mIsReadFinished = true;
             mIsReadError = true;
-qDebug("%s av_read_frame failed \n", __FUNCTION__);
+            printf("%s av_read_frame failed \n", __FUNCTION__);
 //            if (mIsQuit)
 //            {
 //                break; //解码线程也执行完了 可以退出了

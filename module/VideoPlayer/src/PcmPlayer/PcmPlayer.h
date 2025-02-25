@@ -4,6 +4,7 @@
 #include <thread>
 #include <list>
 #include <mutex>
+#include <condition_variable>
 
 #include "frame/AudioFrame/PCMFrame.h"
 

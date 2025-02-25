@@ -139,8 +139,12 @@ include_directories(${PRO_CODE_INC})
 #         Qt5::Core Qt5::Widgets Qt5::Network Qt5::WebSockets Qt5::Concurrent
 #         core gui network sql concurrent xml axcontainer)
 
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME}
+        WS2_32.lib AdvAPI32.lib winmm.lib User32.lib GDI32.lib Strmiids.lib)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
-        WS2_32.lib AdvAPI32.lib winmm.lib User32.lib GDI32.lib Strmiids.lib
         Qt5::Core Qt5::Widgets Qt5::Network  Qt5::Concurrent)
 #target_link_libraries(${PROJECT_NAME}
 #        -lavformat

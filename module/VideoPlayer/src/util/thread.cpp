@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 using namespace std;
-
+namespace Util {
 Thread::Thread()
     : m_thread(nullptr),
       m_is_pause(false),
@@ -160,4 +160,5 @@ void Thread::threadFunc()
     m_state = Stoped;
     
     // cout << "exit thread:" << this_thread::get_id() << endl;
+}
 }
