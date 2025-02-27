@@ -32,11 +32,12 @@ public:
 
     uint32_t getCurrentPts(){return m_current_pts;}
 
-    void setMute(const bool is_mute){m_volume = is_mute;}
+    void setMute(const bool is_mute){m_is_mute = is_mute;}
     void setVolume(float value){m_volume = value;}
     float getVolume(){return m_volume;}
 
     bool deviceOpened(){return m_device_opened;}
+    bool deviceOpenFailed(){return m_device_open_failed;}
 
 protected:
     std::mutex m_mutex_audio;
@@ -49,10 +50,12 @@ protected:
 
     uint32_t m_current_pts = 0; //当前播放帧的时间戳
     bool m_device_opened = false; //设备是否已经打开了
+    bool m_device_open_failed = false; //设备打开失败
     uint64_t m_last_try_open_device_time = 0; //上一次尝试打开音频设备的时间
     int m_sample_rate = 0;
     int m_channel = 0;
     int m_cache_size = 81920; //缓存大小
+    bool m_is_stop = false;
 
     ///音量相关变量
     bool  m_is_mute = false;

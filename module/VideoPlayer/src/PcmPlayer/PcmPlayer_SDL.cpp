@@ -81,7 +81,7 @@ bool PcmPlayer_SDL::openDevice()
             break;
         }
     }
-// qDebug()<<__FUNCTION__<<"NUM="<<num<<" mAudioID="<<mAudioID;
+// printf("NUM=%d mAudioID=%d \n", num, mAudioID);
     /* 检查实际使用的配置（保存在spec,由SDL_OpenAudio()填充） */
 //    if (spec.format != AUDIO_S16SYS)
     if (mAudioID <= 0)
