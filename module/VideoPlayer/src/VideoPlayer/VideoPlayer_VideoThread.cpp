@@ -537,7 +537,7 @@ void VideoPlayer::decodeVideoThread()
                 is_key_frame_getted = true;
             }
 
-            if (is_key_frame_getted) //只有获取到第一帧关键帧后才进行显示，rtsp流最开始的部分会花屏
+            if (!m_is_live_mode || is_key_frame_getted) //只有获取到第一帧关键帧后才进行显示，rtsp流最开始的部分会花屏
             {
                 doDisplayVideo(yuv420pBuffer, videoWidth, videoHeight);
             }
