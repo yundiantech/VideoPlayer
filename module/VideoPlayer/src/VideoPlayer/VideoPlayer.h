@@ -82,7 +82,10 @@ public:
         virtual void onPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio) = 0;
 
         ///播放视频，此函数不宜做耗时操作，否则会影响播放的流畅性。
-        virtual void onDisplayVideo(VideoFramePtr videoFrame) = 0;
+        virtual void onDisplayVideo(VideoRawFramePtr videoFrame) = 0;
+
+        virtual void onVideoBuffer(VideoEncodedFramePtr videoFrame){};
+        // virtual void onAudioBuffer(VideoRawFramePtr videoFrame) = 0;
     };
 
 public:
@@ -108,12 +111,23 @@ public:
 
     void seek(int64_t pos); //单位是微秒
 
+    /**
+     * 设置能力函数
+     * 
+     * @param video_decode 是否支持视频解码
+     * @param encoded_video_callback 是否支持编码后的视频回调
+     * 
+     * 此函数用于配置对象的视频处理能力，包括是否支持视频解码和是否支持编码后视频的回调
+     * 通过设置这些参数，可以控制对象在视频处理过程中的行为和功能
+     */
+    void setAbility(bool video_decode, bool encoded_video_callback);
+
     void setMute(bool isMute);
     void setVolume(float value);
     float getVolume(){return mVolume;}
 
     int64_t getTotalTime(); //单位微秒
-    double getCurrentTime(); //单位秒
+    uint64_t getCurrentTime(); //单位秒
 
     ///用于判断是否打开超时或读取超时
     bool mIsOpenStream; //是否正在打开流（用于回调函数中判断是打开流还是读取流）
@@ -143,7 +157,7 @@ private:
     int64_t         seek_pos; //跳转的位置 -- 微秒
     int             seek_flag_audio;//跳转标志 -- 用于音频线程中
     int             seek_flag_video;//跳转标志 -- 用于视频线程中
-    double          seek_time; //跳转的时间(秒)  值和seek_pos是一样的
+    int64_t        seek_time; //跳转的时间(毫秒秒)  值和seek_pos是一样的
 
     ///播放控制相关
     bool mIsNeedPause; //暂停后跳转先标记此变量
@@ -158,10 +172,12 @@ private:
     ///音视频同步相关
     uint64_t mVideoStartTime; //开始播放视频的时间
     uint64_t mPauseStartTime; //暂停开始的时间
-    double audio_clock; ///音频时钟(秒-小数)
-    double video_clock; ///<pts of last decoded frame / predicted pts of next decoded frame
+    int64_t audio_clock; ///音频时钟(秒-小数)
+    int64_t video_clock; ///<pts of last decoded frame / predicted pts of next decoded frame
     AVStream *mVideoStream; //视频流
     AVStream *mAudioStream; //音频流
+    // std::mutex m_mutex_audio_clk;
+    uint64_t getAudioClock();
 
     ///视频相关
     AVFormatContext *pFormatCtx;
@@ -214,6 +230,8 @@ private:
     std::list<AVPacket> m_video_pkt_list;
     bool inputVideoQuene(const AVPacket &pkt);
     void clearVideoQuene();
+    bool m_enable_video_decode = true;
+    bool m_enable_encoded_video_callback = false; //是否回调解码之前的数据
 
     ///音频帧队列
     Thread *m_thread_audio = nullptr;
@@ -222,7 +240,7 @@ private:
     std::list<AVPacket> m_audio_pkt_list;
     bool inputAudioQuene(const AVPacket &pkt);
     void clearAudioQuene();
-    
+    // bool m_enable_audio_decode = false;
 
 //    ///本播放器中SDL仅用于播放音频，不用做别的用途
 //    ///SDL播放音频相关

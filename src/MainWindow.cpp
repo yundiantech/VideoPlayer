@@ -314,7 +314,7 @@ void MainWindow::slotTimerTimeOut()
 {
     if (QObject::sender() == mTimer)
     {
-        qint64 Sec = mPlayer->getCurrentTime();
+        qint64 Sec = mPlayer->getCurrentTime() / 1000;
 
         ui->horizontalSlider->setValue(Sec);
 
@@ -677,9 +677,15 @@ qDebug()<<__FUNCTION__<<state<<mIsNeedPlayNext;
 }
 
 ///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
-void MainWindow::onDisplayVideo(std::shared_ptr<VideoFrame> videoFrame)
+void MainWindow::onDisplayVideo(VideoRawFramePtr videoFrame)
 {
     ui->widget_videoPlayer->inputOneFrame(videoFrame);
+}
+
+//回调未解码前的数据
+void MainWindow::onVideoBuffer(VideoEncodedFramePtr videoFrame)
+{
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

@@ -14,3 +14,4 @@ bin/win64/Debug/VideoPlayer.ilk
 bin/win64/Debug/VideoPlayer.pdb
 bin/win64/Release/VideoPlayer.exe
 .vscode/settings.json
+bin/linux/VideoPlayer

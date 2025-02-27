@@ -6,30 +6,46 @@
 #include <string.h>
 #include <memory>
 
+#include "VideoRawFrame.h"
+#include "VideoEncodedFrame.h"
+
 #define VideoFramePtr std::shared_ptr<VideoFrame>
 
 class VideoFrame
 {
 public:
+    enum FrameType
+    {
+        VIDEOFRAME_TYPE_NONE = -1,
+        VIDEOFRAME_TYPE_YUV420P,   ///< planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
+        VIDEOFRAME_TYPE_RGB8,
+        VIDEOFRAME_TYPE_RGB24,     ///< packed RGB 8:8:8, 24bpp, RGBRGB...
+        VIDEOFRAME_TYPE_H264, 
+        VIDEOFRAME_TYPE_H265, 
+    };
     VideoFrame();
     ~VideoFrame();
 
-    void initBuffer(const int &width, const int &height);
+    void setFrame(std::shared_ptr<VideoEncodedFrame> frame);
+    void setFrame(std::shared_ptr<VideoRawFrame> frame);
 
-    void setYUVbuf(const uint8_t *buf);
-    void setYbuf(const uint8_t *buf);
-    void setUbuf(const uint8_t *buf);
-    void setVbuf(const uint8_t *buf);
+    uint8_t *buffer();
+    int size();
 
-    uint8_t * buffer(){return mYuv420Buffer;}
-    int width(){return mWidth;}
-    int height(){return mHegiht;}
+    int width(){return m_width;}
+    int height(){return m_hegiht;}
 
 protected:
-    uint8_t *mYuv420Buffer;
+    FrameType m_type = VIDEOFRAME_TYPE_NONE;
 
-    int mWidth;
-    int mHegiht;
+    int m_width = -100;
+    int m_hegiht= -100;
+
+    int64_t m_pts = 0;
+
+    std::shared_ptr<VideoEncodedFrame> m_encoded_frame = nullptr;
+    std::shared_ptr<VideoRawFrame> m_raw_frame = nullptr;
+
 };
 
 #endif // VIDEOFRAME_H

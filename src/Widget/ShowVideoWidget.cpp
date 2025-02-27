@@ -227,12 +227,12 @@ void ShowVideoWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-void ShowVideoWidget::inputOneFrame(VideoFramePtr videoFrame)
+void ShowVideoWidget::inputOneFrame(VideoRawFramePtr videoFrame)
 {
     QMetaObject::invokeMethod(this, [=]()
     {
-        int width = videoFrame.get()->width();
-        int height = videoFrame.get()->height();
+        int width = videoFrame->width();
+        int height = videoFrame->height();
 
         if (m_nVideoW <= 0 || m_nVideoH <= 0 || m_nVideoW != width || m_nVideoH != height)
         {
@@ -645,7 +645,7 @@ void ShowVideoWidget::resizeGL(int window_W, int window_H)
         m_program->release();
     }
 
-    VideoFrame * videoFrame = mVideoFrame.get();
+    VideoRawFrame * videoFrame = mVideoFrame.get();
 
     if (videoFrame != nullptr)
     {

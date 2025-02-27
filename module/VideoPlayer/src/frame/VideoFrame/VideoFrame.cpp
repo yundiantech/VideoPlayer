@@ -2,54 +2,37 @@
 
 VideoFrame::VideoFrame()
 {
-    mYuv420Buffer = nullptr;
+
 }
 
 VideoFrame::~VideoFrame()
 {
-    if (mYuv420Buffer != nullptr)
+
+}
+
+void VideoFrame::setFrame(std::shared_ptr<VideoEncodedFrame> frame)
+{
+    if (frame->getNalu()->type == T_NALU_H264)
     {
-        free(mYuv420Buffer);
-        mYuv420Buffer = nullptr;
+        m_type = VIDEOFRAME_TYPE_H264;
     }
-}
-
-void VideoFrame::initBuffer(const int &width, const int &height)
-{
-    if (mYuv420Buffer != nullptr)
+    else if (frame->getNalu()->type == T_NALU_H265)
     {
-        free(mYuv420Buffer);
-        mYuv420Buffer = nullptr;
+        m_type = VIDEOFRAME_TYPE_H265;
     }
 
-    mWidth  = width;
-    mHegiht = height;
+    m_pts = frame->getPts();
 
-    mYuv420Buffer = (uint8_t*)malloc(width * height * 3 / 2);
-
+    m_encoded_frame = frame;
 }
 
-void VideoFrame::setYUVbuf(const uint8_t *buf)
+void VideoFrame::setFrame(std::shared_ptr<VideoRawFrame> frame)
 {
-    int Ysize = mWidth * mHegiht;
-    memcpy(mYuv420Buffer, buf, Ysize * 3 / 2);
-}
+    m_type = (FrameType)frame->type();
 
-void VideoFrame::setYbuf(const uint8_t *buf)
-{
-    int Ysize = mWidth * mHegiht;
-    memcpy(mYuv420Buffer, buf, Ysize);
-}
+    m_width  = frame->width();
+    m_hegiht = frame->height();
+    m_pts = frame->pts();
 
-void VideoFrame::setUbuf(const uint8_t *buf)
-{
-    int Ysize = mWidth * mHegiht;
-    memcpy(mYuv420Buffer + Ysize, buf, Ysize / 4);
+    m_raw_frame = frame;
 }
-
-void VideoFrame::setVbuf(const uint8_t *buf)
-{
-    int Ysize = mWidth * mHegiht;
-    memcpy(mYuv420Buffer + Ysize + Ysize / 4, buf, Ysize / 4);
-}
-

@@ -6,6 +6,8 @@
 
 #include "VideoPlayer/VideoPlayer.h"
 
+#include <iostream>
+
 //static const struct TextureFormatEntry {
 //    enum AVPixelFormat format;
 //    int texture_fmt;
@@ -222,8 +224,8 @@ void VideoPlayer::decodeVideoThread()
     int videoWidth  = 0;
     int videoHeight =  0;
 
-    double video_pts = 0; //当前视频的pts
-    double audio_pts = 0; //音频pts
+    int64_t video_pts = 0; //当前视频的pts
+    int64_t audio_pts = 0; //音频pts
 
     ///解码视频相关
     AVFrame *pFrame = nullptr;
@@ -247,6 +249,56 @@ void VideoPlayer::decodeVideoThread()
 #endif
 
     bool is_key_frame_getted = false;
+
+    auto avSyncFunc = [&]
+    {
+        ///音视频同步，实现的原理就是，判断是否到显示此帧图像的时间了，没到则休眠5ms，然后继续判断
+        while(1)
+        {
+            if (mIsQuit)
+            {
+                break;
+            }
+
+            if (mAudioStream != NULL && !mIsAudioThreadFinished && !m_pcm_player->deviceOpenFailed())
+            {
+                if (mIsReadFinished && m_audio_pkt_list.size() <= 0 && m_pcm_player->getPcmFrameSize() <= 0)
+                {//读取完了 且音频数据也播放完了 就剩下视频数据了  直接显示出来了 不用同步了
+                    break;
+                }
+
+                ///有音频的情况下，将视频同步到音频
+                ///跟音频的pts做对比，比视频快则做延时
+                // std::lock_guard<std::mutex> lck(m_mutex_audio_clk);
+                audio_pts = audio_clock;
+            }
+            else
+            {
+                ///没有音频或者音频设备打开失败的情况下，直接同步到外部时钟
+                audio_pts = (av_gettime() - mVideoStartTime) / 1000; //毫秒
+                // std::lock_guard<std::mutex> lck(m_mutex_audio_clk);
+                audio_clock = audio_pts;
+            }
+
+// printf("%s %lld %lld \n", __FUNCTION__, video_pts, audio_pts);
+// std::cout<<video_pts<<" "<<audio_pts <<" "<<video_clock<<std::endl;
+            //主要是 跳转的时候 我们把video_clock设置成0了
+            //因此这里需要更新video_pts
+            //否则当从后面跳转到前面的时候 会卡在这里
+            video_pts = video_clock;
+
+            if (video_pts <= audio_pts) break;
+
+            int delayTime = (video_pts - audio_pts);
+
+            delayTime = delayTime > 5 ? 5:delayTime; //最长休眠5ms
+
+            if (!mIsNeedPause)
+            {
+                mSleep(delayTime);
+            }
+        }
+    };
 
     while(1)
     {
@@ -277,43 +329,79 @@ void VideoPlayer::decodeVideoThread()
             continue;
         }
 
-        AVPacket packet = m_video_pkt_list.front();
+        AVPacket pkt = m_video_pkt_list.front();
         m_video_pkt_list.pop_front();
         lck.unlock();
 
-        AVPacket *pkt = &packet;
+        AVPacket *packet = &pkt;
 
-        //收到这个数据 说明刚刚执行过跳转 现在需要把解码器的数据 清除一下
-        if(strcmp((char*)pkt->data, FLUSH_DATA) == 0)
+        if (!m_enable_video_decode)
         {
-            avcodec_flush_buffers(pCodecCtx);
-            av_packet_unref(pkt);
-            continue;
-        }
-
-        if (avcodec_send_packet(pCodecCtx, pkt) != 0)
-        {
-           printf("input AVPacket to decoder failed!\n");
-           av_packet_unref(pkt);
-           continue;
-        }
-
-        while (0 == avcodec_receive_frame(pCodecCtx, pFrame))
-        {
-            if (pkt->dts == AV_NOPTS_VALUE && pFrame->opaque&& *(uint64_t*) pFrame->opaque != AV_NOPTS_VALUE)
+            if (packet->dts != AV_NOPTS_VALUE)
             {
-                video_pts = *(uint64_t *) pFrame->opaque;
-            }
-            else if (pkt->dts != AV_NOPTS_VALUE)
-            {
-                video_pts = pkt->dts;
+                video_pts = packet->dts;
             }
             else
             {
                 video_pts = 0;
             }
 
-            video_pts *= av_q2d(mVideoStream->time_base);
+            video_pts *= (av_q2d(mVideoStream->time_base) * 1000); //毫秒
+            video_clock = video_pts;
+// printf("%s %lld %lld %lld %lld\n", __FUNCTION__, video_pts, video_clock, audio_pts, packet->dts);
+// printf("%s %d m_audio_pkt_list.size()=%d m_video_pkt_list.size()=%d \n", __FILE__, __LINE__, m_audio_pkt_list.size(), m_video_pkt_list.size());
+            avSyncFunc(); //音视频同步
+        }
+
+        if (m_event_handle && m_enable_encoded_video_callback)
+        {
+            //处理视频数据，直接回调未解码前的数据
+            int key_frame = (packet->flags & AV_PKT_FLAG_KEY);
+
+            VideoEncodedFramePtr videoFrame = std::make_shared<VideoEncodedFrame>();
+            videoFrame->setNalu(packet->data, packet->size, true, T_NALU_H265, video_clock);
+            videoFrame->setIsKeyFrame(key_frame);
+
+            m_event_handle->onVideoBuffer(videoFrame);
+        }
+
+        if (!m_enable_video_decode)
+        {
+            av_packet_unref(packet);
+            continue;
+        }
+
+        //收到这个数据 说明刚刚执行过跳转 现在需要把解码器的数据 清除一下
+        if(strcmp((char*)packet->data, FLUSH_DATA) == 0)
+        {
+            avcodec_flush_buffers(pCodecCtx);
+            av_packet_unref(packet);
+            continue;
+        }
+
+        if (avcodec_send_packet(pCodecCtx, packet) != 0)
+        {
+           printf("input AVPacket to decoder failed!\n");
+           av_packet_unref(packet);
+           continue;
+        }
+
+        while (0 == avcodec_receive_frame(pCodecCtx, pFrame))
+        {
+            if (packet->dts == AV_NOPTS_VALUE && pFrame->opaque&& *(uint64_t*) pFrame->opaque != AV_NOPTS_VALUE)
+            {
+                video_pts = *(uint64_t *) pFrame->opaque;
+            }
+            else if (packet->dts != AV_NOPTS_VALUE)
+            {
+                video_pts = packet->dts;
+            }
+            else
+            {
+                video_pts = 0;
+            }
+
+            video_pts *= (av_q2d(mVideoStream->time_base) * 1000); //毫秒
             video_clock = video_pts;
     //OUTPUT("%s %f \n", __FUNCTION__, video_pts);
             if (seek_flag_video)
@@ -321,7 +409,7 @@ void VideoPlayer::decodeVideoThread()
                 //发生了跳转 则跳过关键帧到目的时间的这几帧
                if (video_pts < seek_time)
                {
-                   av_packet_unref(pkt);
+                   av_packet_unref(packet);
                    continue;
                }
                else
@@ -330,49 +418,7 @@ void VideoPlayer::decodeVideoThread()
                }
             }
 
-            ///音视频同步，实现的原理就是，判断是否到显示此帧图像的时间了，没到则休眠5ms，然后继续判断
-            while(1)
-            {
-                if (mIsQuit)
-                {
-                    break;
-                }
-
-                if (mAudioStream != NULL && !mIsAudioThreadFinished && m_pcm_player->deviceOpened())
-                {
-                    if (mIsReadFinished && m_audio_pkt_list.size() <= 0 && m_pcm_player->getPcmFrameSize() <= 0)
-                    {//读取完了 且音频数据也播放完了 就剩下视频数据了  直接显示出来了 不用同步了
-                        break;
-                    }
-
-                    ///有音频的情况下，将视频同步到音频
-                    ///跟音频的pts做对比，比视频快则做延时
-                    audio_pts = audio_clock;
-                }
-                else
-                {
-                    ///没有音频或者音频设备打开失败的情况下，直接同步到外部时钟
-                    audio_pts = (av_gettime() - mVideoStartTime) / 1000000.0;
-                    audio_clock = audio_pts;
-                }
-
-// fprintf(stderr, "%s %f %f \n", __FUNCTION__, video_pts, audio_pts);
-                //主要是 跳转的时候 我们把video_clock设置成0了
-                //因此这里需要更新video_pts
-                //否则当从后面跳转到前面的时候 会卡在这里
-                video_pts = video_clock;
-
-                if (video_pts <= audio_pts) break;
-
-                int delayTime = (video_pts - audio_pts) * 1000;
-
-                delayTime = delayTime > 5 ? 5:delayTime; //最长休眠5ms
-
-                if (!mIsNeedPause)
-                {
-                    mSleep(delayTime);
-                }
-            }
+            avSyncFunc();
 
 #if CONFIG_AVFILTER
         if (   last_w != pFrame->width
@@ -485,13 +531,13 @@ void VideoPlayer::decodeVideoThread()
                     pFrame->linesize, 0, videoHeight, pFrameYUV->data,
                     pFrameYUV->linesize);
 
-// printf("(packet->flags & AV_PKT_FLAG_KEY) = %d\n", pkt->flags & AV_PKT_FLAG_KEY);
-            if (!is_key_frame_getted && (pkt->flags & AV_PKT_FLAG_KEY)) // is keyframe
+// printf("(packet->flags & AV_PKT_FLAG_KEY) = %d\n", packet->flags & AV_PKT_FLAG_KEY);
+            if (!is_key_frame_getted && (packet->flags & AV_PKT_FLAG_KEY)) // is keyframe
             {
                 is_key_frame_getted = true;
             }
 
-            if (is_key_frame_getted)
+            if (is_key_frame_getted) //只有获取到第一帧关键帧后才进行显示，rtsp流最开始的部分会花屏
             {
                 doDisplayVideo(yuv420pBuffer, videoWidth, videoHeight);
             }
@@ -508,7 +554,7 @@ void VideoPlayer::decodeVideoThread()
             }
 
         }
-        av_packet_unref(pkt);
+        av_packet_unref(packet);
     }
 
 #if CONFIG_AVFILTER

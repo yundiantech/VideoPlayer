@@ -166,6 +166,12 @@ void VideoPlayer::seek(int64_t pos)
     }
 }
 
+void VideoPlayer::setAbility(bool video_decode, bool encoded_video_callback)
+{
+    m_enable_video_decode = video_decode;
+    m_enable_encoded_video_callback = encoded_video_callback;
+}
+
 void VideoPlayer::setMute(bool isMute)
 {
     mIsMute = isMute;
@@ -178,8 +184,14 @@ void VideoPlayer::setVolume(float value)
     m_pcm_player->setVolume(value);
 }
 
-double VideoPlayer::getCurrentTime()
+uint64_t VideoPlayer::getCurrentTime()
 {
+    return getAudioClock();
+}
+
+uint64_t VideoPlayer::getAudioClock()
+{
+    // std::lock_guard<std::mutex> lck(m_mutex_audio_clk);
     return audio_clock;
 }
 
@@ -334,11 +346,11 @@ void VideoPlayer::run()
 
     videoStream = -1;
     audioStream = -1;
-
+printf("%s:%d pFormatCtx->nb_streams=%d \n", __FILE__, __LINE__, pFormatCtx->nb_streams);
     ///循环查找视频中包含的流信息，
     for (int i = 0; i < pFormatCtx->nb_streams; i++)
     {
-        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && videoStream < 0)
         {
             videoStream = i;
         }
@@ -355,33 +367,35 @@ void VideoPlayer::run()
     {
         AVStream *video_stream = pFormatCtx->streams[videoStream];
 
-        ///查找视频解码器
-        pCodec = (AVCodec*)avcodec_find_decoder(video_stream->codecpar->codec_id);
-        pCodecCtx = avcodec_alloc_context3(pCodec);
-        pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-
-        avcodec_parameters_to_context(pCodecCtx, video_stream->codecpar);
-
-        if (pCodec == nullptr)
+        if (m_enable_video_decode)
         {
-            fprintf(stderr, "PCodec not found.\n");
-            doOpenVideoFileFailed();
-            goto end;
-        }
+            ///查找视频解码器
+            pCodec = (AVCodec*)avcodec_find_decoder(video_stream->codecpar->codec_id);
+            pCodecCtx = avcodec_alloc_context3(pCodec);
+            pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
 
-        ///打开视频解码器
-        if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0)
-        {
-            fprintf(stderr, "Could not open video codec.\n");
-            doOpenVideoFileFailed();
-            goto end;
+            avcodec_parameters_to_context(pCodecCtx, video_stream->codecpar);
+
+            if (pCodec == nullptr)
+            {
+                fprintf(stderr, "PCodec not found.\n");
+                doOpenVideoFileFailed();
+                goto end;
+            }
+
+            ///打开视频解码器
+            if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0)
+            {
+                fprintf(stderr, "Could not open video codec.\n");
+                doOpenVideoFileFailed();
+                goto end;
+            }
         }
 
         mVideoStream = video_stream;
 
         ///启动视频解码线程
         m_thread_video->start();
-
     }
 
     if (audioStream >= 0)
@@ -607,7 +621,7 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
                 mPauseStartTime = av_gettime();
             }
             seek_req = 0;
-            seek_time = seek_pos / 1000000.0;
+            seek_time = seek_pos / 1000;
             seek_flag_audio = 1;
             seek_flag_video = 1;
 
@@ -654,7 +668,7 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
             continue;
         }
 // qDebug("%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
-// fprintf(stderr, "%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
+// fprintf(stderr, "%s mIsQuit=%d mIsPause=%d packet.stream_index=%d videoStream=%d audioStream=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index, videoStream, audioStream);
         if (packet.stream_index == videoStream)
         {
             inputVideoQuene(packet);
@@ -863,12 +877,10 @@ void VideoPlayer::doDisplayVideo(const uint8_t *yuv420Buffer, const int &width, 
 //    fprintf(stderr, "%s width=%d height=%d \n", __FUNCTION__, width, height);
     if (m_event_handle != nullptr)
     {
-        VideoFramePtr videoFrame = std::make_shared<VideoFrame>();
+        VideoRawFramePtr videoFrame = std::make_shared<VideoRawFrame>();
 
-        VideoFrame * ptr = videoFrame.get();
-
-        ptr->initBuffer(width, height);
-        ptr->setYUVbuf(yuv420Buffer);
+        videoFrame->initBuffer(width, height, VideoRawFrame::FRAME_TYPE_YUV420P);
+        videoFrame->setFramebuf(yuv420Buffer);
 
         m_event_handle->onDisplayVideo(videoFrame);
     }

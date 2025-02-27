@@ -107,8 +107,9 @@ protected:
     void onPlayerStateChanged(const VideoPlayer::State &state, const bool &hasVideo, const bool &hasAudio);
 
     ///显示视频数据，此函数不宜做耗时操作，否则会影响播放的流畅性。
-    void onDisplayVideo(VideoFramePtr videoFrame);
+    void onDisplayVideo(VideoRawFramePtr videoFrame);
 
+    void onVideoBuffer(VideoEncodedFramePtr videoFrame); //回调未解码前的数据
 };
 
 #endif // MAINWINDOW_H

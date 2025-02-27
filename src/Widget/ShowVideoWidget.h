@@ -51,7 +51,7 @@ public:
 
     qint64 getLastGetFrameTime(){return mLastGetFrameTime;}
 
-    void inputOneFrame(VideoFramePtr videoFrame);
+    void inputOneFrame(VideoRawFramePtr videoFrame);
 
 signals:
     void sig_CloseBtnClick();
@@ -97,7 +97,7 @@ private:
     int m_nVideoW; //视频分辨率宽
     int m_nVideoH; //视频分辨率高
 
-    VideoFramePtr mVideoFrame;
+    VideoRawFramePtr mVideoFrame;
     QList<FaceInfoNode> mFaceInfoList;
 
     bool mIsOpenGLInited; //openGL初始化函数是否执行过了

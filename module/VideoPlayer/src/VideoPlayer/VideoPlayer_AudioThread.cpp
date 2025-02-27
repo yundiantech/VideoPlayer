@@ -8,6 +8,7 @@
 
 #include "PcmPlayer/PcmVolumeControl.h"
 
+#include <iostream>
 #include <stdio.h>
 
 void VideoPlayer::decodeAudioThread()
@@ -15,7 +16,7 @@ void VideoPlayer::decodeAudioThread()
     fprintf(stderr, "%s start \n", __FUNCTION__);
     mIsAudioThreadFinished = false;
     
-    float pts_s = 0.0f; //时间戳(秒)
+    int64_t pts_ms = 0; //时间戳(毫秒)
 
     while (1)
     {
@@ -55,7 +56,7 @@ void VideoPlayer::decodeAudioThread()
         /* if update, update the audio clock w/pts */
         if (pkt->pts != AV_NOPTS_VALUE)
         {
-            pts_s = av_q2d(mAudioStream->time_base) * pkt->pts;
+            pts_ms = av_q2d(mAudioStream->time_base) * pkt->pts * 1000;
         }
 
         //收到这个数据 说明刚刚执行过跳转 现在需要把解码器的数据 清除一下
@@ -69,7 +70,7 @@ void VideoPlayer::decodeAudioThread()
         if (seek_flag_audio)
         {
             //发生了跳转 则跳过关键帧到目的时间的这几帧
-           if (pts_s < seek_time)
+           if (pts_ms < seek_time)
            {
                continue;
            }
@@ -109,11 +110,11 @@ void VideoPlayer::decodeAudioThread()
                     break;
                 }
 
-                /* if update, update the audio clock w/pts */
-                if (packet.pts != AV_NOPTS_VALUE)
-                {
-                    audio_clock = 1000 * av_q2d(mAudioStream->time_base) * packet.pts;
-                }
+                // /* if update, update the audio clock w/pts */
+                // if (packet.pts != AV_NOPTS_VALUE)
+                // {
+                //     audio_clock = (uint64_t)(av_q2d(mAudioStream->time_base) * packet.pts * 1000);
+                // }
 
                 int out_sample_rate = m_out_sample_rate;
 
@@ -124,7 +125,7 @@ void VideoPlayer::decodeAudioThread()
                 /// 因此就需要重新计算采样点个数（使用下面的函数）
                 /// 将in_sample_rate的采样次数换算成out_sample_rate对应的采样次数
                 int nb_samples = av_rescale_rnd(swr_get_delay(swrCtx, out_sample_rate) + aFrame->nb_samples, out_sample_rate, m_in_sample_rate, AV_ROUND_UP);
-    //qDebug()<<swr_get_delay(swrCtx, out_sample_rate) + aFrame->nb_samples<<aFrame->nb_samples<<nb_samples;
+// std::cout<<swr_get_delay(swrCtx, out_sample_rate) + aFrame->nb_samples<<aFrame->nb_samples<<nb_samples<<std::endl;
     //            int nb_samples = av_rescale_rnd(aFrame->nb_samples, out_sample_rate, m_in_sample_rate, AV_ROUND_INF);
                 if (aFrame_ReSample != nullptr)
                 {
@@ -185,11 +186,17 @@ void VideoPlayer::decodeAudioThread()
 
                     PCMFramePtr pcmFramePtr = std::make_shared<PCMFrame>();
                     pcmFramePtr->setFrameBuffer(audio_buf, resampled_data_size);
-                    pcmFramePtr->setFrameInfo(m_out_sample_rate, audio_tgt_channels, pts_s*1000);
+                    pcmFramePtr->setFrameInfo(m_out_sample_rate, audio_tgt_channels, pts_ms);
 
                     int audio_frame_size = m_pcm_player->inputPCMFrame(pcmFramePtr);
-//qDebug()<<resampled_data_size<<audio_frame_size;
-                    audio_clock = m_pcm_player->getCurrentPts() / 1000.0;
+
+                    if (audio_frame_size > 0) //大于0 表示音频播放设备处于打开状态
+                    {
+                        // std::lock_guard<std::mutex> lck(m_mutex_audio_clk);
+                        audio_clock = m_pcm_player->getCurrentPts();
+                    }
+                    
+// std::cout<<resampled_data_size<<" "<<audio_frame_size<<" "<<audio_clock<<" "<<pts_ms<<std::endl;
                 }
 
             }

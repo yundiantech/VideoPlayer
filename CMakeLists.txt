@@ -19,7 +19,7 @@ set(CMAKE_AUTOUIC ON)
 #CMAKE_RUNTIME_OUTPUT_DIRECTORY：存放可执行软件的目录；
 #set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/archive)
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/library)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/win64)
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/win64)
 #set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/path)
 
 if(UNIX)
@@ -28,6 +28,8 @@ if(UNIX)
 
     set(CMAKE_PREFIX_PATH "/opt/Qt/Qt5.13.2")
     set(QT_QMAKE_EXECUTABLE "/opt/Qt/Qt5.13.2/bin/qmake")
+
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/linux)
 
 elseif(WIN32)
 
@@ -40,11 +42,12 @@ elseif(WIN32)
     
     if(CMAKE_CL_64)    #CMAKE的内建变量，如果是true，就说明编译器的64位的，自然可以编译64bit的程序
         set(QT_DIR_NAME msvc2017_64)
-
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/win64)
         # set(CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
         # list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
     else()
         set(QT_DIR_NAME msvc2017)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/win32)
     endif()
 
     foreach(item ${QT_DIR_ROOT})
