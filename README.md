@@ -16,7 +16,7 @@ Qt中引用SDL库文件 请参考：
 http://blog.yundiantech.com/?log=blog&id=10  
 
 学习音视频技术欢迎访问 http://blog.yundiantech.com  
-音视频技术交流讨论欢迎加 QQ群 121376426    
+音视频技术交流讨论欢迎加 QQ群 321159586    
 
 PS:记得将ffmpeg/bin目录下的dll文件拷贝到编译生成的exe所在的目录下，否则会无法运行。  
 
@@ -29,6 +29,7 @@ Qt5.13.2(vs2017/mingw) + ffmpeg4.1 + SDL2
 1.优化音频文件播放。  
 2.修复杂音问题。  
 3.修复RTSP延时问题。  
+4.修复纯视频流时暂停再播放视频会卡一段时间的问题。  
 
 【V2.1.8】 2024-12-20  
 Qt5.13.2(vs2017/mingw) + ffmpeg4.1 + SDL2  
