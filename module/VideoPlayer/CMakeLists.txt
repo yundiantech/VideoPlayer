@@ -1,6 +1,8 @@
 
 cmake_minimum_required(VERSION 3.13)
 
+set(USE_PCM_PLAYER 1)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 file(GLOB_RECURSE ALL_SOURCE
@@ -8,9 +10,17 @@ file(GLOB_RECURSE ALL_SOURCE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/VideoPlayer/*.cpp
         )
 
-message("ALL_SOURCE:"${ALL_SOURCE})
 #排除main.cpp
 list(REMOVE_ITEM ALL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
+if (USE_PCM_PLAYER)
+    add_definitions(-DUSE_PCM_PLAYER -DENABLE_SDL)
+else()
+    #排除PcmPlayer
+    list(REMOVE_ITEM ALL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/PcmPlayer/PcmPlayer_SDL.cpp)
+endif()
+
+message("ALL_SOURCE:"${ALL_SOURCE})
 
 # 后来你决定添加新的源代码
 # 使用target_sources添加文件

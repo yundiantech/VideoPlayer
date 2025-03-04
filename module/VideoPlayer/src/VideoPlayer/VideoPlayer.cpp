@@ -6,7 +6,9 @@
 
 #include "VideoPlayer.h"
 
+#ifdef USE_PCM_PLAYER
 #include "PcmPlayer/PcmPlayer_SDL.h"
+#endif
 
 #include <stdio.h>
 #include <iostream>
@@ -20,10 +22,10 @@ VideoPlayer::VideoPlayer()
     mIsNeedPause = false;
 
     mVolume = 1;
-
+#ifdef USE_PCM_PLAYER
     m_pcm_player = new PcmPlayer_SDL();
     m_pcm_player->setSpeed(m_speed);
-
+#endif
     this->setSingleMode(true);
 
     m_thread_video = new Thread();
@@ -178,13 +180,17 @@ void VideoPlayer::setAbility(bool video_decode, bool encoded_video_callback, boo
 void VideoPlayer::setMute(bool isMute)
 {
     mIsMute = isMute;
+#ifdef USE_PCM_PLAYER
     m_pcm_player->setMute(isMute);
+#endif
 }
 
 void VideoPlayer::setVolume(float value)
 {
     mVolume = value;
+#ifdef USE_PCM_PLAYER
     m_pcm_player->setVolume(value);
+#endif
 }
 
 uint64_t VideoPlayer::getCurrentTime()
@@ -809,10 +815,10 @@ end:
 fprintf(stderr, "%s:%d mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d \n", __FILE__, __LINE__, mIsVideoThreadFinished, mIsAudioThreadFinished);
         mSleep(10);
     } //确保视频线程结束后 再销毁队列
-
+#ifdef USE_PCM_PLAYER
     m_pcm_player->stopPlay();
     m_pcm_player->clearFrame();
-
+#endif
     if (bsf_ctx)
     {
         av_bsf_free(&bsf_ctx);
@@ -852,7 +858,7 @@ fprintf(stderr, "%s:%d mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d \n", 
     avformat_close_input(&pFormatCtx);
     avformat_free_context(pFormatCtx);
 
-    SDL_Quit();
+    // SDL_Quit();
 
     if (mIsReadError && !mIsQuit)
     {
@@ -915,7 +921,9 @@ void VideoPlayer::clearAudioQuene()
         av_packet_unref(&pkt);
     }
     m_audio_pkt_list.clear();
+#ifdef USE_PCM_PLAYER
     m_pcm_player->clearFrame();
+#endif
 }
 
 ///当使用界面类继承了本类之后，以下函数不会执行

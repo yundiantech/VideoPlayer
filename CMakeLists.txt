@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-# set(PRODUCT_NAME TransCodeIpcAudio)
+# set(PRODUCT_NAME VideoPlayer)
 
 #直接获取cmakelists.txt所在目录名 赋值给PRODUCT_NAME
 get_filename_component(PRODUCT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)

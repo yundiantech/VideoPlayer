@@ -246,12 +246,9 @@ private:
     bool m_enable_audio_play = true; //是否播放音频
     bool m_enable_encoded_audio_callback = false; //是否回调解码之前的音频数据
 
-//    ///本播放器中SDL仅用于播放音频，不用做别的用途
-//    ///SDL播放音频相关
-//    SDL_AudioDeviceID mAudioID;
-//    int openSDL();
-//    void closeSDL();
+#ifdef USE_PCM_PLAYER
     PcmPlayer *m_pcm_player = nullptr;
+#endif
 
     int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph, AVFilterContext *source_ctx, AVFilterContext *sink_ctx);
     int configure_video_filters(AVFilterGraph *graph, const char *vfilters, AVFrame *frame);

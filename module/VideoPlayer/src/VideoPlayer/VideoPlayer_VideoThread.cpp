@@ -261,9 +261,17 @@ void VideoPlayer::decodeVideoThread()
                 break;
             }
 
-            if (mAudioStream != NULL && !mIsAudioThreadFinished && !m_pcm_player->deviceOpenFailed())
+            if (mAudioStream != NULL && !mIsAudioThreadFinished 
+#ifdef USE_PCM_PLAYER
+            && !m_pcm_player->deviceOpenFailed()
+#endif
+            )
             {
-                if (mIsReadFinished && m_audio_pkt_list.size() <= 0 && m_pcm_player->getPcmFrameSize() <= 0)
+                if (mIsReadFinished && m_audio_pkt_list.size() <= 0 
+#ifdef USE_PCM_PLAYER
+                && m_pcm_player->getPcmFrameSize() <= 0
+#endif
+                )
                 {//读取完了 且音频数据也播放完了 就剩下视频数据了  直接显示出来了 不用同步了
                     break;
                 }
