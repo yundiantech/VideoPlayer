@@ -18,6 +18,16 @@
 class PCMFrame
 {
 public:
+    enum FrameType
+    {
+        PCMFRAME_TYPE_NONE = -1,
+        PCMFRAME_TYPE_PCM,
+        PCMFRAME_TYPE_PCMU, 
+        PCMFRAME_TYPE_PCMA,
+        PCMFRAME_TYPE_G711U,
+        PCMFRAME_TYPE_G711A, 
+    };
+
     PCMFrame();
     ~PCMFrame();
 
@@ -25,10 +35,12 @@ public:
     uint8_t *getBuffer(){return mFrameBuffer;}
     unsigned int getSize(){return  mFrameBufferSize;}
 
-    void setFrameInfo(int sample_rate, int channels, uint32_t pts);
+    void setFrameInfo(int sample_rate, int channels, uint32_t pts, FrameType type = PCMFRAME_TYPE_PCM);
     uint32_t pts(){return m_pts;}
     int sampleRate(){return m_sample_rate;}
     int channels(){return m_channels;}
+
+    FrameType type(){return m_type;}
 
 private:
     uint8_t *mFrameBuffer = nullptr; //pcm数据
@@ -38,6 +50,8 @@ private:
 //    enum AVSampleFormat mSampleFmt = AV_SAMPLE_FMT_S16;//输出的采样格式
     int m_sample_rate = 0;//采样率
     int m_channels = 0; //声道数
+
+    FrameType m_type = PCMFRAME_TYPE_NONE;
 
 };
 

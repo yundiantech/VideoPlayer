@@ -22,6 +22,7 @@ VideoPlayer::VideoPlayer()
     mVolume = 1;
 
     m_pcm_player = new PcmPlayer_SDL();
+    m_pcm_player->setSpeed(m_speed);
 
     this->setSingleMode(true);
 
@@ -166,10 +167,12 @@ void VideoPlayer::seek(int64_t pos)
     }
 }
 
-void VideoPlayer::setAbility(bool video_decode, bool encoded_video_callback)
+void VideoPlayer::setAbility(bool video_decode, bool encoded_video_callback, bool audio_play, bool encoded_audio_callback)
 {
     m_enable_video_decode = video_decode;
     m_enable_encoded_video_callback = encoded_video_callback;
+    m_enable_audio_play = audio_play;
+    m_enable_encoded_audio_callback = encoded_audio_callback;
 }
 
 void VideoPlayer::setMute(bool isMute)
@@ -307,6 +310,7 @@ void VideoPlayer::run()
 
     swrCtx = nullptr;
 
+    AVBSFContext *bsf_ctx = nullptr;
     mAudioStream = nullptr;
     mVideoStream = nullptr;
 
@@ -393,6 +397,53 @@ printf("%s:%d pFormatCtx->nb_streams=%d \n", __FILE__, __LINE__, pFormatCtx->nb_
         }
 
         mVideoStream = video_stream;
+
+        if (!m_is_live_mode && m_enable_encoded_video_callback)
+        {
+            ///如果需要回调解码前的数据，则需要设置AVBitStreamFilter
+            ///用于添加起始码和sps/pps
+            do{
+                //设置AVBitStreamFilter
+                int ret;
+                const AVBitStreamFilter *filter = nullptr;
+
+                if (mVideoStream->codecpar->codec_id == AV_CODEC_ID_H264) 
+                {
+                    filter = av_bsf_get_by_name("h264_mp4toannexb");
+                } 
+                else if (mVideoStream->codecpar->codec_id == AV_CODEC_ID_HEVC) 
+                {
+                    filter = av_bsf_get_by_name("hevc_mp4toannexb");
+                }
+
+                if (!filter) 
+                {
+                    printf("Unkonw bitstream filter");
+                    break;
+                }
+
+                ret = av_bsf_alloc(filter, &bsf_ctx);
+                if (ret < 0) 
+                {
+                    printf("alloc bsf error");
+                    break;
+                }
+
+                ret = avcodec_parameters_copy(bsf_ctx->par_in, mVideoStream->codecpar);
+                if (ret < 0)
+                {
+                    printf("copy bsf error");
+
+                    av_bsf_free(&bsf_ctx);
+                    bsf_ctx = nullptr;
+
+                    break;
+                }
+
+                av_bsf_init(bsf_ctx);
+
+            }while(0);
+        }
 
         ///启动视频解码线程
         m_thread_video->start();
@@ -671,8 +722,26 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
 // fprintf(stderr, "%s mIsQuit=%d mIsPause=%d packet.stream_index=%d videoStream=%d audioStream=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index, videoStream, audioStream);
         if (packet.stream_index == videoStream)
         {
-            inputVideoQuene(packet);
-            //这里我们将数据存入队列 因此不调用 av_free_packet 释放
+            if (bsf_ctx)
+            {
+                if (av_bsf_send_packet(bsf_ctx, &packet) < 0) 
+                {
+                    // JLOGE("send_packet error");
+                    av_packet_unref(&packet);
+                    continue;
+                }
+
+                while (av_bsf_receive_packet(bsf_ctx, &packet) == 0) 
+                {
+                    inputVideoQuene(packet);
+                    //这里我们将数据存入队列 因此不调用 av_free_packet 释放
+                    //av_packet_unref(&packet);
+                }
+            }
+            else
+            {
+                inputVideoQuene(packet);
+            }
         }
         else if(packet.stream_index == audioStream)
         {
@@ -693,6 +762,26 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
             av_packet_unref(&packet);
         }
 // fprintf(stderr, "%s:%d \n", __FILE__, __LINE__);
+    }
+
+    if (bsf_ctx)
+    {
+        //flush
+        if (av_bsf_send_packet(bsf_ctx, NULL) < 0)
+        {
+            // fprintf(stderr, "send_packet error");
+            // break;
+        }
+
+        AVPacket pkt;
+        while (av_bsf_receive_packet(bsf_ctx, &pkt) == 0)
+        {
+            av_packet_unref(&pkt);
+        }
+
+        // av_bsf_free(&bsf_ctx);
+
+    //    printf("bsf_ctx fflush finish\n");
     }
 
     ///文件读取结束 跳出循环的情况
@@ -723,6 +812,12 @@ fprintf(stderr, "%s:%d mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d \n", 
 
     m_pcm_player->stopPlay();
     m_pcm_player->clearFrame();
+
+    if (bsf_ctx)
+    {
+        av_bsf_free(&bsf_ctx);
+        bsf_ctx = nullptr;
+    }
 
     if (swrCtx != nullptr)
     {

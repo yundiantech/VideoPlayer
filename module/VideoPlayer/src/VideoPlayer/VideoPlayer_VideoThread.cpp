@@ -252,6 +252,7 @@ void VideoPlayer::decodeVideoThread()
 
     auto avSyncFunc = [&]
     {
+        ///视频同步到音频
         ///音视频同步，实现的原理就是，判断是否到显示此帧图像的时间了，没到则休眠5ms，然后继续判断
         while(1)
         {
@@ -275,7 +276,7 @@ void VideoPlayer::decodeVideoThread()
             else
             {
                 ///没有音频或者音频设备打开失败的情况下，直接同步到外部时钟
-                audio_pts = (av_gettime() - mVideoStartTime) / 1000; //毫秒
+                audio_pts = (av_gettime() - mVideoStartTime) * m_speed / 1000; //毫秒
                 // std::lock_guard<std::mutex> lck(m_mutex_audio_clk);
                 audio_clock = audio_pts;
             }
@@ -358,10 +359,35 @@ void VideoPlayer::decodeVideoThread()
             //处理视频数据，直接回调未解码前的数据
             int key_frame = (packet->flags & AV_PKT_FLAG_KEY);
 
-            VideoEncodedFramePtr videoFrame = std::make_shared<VideoEncodedFrame>();
-            videoFrame->setNalu(packet->data, packet->size, true, T_NALU_H265, video_clock);
-            videoFrame->setIsKeyFrame(key_frame);
+            T_NALU_TYPE nalu_type = T_NALU_H264;
 
+            if (mVideoStream->codecpar->codec_id == AV_CODEC_ID_H264) 
+            {
+                nalu_type = T_NALU_H264;
+            } 
+            else if (mVideoStream->codecpar->codec_id == AV_CODEC_ID_HEVC) 
+            {
+                nalu_type = T_NALU_H265;
+            }
+
+            VideoEncodedFramePtr videoFrame = std::make_shared<VideoEncodedFrame>();
+
+            if (key_frame && mVideoStream->codec->extradata_size > 0)
+            {
+                int buffer_size = mVideoStream->codec->extradata_size + packet->size;
+                uint8_t *buffer = (uint8_t*)malloc(buffer_size);
+                printf("mVideoStream->codec->extradata_size=%d \n", mVideoStream->codec->extradata_size);
+                memcpy(buffer, mVideoStream->codec->extradata, mVideoStream->codec->extradata_size);
+                memcpy(buffer + mVideoStream->codec->extradata_size, packet->data, packet->size);
+
+                videoFrame->setNalu(buffer, buffer_size, false, nalu_type, video_clock);
+            }
+            else
+            {
+                videoFrame->setNalu(packet->data, packet->size, true, nalu_type, video_clock);
+            }   
+
+            videoFrame->setIsKeyFrame(key_frame);
             m_event_handle->onVideoBuffer(videoFrame);
         }
 

@@ -1,5 +1,4 @@
-﻿#ifndef TYPES_H
-#define TYPES_H
+﻿#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
@@ -24,4 +23,4 @@ void mSleep(int mSecond);
 
 int64_t getTimeStamp_MilliSecond(); //获取时间戳（毫秒）
 
-#endif // TYPES_H
+

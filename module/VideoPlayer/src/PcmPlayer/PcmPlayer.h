@@ -32,6 +32,7 @@ public:
 
     uint32_t getCurrentPts(){return m_current_pts;}
 
+    void setSpeed(float speed){m_play_speed = speed;}    
     void setMute(const bool is_mute){m_is_mute = is_mute;}
     void setVolume(float value){m_volume = value;}
     float getVolume(){return m_volume;}
@@ -43,6 +44,7 @@ protected:
     std::mutex m_mutex_audio;
     std::condition_variable m_cond_audio;
     std::list<PCMFramePtr> m_pcm_frame_list;
+    float m_play_speed = 1.0f; //倍速播放
     
     /// 用于存放上一次未处理完的数据
     uint8_t m_last_frame_buffer[10240];

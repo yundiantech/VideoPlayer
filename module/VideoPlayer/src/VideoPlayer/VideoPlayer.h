@@ -36,9 +36,10 @@ extern "C"
 ///启用滤镜，用于旋转带角度的视频
 #define CONFIG_AVFILTER 1
 
-#include "types.h"
-#include "PcmPlayer/PcmPlayer.h"
+#include "../types.h"
 #include "util/thread.h"
+#include "PcmPlayer/PcmPlayer.h"
+#include "frame/AudioFrame/AACFrame.h"
 #include "frame/VideoFrame/VideoFrame.h"
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
@@ -84,8 +85,9 @@ public:
         ///播放视频，此函数不宜做耗时操作，否则会影响播放的流畅性。
         virtual void onDisplayVideo(VideoRawFramePtr videoFrame) = 0;
 
-        virtual void onVideoBuffer(VideoEncodedFramePtr videoFrame){};
-        // virtual void onAudioBuffer(VideoRawFramePtr videoFrame) = 0;
+        virtual void onVideoBuffer(VideoEncodedFramePtr video_frame){};
+        virtual void onAudioBuffer(AACFramePtr audio_frame){};
+        virtual void onAudioBuffer(PCMFramePtr audio_frame){};
     };
 
 public:
@@ -120,7 +122,7 @@ public:
      * 此函数用于配置对象的视频处理能力，包括是否支持视频解码和是否支持编码后视频的回调
      * 通过设置这些参数，可以控制对象在视频处理过程中的行为和功能
      */
-    void setAbility(bool video_decode, bool encoded_video_callback);
+    void setAbility(bool video_decode, bool encoded_video_callback, bool audio_play, bool encoded_audio_callback);
 
     void setMute(bool isMute);
     void setVolume(float value);
@@ -145,6 +147,7 @@ protected:
 private:
     std::string m_file_path; //视频文件路径
     bool m_is_live_mode = false; //是否为直播流
+    float m_speed = 1; //倍速播放
 
     State m_state; //播放状态
 
@@ -231,7 +234,7 @@ private:
     bool inputVideoQuene(const AVPacket &pkt);
     void clearVideoQuene();
     bool m_enable_video_decode = true;
-    bool m_enable_encoded_video_callback = false; //是否回调解码之前的数据
+    bool m_enable_encoded_video_callback = false; //是否回调解码之前的视频数据
 
     ///音频帧队列
     Thread *m_thread_audio = nullptr;
@@ -240,7 +243,8 @@ private:
     std::list<AVPacket> m_audio_pkt_list;
     bool inputAudioQuene(const AVPacket &pkt);
     void clearAudioQuene();
-    // bool m_enable_audio_decode = false;
+    bool m_enable_audio_play = true; //是否播放音频
+    bool m_enable_encoded_audio_callback = false; //是否回调解码之前的音频数据
 
 //    ///本播放器中SDL仅用于播放音频，不用做别的用途
 //    ///SDL播放音频相关
