@@ -13,6 +13,18 @@
 #include <stdio.h>
 #include <iostream>
 
+#include <libavutil/error.h>
+#include <stdio.h>
+
+void print_ffmpeg_error(int errnum) 
+{
+    char errbuf[128];
+    const char *errbuf_ptr = errbuf;
+    if (av_strerror(errnum, errbuf, sizeof(errbuf)) < 0)
+        errbuf_ptr = strerror(AVUNERROR(errnum));
+    fprintf(stderr, "Error: %s\n", errbuf_ptr);
+}
+
 VideoPlayer::VideoPlayer()
 {
     m_state = VideoPlayer::Stop;
@@ -338,9 +350,12 @@ void VideoPlayer::run()
 
     mCallStartTime = av_gettime();
     mIsOpenStream  = true;
-    if (avformat_open_input(&pFormatCtx, file_path, nullptr, &opts) != 0)
+
+    int ret = avformat_open_input(&pFormatCtx, file_path, nullptr, &opts);
+    if (ret != 0)
     {
-        fprintf(stderr, "can't open the file. \n");
+        fprintf(stderr, "can't open the file. ret=%d \n", ret);
+        print_ffmpeg_error(ret);
         mIsReadError = true;
         doOpenVideoFileFailed();
         goto end;

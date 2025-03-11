@@ -24,13 +24,7 @@ extern "C"
     #include <libavfilter/avfilter.h>
     #include <libavfilter/buffersink.h>
     #include <libavfilter/buffersrc.h>
-
-//    #include <SDL.h>
-//    #include <SDL_audio.h>
-//    #include <SDL_types.h>
-//    #include <SDL_name.h>
-//    #include <SDL_main.h>
-//    #include <SDL_config.h>
+    #include <libavcodec/bsf.h>
 }
 
 ///启用滤镜，用于旋转带角度的视频

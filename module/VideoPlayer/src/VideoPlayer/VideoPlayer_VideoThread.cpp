@@ -380,13 +380,13 @@ void VideoPlayer::decodeVideoThread()
 
             VideoEncodedFramePtr videoFrame = std::make_shared<VideoEncodedFrame>();
 
-            if (key_frame && mVideoStream->codec->extradata_size > 0)
+            if (key_frame && mVideoStream->codecpar->extradata_size > 0)
             {
-                int buffer_size = mVideoStream->codec->extradata_size + packet->size;
+                int buffer_size = mVideoStream->codecpar->extradata_size + packet->size;
                 uint8_t *buffer = (uint8_t*)malloc(buffer_size);
-                printf("mVideoStream->codec->extradata_size=%d \n", mVideoStream->codec->extradata_size);
-                memcpy(buffer, mVideoStream->codec->extradata, mVideoStream->codec->extradata_size);
-                memcpy(buffer + mVideoStream->codec->extradata_size, packet->data, packet->size);
+                printf("mVideoStream->codecpar->extradata_size=%d \n", mVideoStream->codecpar->extradata_size);
+                memcpy(buffer, mVideoStream->codecpar->extradata, mVideoStream->codecpar->extradata_size);
+                memcpy(buffer + mVideoStream->codecpar->extradata_size, packet->data, packet->size);
 
                 videoFrame->setNalu(buffer, buffer_size, false, nalu_type, video_clock);
             }
