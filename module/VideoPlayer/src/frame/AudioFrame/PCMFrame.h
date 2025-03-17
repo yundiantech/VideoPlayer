@@ -39,8 +39,10 @@ public:
     uint32_t pts(){return m_pts;}
     int sampleRate(){return m_sample_rate;}
     int channels(){return m_channels;}
-
     FrameType type(){return m_type;}
+
+    void setTimeStamp(uint64_t t){m_timestamp_ms = t;}
+    uint64_t getTimeStamp(){return m_timestamp_ms;}
 
 private:
     uint8_t *mFrameBuffer = nullptr; //pcm数据
@@ -52,6 +54,8 @@ private:
     int m_channels = 0; //声道数
 
     FrameType m_type = PCMFRAME_TYPE_NONE;
+
+    uint64_t m_timestamp_ms = 0;
 
 };
 

@@ -1,9 +1,12 @@
 ﻿#include "PCMFrame.h"
 
+#include "util/util.h"
+
 PCMFrame::PCMFrame()
 {
     mFrameBuffer = nullptr;
     mFrameBufferSize = 0;
+    m_timestamp_ms = Util::GetUtcTime();
 }
 
 PCMFrame::~PCMFrame()

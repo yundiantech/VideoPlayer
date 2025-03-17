@@ -1,9 +1,12 @@
 #include "AACFrame.h"
 
+#include "util/util.h"
+
 AACFrame::AACFrame()
 {
     mFrameBuffer = nullptr;
     mFrameBufferSize = 0;
+    m_timestamp_ms = Util::GetUtcTime();
 }
 
 AACFrame::~AACFrame()

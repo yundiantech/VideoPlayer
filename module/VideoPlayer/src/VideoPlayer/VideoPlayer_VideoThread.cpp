@@ -384,7 +384,7 @@ void VideoPlayer::decodeVideoThread()
             {
                 int buffer_size = mVideoStream->codecpar->extradata_size + packet->size;
                 uint8_t *buffer = (uint8_t*)malloc(buffer_size);
-                printf("mVideoStream->codecpar->extradata_size=%d \n", mVideoStream->codecpar->extradata_size);
+                // printf("mVideoStream->codecpar->extradata_size=%d \n", mVideoStream->codecpar->extradata_size);
                 memcpy(buffer, mVideoStream->codecpar->extradata, mVideoStream->codecpar->extradata_size);
                 memcpy(buffer + mVideoStream->codecpar->extradata_size, packet->data, packet->size);
 

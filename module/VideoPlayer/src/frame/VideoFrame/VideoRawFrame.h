@@ -36,6 +36,9 @@ public:
     void setPts(const int64_t &pts){mPts=pts;}
     int64_t pts(){return mPts;}
 
+    void setTimeStamp(uint64_t t){m_timestamp_ms = t;}
+    uint64_t getTimeStamp(){return m_timestamp_ms;}
+
     FrameType type(){return mType;}
 
 protected:
@@ -48,4 +51,6 @@ protected:
     int mHegiht;
 
     int64_t mPts;
+    uint64_t m_timestamp_ms = 0;
+
 };

@@ -1,6 +1,8 @@
 ﻿#include "VideoRawFrame.h"
 #include <stdio.h>
 
+#include "util/util.h"
+
 #ifdef ENABLE_FFMPEG
 extern "C"
 {
@@ -9,13 +11,12 @@ extern "C"
 }
 #endif
 
-
-
 VideoRawFrame::VideoRawFrame()
 {
     mFrameBuffer = nullptr;
     mFrameBufferSize = 0;
     mPts = 0;
+    m_timestamp_ms = Util::GetUtcTime();
 }
 
 VideoRawFrame::~VideoRawFrame()
