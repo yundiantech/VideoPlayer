@@ -30,7 +30,7 @@ extern "C"
 ///启用滤镜，用于旋转带角度的视频
 #define CONFIG_AVFILTER 1
 
-#include "../types.h"
+#include "util/util.h"
 #include "util/thread.h"
 #include "PcmPlayer/PcmPlayer.h"
 #include "frame/AudioFrame/AACFrame.h"

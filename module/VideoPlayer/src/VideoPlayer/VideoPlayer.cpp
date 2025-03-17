@@ -625,6 +625,11 @@ fprintf(stderr, "%s mIsQuit=%d mIsPause=%d file_path=%s \n", __FUNCTION__, mIsQu
             break;
         }
 
+        if (m_is_live_mode && mIsReadError)
+        {
+            break; //网络流读取失败，需要重新打开流
+        }
+
         if (seek_req)
         {
             int stream_index = -1;

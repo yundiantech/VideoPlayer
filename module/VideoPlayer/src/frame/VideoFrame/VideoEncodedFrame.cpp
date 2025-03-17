@@ -1,10 +1,13 @@
 ﻿#include "VideoEncodedFrame.h"
 
+#include "util/util.h"
+
 VideoEncodedFrame::VideoEncodedFrame()
 {
     mNalu = nullptr;
     mPts = 0;
     mIsKeyFrame = false;
+    m_timestamp_ms = Util::GetUtcTime();
 }
 
 VideoEncodedFrame::~VideoEncodedFrame()
