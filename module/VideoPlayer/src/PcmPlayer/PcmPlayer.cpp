@@ -142,8 +142,8 @@ void PcmPlayer::playAudioBuffer(void *stream, int len)
         PCMFramePtr pcm_frame = m_pcm_frame_list.front();
         m_pcm_frame_list.pop_front();
 
-        memcpy(m_last_frame_buffer + m_last_frame_buffer_size, pcm_frame->getBuffer(), pcm_frame->getSize());
-        m_last_frame_buffer_size += pcm_frame->getSize();
+        memcpy(m_last_frame_buffer + m_last_frame_buffer_size, pcm_frame->buffer(), pcm_frame->size());
+        m_last_frame_buffer_size += pcm_frame->size();
 
         m_current_pts = pcm_frame->pts();
     }

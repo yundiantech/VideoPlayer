@@ -32,8 +32,8 @@ public:
     ~PCMFrame();
 
     void setFrameBuffer(const uint8_t * const buffer, const unsigned int &size);
-    uint8_t *getBuffer(){return mFrameBuffer;}
-    unsigned int getSize(){return  mFrameBufferSize;}
+    uint8_t *buffer(){return mFrameBuffer;}
+    unsigned int size(){return  mFrameBufferSize;}
 
     void setFrameInfo(int sample_rate, int channels, uint32_t pts, FrameType type = PCMFRAME_TYPE_PCM);
     uint32_t pts(){return m_pts;}
@@ -42,7 +42,7 @@ public:
     FrameType type(){return m_type;}
 
     void setTimeStamp(uint64_t t){m_timestamp_ms = t;}
-    uint64_t getTimeStamp(){return m_timestamp_ms;}
+    uint64_t timeStamp(){return m_timestamp_ms;}
 
 private:
     uint8_t *mFrameBuffer = nullptr; //pcm数据

@@ -4,22 +4,19 @@
 
 VideoEncodedFrame::VideoEncodedFrame()
 {
-    mNalu = nullptr;
-    mPts = 0;
-    mIsKeyFrame = false;
     m_timestamp_ms = Util::GetUtcTime();
 }
 
 VideoEncodedFrame::~VideoEncodedFrame()
 {
-    NALUParsing::FreeNALU(mNalu); //释放NALU内存
-    mNalu = nullptr;
+    NALUParsing::FreeNALU(m_nalu); //释放NALU内存
+    m_nalu = nullptr;
 }
 
 void VideoEncodedFrame::setNalu(T_NALU *nalu, const int64_t &time)
 {
-    mNalu = nalu;
-    mPts  = time;
+    m_nalu = nalu;
+    m_pts  = time;
 }
 
 void VideoEncodedFrame::setNalu(uint8_t *buffer, const int &len, const bool &isAllocBuffer, const T_NALU_TYPE &type, const uint64_t &time)
@@ -82,32 +79,32 @@ void VideoEncodedFrame::setNalu(uint8_t *buffer, const int &len, const bool &isA
 //        }
     }
 
-    if (mNalu != nullptr)
+    if (m_nalu != nullptr)
     {
-        NALUParsing::FreeNALU(mNalu); //释放NALU内存
+        NALUParsing::FreeNALU(m_nalu); //释放NALU内存
     }
 
-    mNalu = nalu;
-    mPts  = time;
+    m_nalu = nalu;
+    m_pts  = time;
 }
 
-uint8_t *VideoEncodedFrame::getBuffer()
+uint8_t *VideoEncodedFrame::buffer()
 {
     uint8_t *buffer = nullptr;
 
     do{
-        if (!mNalu)
+        if (!m_nalu)
         {
             break;
         }
 
-        if (mNalu->type == T_NALU_H264)
+        if (m_nalu->type == T_NALU_H264)
         {
-            buffer = mNalu->nalu.h264Nalu.buf;
+            buffer = m_nalu->nalu.h264Nalu.buf;
         }
-        else if (mNalu->type == T_NALU_H265)
+        else if (m_nalu->type == T_NALU_H265)
         {
-            buffer = mNalu->nalu.h265Nalu.buf;
+            buffer = m_nalu->nalu.h265Nalu.buf;
         }
 
     } while (0);
@@ -115,23 +112,23 @@ uint8_t *VideoEncodedFrame::getBuffer()
     return buffer;
 }
 
-unsigned int VideoEncodedFrame::getSize()
+unsigned int VideoEncodedFrame::size()
 {
     unsigned int buffer_size = 0;
 
     do{
-        if (!mNalu)
+        if (!m_nalu)
         {
             break;
         }
 
-        if (mNalu->type == T_NALU_H264)
+        if (m_nalu->type == T_NALU_H264)
         {
-            buffer_size = mNalu->nalu.h264Nalu.len;
+            buffer_size = m_nalu->nalu.h264Nalu.len;
         }
-        else if (mNalu->type == T_NALU_H265)
+        else if (m_nalu->type == T_NALU_H265)
         {
-            buffer_size = mNalu->nalu.h265Nalu.len;
+            buffer_size = m_nalu->nalu.h265Nalu.len;
         }
 
     } while (0);

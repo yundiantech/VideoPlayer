@@ -37,7 +37,7 @@ public:
     int64_t pts(){return mPts;}
 
     void setTimeStamp(uint64_t t){m_timestamp_ms = t;}
-    uint64_t getTimeStamp(){return m_timestamp_ms;}
+    uint64_t timeStamp(){return m_timestamp_ms;}
 
     FrameType type(){return mType;}
 

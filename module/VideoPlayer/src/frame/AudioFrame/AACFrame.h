@@ -66,11 +66,14 @@ public:
     void setFrameBuffer(const uint8_t * const buffer, const unsigned int &size);
     void setFrameBuffer(const uint8_t * const adtsBuffer, const unsigned int &adtsSize, const uint8_t * const buffer, const unsigned int &size);
 
-    uint8_t *getBuffer(){return mFrameBuffer;}
-    unsigned int getSize(){return  mFrameBufferSize;}
+    uint8_t *buffer(){return mFrameBuffer;}
+    unsigned int size(){return  mFrameBufferSize;}
+
+    void setPts(uint32_t pts){m_pts = pts;}
+    uint32_t pts(){return m_pts;}
 
     void setTimeStamp(uint64_t t){m_timestamp_ms = t;}
-    uint64_t getTimeStamp(){return m_timestamp_ms;}
+    uint64_t timeStamp(){return m_timestamp_ms;}
 
 private:
     ADTS_HEADER mAdtsHeader;
@@ -78,6 +81,7 @@ private:
     uint8_t *mFrameBuffer; //aac数据（包括adts头）
     unsigned int mFrameBufferSize; //aac数据长度（包括adts头的大小）
 
+    uint32_t m_pts = 0; //时间戳
     uint64_t m_timestamp_ms = 0; //本地绝对时间(UTC时间戳-毫秒)
 
 };

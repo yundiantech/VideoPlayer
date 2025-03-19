@@ -12,16 +12,16 @@ VideoFrame::~VideoFrame()
 
 void VideoFrame::setFrame(std::shared_ptr<VideoEncodedFrame> frame)
 {
-    if (frame->getNalu()->type == T_NALU_H264)
+    if (frame->nalu()->type == T_NALU_H264)
     {
         m_type = VIDEOFRAME_TYPE_H264;
     }
-    else if (frame->getNalu()->type == T_NALU_H265)
+    else if (frame->nalu()->type == T_NALU_H265)
     {
         m_type = VIDEOFRAME_TYPE_H265;
     }
 
-    m_pts = frame->getPts();
+    m_pts = frame->pts();
 
     m_encoded_frame = frame;
 }
