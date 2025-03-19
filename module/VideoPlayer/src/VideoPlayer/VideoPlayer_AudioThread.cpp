@@ -74,7 +74,7 @@ void VideoPlayer::decodeAudioThread()
         }
 
         std::unique_lock<std::mutex> lck(m_mutex_audio);
-        while (!mIsQuit && m_audio_pkt_list.empty())
+        while (!mIsQuit && !mIsReadFinished && m_audio_pkt_list.empty())
         {
             m_cond_audio.wait(lck);
         }
@@ -139,7 +139,7 @@ void VideoPlayer::decodeAudioThread()
 
                 AACFramePtr aac_frame = std::make_shared<AACFrame>();
                 aac_frame->setFrameBuffer(adtsBuffer, 7, packet->data, packet->size);
-
+                aac_frame->setPts(audio_clock);
                 m_event_handle->onAudioBuffer(aac_frame);
             }
             else if(mAudioStream->codecpar->codec_id == AV_CODEC_ID_PCM_MULAW)

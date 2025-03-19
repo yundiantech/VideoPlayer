@@ -217,7 +217,7 @@ fail:
 
 void VideoPlayer::decodeVideoThread()
 {
-    fprintf(stderr, "%s start \n", __FUNCTION__);
+    fprintf(stderr, "%s start pointer=%d file_path=%s \n", __FUNCTION__, this, m_file_path.c_str());
 
     mIsVideoThreadFinished = false;
 
@@ -324,7 +324,7 @@ void VideoPlayer::decodeVideoThread()
         }
 
         std::unique_lock<std::mutex> lck(m_mutex_video);
-        while (!mIsQuit && m_video_pkt_list.empty())
+        while (!mIsQuit && !mIsReadFinished && m_video_pkt_list.empty())
         {
             m_cond_video.wait(lck);
         }
@@ -620,6 +620,4 @@ void VideoPlayer::decodeVideoThread()
     mIsVideoThreadFinished = true;
 
     fprintf(stderr, "%s finished \n", __FUNCTION__);
-
-    return;
 }

@@ -155,6 +155,7 @@ bool VideoPlayer::stop(bool isWait)
 
     m_state = VideoPlayer::Stop;
     mIsQuit = true;
+    mIsPause = false;
 
     ///唤醒等待中的线程
     m_cond_video.notify_all();
@@ -735,7 +736,13 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
         {
             mIsReadFinished = true;
             mIsReadError = true;
-            printf("%s av_read_frame failed \n", __FUNCTION__);
+
+            ///唤醒等待中的线程
+            m_cond_video.notify_all();
+            m_cond_audio.notify_all();
+
+            // printf("%s av_read_frame failed %s mIsVideoThreadFinished=%d mIsAudioThreadFinished=%d mIsQuit=%d m_video_pkt_list.size()=%d m_audio_pkt_list.size()=%d \n", 
+            // __FUNCTION__, file_path, mIsVideoThreadFinished, mIsAudioThreadFinished, mIsQuit, m_video_pkt_list.size(), m_audio_pkt_list.size());
 //            if (mIsQuit)
 //            {
 //                break; //解码线程也执行完了 可以退出了
@@ -743,6 +750,10 @@ std::cout<<" video:"<<pFormatCtx->streams[videoStream]->duration<<" "<<pFormatCt
 
             mSleep(10);
             continue;
+        }
+        else
+        {
+            mIsReadFinished = false;
         }
 // qDebug("%s mIsQuit=%d mIsPause=%d packet.stream_index=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index);
 // fprintf(stderr, "%s mIsQuit=%d mIsPause=%d packet.stream_index=%d videoStream=%d audioStream=%d \n", __FUNCTION__, mIsQuit, mIsPause, packet.stream_index, videoStream, audioStream);

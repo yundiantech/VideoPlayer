@@ -169,28 +169,28 @@ private:
     ///音视频同步相关
     uint64_t mVideoStartTime; //开始播放视频的时间
     uint64_t mPauseStartTime; //暂停开始的时间
-    int64_t audio_clock; ///音频时钟(秒-小数)
+    int64_t audio_clock; ///音频时钟毫秒
     int64_t video_clock; ///<pts of last decoded frame / predicted pts of next decoded frame
-    AVStream *mVideoStream; //视频流
-    AVStream *mAudioStream; //音频流
+    AVStream *mVideoStream = nullptr; //视频流
+    AVStream *mAudioStream = nullptr; //音频流
     // std::mutex m_mutex_audio_clk;
     uint64_t getAudioClock();
 
     ///视频相关
-    AVFormatContext *pFormatCtx;
-    AVCodecContext *pCodecCtx;
-    AVCodec *pCodec;
+    AVFormatContext *pFormatCtx = nullptr;
+    AVCodecContext *pCodecCtx = nullptr;
+    AVCodec *pCodec = nullptr;
 
     ///音频相关
-    AVCodecContext *aCodecCtx;
-    AVCodec *aCodec;
-    AVFrame *aFrame;
+    AVCodecContext *aCodecCtx = nullptr;
+    AVCodec *aCodec = nullptr;
+    AVFrame *aFrame = nullptr;
 
     ///以下变量用于音频重采样
     /// 由于ffmpeg解码出来后的pcm数据有可能是带平面的pcm，因此这里统一做重采样处理，
     /// 重采样成44100的16 bits 双声道数据(AV_SAMPLE_FMT_S16)
-    AVFrame *aFrame_ReSample;
-    SwrContext *swrCtx;
+    AVFrame *aFrame_ReSample = nullptr;
+    SwrContext *swrCtx = nullptr;
 
     enum AVSampleFormat in_sample_fmt; //输入的采样格式
     enum AVSampleFormat out_sample_fmt;//输出的采样格式 16bit PCM
