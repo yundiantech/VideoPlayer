@@ -1,51 +1,40 @@
 INCLUDEPATH += $$PWD
 
-include($$PWD/ffmpeg/ffmpeg.pri)
-include($$PWD/SDL2/SDL2.pri)
+FFMPEG_BRANCH_NAME="V4.3.1"
+SDL2_BRANCH_NAME="V2.0.2"
 
-#win32{
-
-#    INCLUDEPATH += $$PWD/win/ffmpeg/include \
-#                   $$PWD/win/SDL2/include
-
-#    contains(QT_ARCH, i386) {
-#        message("32-bit")
-
-#        LIBS += -L$$PWD/win/ffmpeg/lib/x86 -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
-#        LIBS += -L$$PWD/win/SDL2/lib/x86 -lSDL2
-#    } else {
-#        message("64-bit")
-
-#        LIBS += -L$$PWD/win/ffmpeg/lib/x64 -lavcodec -lavdevice -lavfilter -lavformat -lavutil -lpostproc -lswresample -lswscale
-#        LIBS += -L$$PWD/win/SDL2/lib/x64 -lSDL2
-#    }
-
-#}
-
-unix{
-
-    INCLUDEPATH += $$PWD/linux/ffmpeg/include \
-                   $$PWD/linux/SDL2/include/SDL2
-
-    contains(QT_ARCH, i386) {
-        message("32-bit, 请自行编译32位库!")
-    } else {
-        message("64-bit")
-
-        LIBS += -L$$PWD/linux/ffmpeg/lib  -lavformat  -lavcodec -lavdevice -lavfilter -lavutil -lswresample -lswscale
-        LIBS += -L$$PWD/linux/SDL2/lib -lSDL2
-
-        LIBS += -lpthread -ldl
-    }
-
-#QMAKE_POST_LINK 表示编译后执行内容
-#QMAKE_PRE_LINK 表示编译前执行内容
-
-#解压库文件
-#QMAKE_PRE_LINK += "cd $$PWD/lib/linux && tar xvzf ffmpeg.tar.gz "
-system("cd $$PWD/lib/linux && tar xvzf ffmpeg.tar.gz")
-system("cd $$PWD/lib/linux && tar xvzf SDL2.tar.gz")
-
-
+win32{
+    message("current platform: Windows ")
+    FFMPEG_BRANCH_NAME="V4.3.1-windows"
+    SDL2_BRANCH_NAME="V2.0.2-windows"
 }
 
+unix{
+    message("current platform: Linux ")
+    FFMPEG_BRANCH_NAME="V4.3.1-linux"
+    SDL2_BRANCH_NAME="V2.0.12-linux"
+}
+    
+
+#自动下载ffmpeg库文件
+FILE_TO_CHECK=$$PWD/ffmpeg
+!exists($$FILE_TO_CHECK) {
+    message("File $$FILE_TO_CHECK does not exist. Cloning from Git repository...")
+    system(git clone https://gitee.com/devlib/ffmpeg-dev.git ffmpeg -b $$FFMPEG_BRANCH_NAME)
+} else {
+    message("File $$FILE_TO_CHECK exists.")
+}
+
+
+#自动下载SDL库文件
+FILE_TO_CHECK=$$PWD/SDL2
+!exists($$FILE_TO_CHECK) {
+    message("File $$FILE_TO_CHECK does not exist. Cloning from Git repository...")
+    system(git clone https://gitee.com/devlib/SDL2-dev.git SDL2 -b $$SDL2_BRANCH_NAME)
+} else {
+    message("File $$FILE_TO_CHECK exists.")
+}
+
+
+include($$PWD/ffmpeg/ffmpeg.pri)
+include($$PWD/SDL2/SDL2.pri)

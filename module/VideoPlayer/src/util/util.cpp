@@ -30,7 +30,40 @@ void mSleep(int mSecond)
 
 namespace Util
 {
-    
+
+#ifdef WIN32
+#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
+  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+#else
+  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+#endif
+int gettimeofday(struct timeval* tv, int* /*tz*/) 
+{
+    FILETIME ft;
+    unsigned __int64 tmpres = 0;
+
+    if( tv )
+    {
+        GetSystemTimeAsFileTime( &ft );
+
+        tmpres |= ft.dwHighDateTime;
+        tmpres <<= 32;
+        tmpres |= ft.dwLowDateTime;
+
+        tmpres /= 10;
+
+        tmpres -= DELTA_EPOCH_IN_MICROSECS;
+
+        tv->tv_sec = (time_t)(tmpres / 1000000UL);
+        tv->tv_usec = (int)(tmpres % 1000000UL);
+
+        return 0;
+    }
+
+    return -1;
+}
+#endif
+
 uint64_t GetUtcTime()
 {
     /* 获取本地utc时间 */
@@ -79,7 +112,7 @@ uint64_t GetTodayUtcTime()
     tUTC->tm_sec = 0;
     uint64_t timestamp = (uint64_t)mktime(tUTC) * 1000;
 #else
-    uint64_t timestamp = (AppConfig::GetUtcTime() - tUTC->tm_hour * 3600000 - tUTC->tm_min * 60000 - tUTC->tm_sec * 1000);
+    uint64_t timestamp = (GetUtcTime() - tUTC->tm_hour * 3600000 - tUTC->tm_min * 60000 - tUTC->tm_sec * 1000);
 #endif
 
     return timestamp;
@@ -108,7 +141,13 @@ std::string getLocalTimeInStringFormat()
     struct timeval tv;
     char time_now[128] = {0};
     gettimeofday(&tv, NULL);
+
+#ifdef WIN32
+    time_t t = static_cast<time_t>(tv.tv_sec);
+    localtime_s(&nowtime, &t);
+#else
     localtime_r(&tv.tv_sec, &nowtime);
+#endif
 
     sprintf(time_now, "%4d%02d%02d%02d%02d%02d%03d",
             nowtime.tm_year + 1900,
