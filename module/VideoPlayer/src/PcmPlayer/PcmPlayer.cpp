@@ -148,11 +148,11 @@ void PcmPlayer::playAudioBuffer(void *stream, int len)
         m_current_pts = pcm_frame->pts();
     }
 
-    // printf("%s:%d %d %d m_is_stop=%d\n", __FILE__, __LINE__, len, m_pcm_frame_list.size(), m_is_stop);
+    // printf("%s:%d %d %d m_is_stop=%d m_is_mute=%d\n", __FILE__, __LINE__, len, m_pcm_frame_list.size(), m_is_stop, m_is_mute);
     if (m_last_frame_buffer_size > 0)
     {
-//        fprintf(stderr, "%s %d %d \n", __FUNCTION__, pcmFramePtr->getSize(), len);
         int buffer_size = std::min(m_last_frame_buffer_size, len);
+        // fprintf(stderr, "%s buffer_size=%d len=%d \n", __FUNCTION__, buffer_size, len);
         if (m_is_mute)// || mIsNeedPause) //静音 或者 是在暂停的时候跳转了
         {
             memset(stream, 0x0, len);

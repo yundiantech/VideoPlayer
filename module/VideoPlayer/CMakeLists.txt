@@ -14,7 +14,8 @@ file(GLOB_RECURSE ALL_SOURCE
 list(REMOVE_ITEM ALL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
 if (USE_PCM_PLAYER)
-    add_definitions(-DUSE_PCM_PLAYER -DENABLE_SDL)
+    # add_definitions(-DUSE_PCM_PLAYER -DENABLE_SDL)
+    target_compile_definitions (${PROJECT_NAME} PRIVATE USE_PCM_PLAYER ENABLE_SDL)
 else()
     #排除PcmPlayer
     list(REMOVE_ITEM ALL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/PcmPlayer/PcmPlayer_SDL.cpp)
