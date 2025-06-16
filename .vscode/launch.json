@@ -23,7 +23,7 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}/bin/win64/",
-            "environment": [{"name":"PATH","value":"C:/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin"}],
+            "environment": [{"name":"PATH","value":"C:/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin;C:/Qt/6.7.3/msvc2019_64/bin"}],
             "console": "externalTerminal"
         },
         { 
@@ -46,7 +46,7 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}/bin/win64/",
-            "environment": [{"name":"PATH","value":"C:/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin"}],
+            "environment": [{"name":"PATH","value":"C:/Qt/Qt5.13.2/5.13.2/msvc2017_64/bin;C:/Qt/6.7.3/msvc2019_64/bin"}],
             // "console": "externalTerminal"
             "console": "internalConsole" //在 VSCode 内部的调试控制台中显示输出，这个控制台只能在调试会话期间使用。
         }

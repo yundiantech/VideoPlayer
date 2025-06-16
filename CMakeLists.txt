@@ -35,28 +35,37 @@ elseif(WIN32)
 
     message("current platform: Windows ")
 
-    #指定Qt安装目录
-    set(QT_DIR_ROOT 
-            C:/Qt/Qt5.13.2/5.13.2
-            D:/Qt/Qt5.13.2/5.13.2)
+    # #指定Qt安装目录
+    # set(QT_DIR_ROOT 
+    #         C:/Qt/Qt5.13.2/5.13.2
+    #         D:/Qt/Qt5.13.2/5.13.2)
     
-    if(CMAKE_CL_64)    #CMAKE的内建变量，如果是true，就说明编译器的64位的，自然可以编译64bit的程序
-        set(QT_DIR_NAME msvc2017_64)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/win64)
-        # set(CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
-        # list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
-    else()
-        set(QT_DIR_NAME msvc2017)
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/win32)
-    endif()
+    # if(CMAKE_CL_64)    #CMAKE的内建变量，如果是true，就说明编译器的64位的，自然可以编译64bit的程序
+    #     set(QT_DIR_NAME msvc2017_64)
+    #     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/win64)
+    #     # set(CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
+    #     # list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_ROOT}/msvc2017_64)
+    # else()
+    #     set(QT_DIR_NAME msvc2017)
+    #     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/win32)
+    # endif()
 
-    foreach(item ${QT_DIR_ROOT})
-        set(QT_DIR_PATH ${item}/${QT_DIR_NAME})
-        message(STATUS "item is ${QT_DIR_PATH}")
-        if(EXISTS ${QT_DIR_PATH})
-            list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_PATH})
-        endif()
-    endforeach()
+    # foreach(item ${QT_DIR_ROOT})
+    #     set(QT_DIR_PATH ${item}/${QT_DIR_NAME})
+    #     message(STATUS "item is ${QT_DIR_PATH}")
+    #     if(EXISTS ${QT_DIR_PATH})
+    #         list(APPEND CMAKE_PREFIX_PATH ${QT_DIR_PATH})
+    #     endif()
+    # endforeach()
+
+    if(CMAKE_CL_64)    #CMAKE的内建变量，如果是true，就说明编译器的64位的，自然可以编译64bit的程序
+        list(APPEND CMAKE_PREFIX_PATH C:/Qt/Qt5.13.2/5.13.2/msvc2017_64)
+        list(APPEND CMAKE_PREFIX_PATH C:/Qt/6.7.3/msvc2019_64)
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/win64)
+    else()
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/win32)
+        list(APPEND CMAKE_PREFIX_PATH C:/Qt/Qt5.13.2/5.13.2/msvc2017)
+    endif()
 
 else()
 
@@ -77,8 +86,41 @@ endif()
 
 
 # find_package(<库名> <版本号> EXACT COMPONENTS <组件名1> ... <组件名n> REQUIRED)
-find_package(Qt5 5.13.2 COMPONENTS Widgets Network Concurrent REQUIRED)
- 
+find_package(Qt5 COMPONENTS Core Gui OpenGL OpenGLWidgets Widgets Network Concurrent)
+find_package(Qt6 COMPONENTS Core Gui OpenGL OpenGLWidgets Widgets Network Concurrent Core5Compat)
+# find_package(Qt6 REQUIRED COMPONENTS Core Gui OpenGL OpenGLWidgets Widgets Network Concurrent )
+
+message("Qt5_VERSION:"${Qt5_VERSION})
+message("Qt6_VERSION:"${Qt6_VERSION})
+
+set(FOUND_QT5 FALSE)
+set(FOUND_QT6 FALSE)
+
+### 优先使用Qt6 ###
+if(DEFINED Qt6_VERSION AND NOT ${Qt6_VERSION} STREQUAL "")
+    message(STATUS "found Qt6")
+    set(FOUND_QT6 TRUE)
+else()
+    message(STATUS "not found Qt6")
+endif()
+
+if(DEFINED Qt5_VERSION AND NOT ${Qt5_VERSION} STREQUAL "")
+    message(STATUS "found Qt5")
+    set(FOUND_QT5 TRUE)
+else()
+    message(STATUS "not found Qt5")
+endif()
+
+# if(Qt5_VERSION VERSION_GREATER_EQUAL "5.12.0")
+#     message(STATUS "Qt version is 5.12.0 or higher")
+# else()
+#     message(FATAL_ERROR "Qt version is too low, need at least 5.12.0")
+# endif()
+
+if (NOT FOUND_QT5 AND NOT FOUND_QT6)
+    message(FATAL_ERROR "\n!!!!! Qt5 or Qt6 not found!!!!!\n")
+endif()
+
 #CMAKE_ARCHIVE_OUTPUT_DIRECTORY：默认存放静态库的文件夹位置；
 #CMAKE_LIBRARY_OUTPUT_DIRECTORY：默认存放动态库的文件夹位置；
 #LIBRARY_OUTPUT_PATH：默认存放库文件的位置，如果产生的是静态库并且没有指定
@@ -113,21 +155,12 @@ file(GLOB_RECURSE ALL_SOURCE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Widget/*.cpp
         )
   
-# file(GLOB_RECURSE TMP_SOURCE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/module/VideoPlayer/src/*.c
-#     ${CMAKE_CURRENT_SOURCE_DIR}/module/VideoPlayer/src/*.cpp)
-# list (APPEND ALL_SOURCE ${TMP_SOURCE})
+if (FOUND_QT6)
+    qt6_add_resources(qrc_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc)
+elseif (FOUND_QT5)
+    qt5_add_resources(qrc_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc)
+endif()
 
-# file(GLOB_RECURSE TMP_SOURCE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/module/DragAbleWidget/*.c
-#     ${CMAKE_CURRENT_SOURCE_DIR}/module/DragAbleWidget/*.cpp)
-# list (APPEND ALL_SOURCE ${TMP_SOURCE})
-
-# file(GLOB_RECURSE ALL_HEAD
-#         src/*.hpp
-#         src/*.h)
-
-qt5_add_resources(qrc_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/resources.qrc)
 # message("ALL_SOURCE:"${ALL_SOURCE})
 add_executable(${PROJECT_NAME} ${ALL_SOURCE} ${qrc_FILES})
 # add_executable(${PROJECT_NAME} ${ALL_SOURCE})
@@ -137,28 +170,17 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/module/VideoPlayer)
 
 include_directories(${PRO_CODE_INC})
 
-# target_link_libraries(${PROJECT_NAME}
-#         winmm.lib
-#         Qt5::Core Qt5::Widgets Qt5::Network Qt5::WebSockets Qt5::Concurrent
-#         core gui network sql concurrent xml axcontainer)
-
 if (WIN32)
     target_link_libraries(${PROJECT_NAME}
         WS2_32.lib AdvAPI32.lib winmm.lib User32.lib GDI32.lib Strmiids.lib)
 endif()
 
-target_link_libraries(${PROJECT_NAME}
-        Qt5::Core Qt5::Widgets Qt5::Network  Qt5::Concurrent)
-#target_link_libraries(${PROJECT_NAME}
-#        -lavformat
-#        -lavcodec
-#        -lavutil
-#        -lswscale
-#        -lavfilter
-#        -lswresample
-#        -lnvmpi
-#        -lpthread -llzma -lssl -lcrypt -lz
-#        Qt5::Core Qt5::Widgets Qt5::Network Qt5::WebSockets)
+if (FOUND_QT6)
+    target_link_libraries(${PROJECT_NAME} Qt6::Core Qt6::Widgets Qt6::Network Qt6::Concurrent Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Core5Compat)
+elseif (FOUND_QT5)
+    target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Widgets Qt5::Network Qt5::Concurrent)
+endif()
+
 
 # message(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
