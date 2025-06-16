@@ -41,3 +41,4 @@ HEADERS  += \
     include($$PWD/lib/lib.pri)
 ### lib ### End
 
+DEFINES += USE_PCM_PLAYER ENABLE_SDL
