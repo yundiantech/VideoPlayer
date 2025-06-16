@@ -1,18 +1,23 @@
-/**
- * Ò¶º£»Ô
- * QQÈº121376426
+ï»¿/**
+ * å¶æµ·è¾‰
+ * QQç¾¤321159586
  * http://blog.yundiantech.com/
  */
 
 #include "DragAbleWidget.h"
 #include "ui_DragAbleWidget.h"
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QScreen>
+#else
 #include <QDesktopWidget>
+#endif
+
 #include <QMouseEvent>
 #include <QTimer>
 #include <QDebug>
 
-#define MARGINS 2 //´°Ìå±ß¿ò
+#define MARGINS 2 //çª—ä½“è¾¹æ¡†
 
 DragAbleWidget::DragAbleWidget(QWidget *parent) :
     QWidget(parent),
@@ -20,19 +25,24 @@ DragAbleWidget::DragAbleWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ///¶¨Ê±Æ÷ÓÃÓÚ¶¨ÖÆ¼ì²âÊó±êÎ»ÖÃ£¬·ÀÖ¹Êó±ê¿ìËÙÒÆÈë´°¿Ú£¬Ã»ÓÐ¼ì²âµ½£¬µ¼ÖÂÊó±ê¼ýÍ·³ÊÏÖÍÏÀ­µÄÐÎ×´
+    ///å®šæ—¶å™¨ç”¨äºŽå®šåˆ¶æ£€æµ‹é¼ æ ‡ä½ç½®ï¼Œé˜²æ­¢é¼ æ ‡å¿«é€Ÿç§»å…¥çª—å£ï¼Œæ²¡æœ‰æ£€æµ‹åˆ°ï¼Œå¯¼è‡´é¼ æ ‡ç®­å¤´å‘ˆçŽ°æ‹–æ‹‰çš„å½¢çŠ¶
     mTimer = new QTimer;
     mTimer->setInterval(1000);
     connect(mTimer, &QTimer::timeout, this, &DragAbleWidget::slotTimerTimeOut);
     mTimer->start();
 
-///¸Ä±ä´°Ìå´óÐ¡Ïà¹Ø
+///æ”¹å˜çª—ä½“å¤§å°ç›¸å…³
     isMax = false;
 
     int w = this->width();
     int h = this->height();
 
-    QRect screenRect = QApplication::desktop()->screenGeometry();//»ñÈ¡Éè±¸ÆÁÄ»´óÐ¡
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QRect screenRect = QApplication::primaryScreen()->availableGeometry();//èŽ·å–è®¾å¤‡å±å¹•å¤§å°
+#else
+    QRect screenRect = QApplication::desktop()->screenGeometry();//èŽ·å–è®¾å¤‡å±å¹•å¤§å°
+#endif
+
     int x = (screenRect.width() - w) / 2;
     int y = (screenRect.height() - h) / 2;
 
@@ -42,7 +52,7 @@ DragAbleWidget::DragAbleWidget(QWidget *parent) :
 
     isLeftPressDown = false;
     this->dir = NONE;
-    this->setMouseTracking(true);// ×·×ÙÊó±ê
+    this->setMouseTracking(true);// è¿½è¸ªé¼ æ ‡
     ui->widget_frame->setMouseTracking(true);
     ui->widget_back->setMouseTracking(true);
     ui->widget_container->setMouseTracking(true);
@@ -55,7 +65,7 @@ DragAbleWidget::DragAbleWidget(QWidget *parent) :
 
 //    ui->widget_frame->setContentsMargins(1, 1, 1, 1);
 
-    //°²×°ÊÂ¼þ¼àÌýÆ÷,ÈÃ±êÌâÀ¸Ê¶±ðÊó±êË«»÷
+    //å®‰è£…äº‹ä»¶ç›‘å¬å™¨,è®©æ ‡é¢˜æ è¯†åˆ«é¼ æ ‡åŒå‡»
 //    ui->widget_beingClass_back->installEventFilter(this);
 
 }
@@ -76,7 +86,7 @@ void DragAbleWidget::setTitle(QString str)
     this->setWindowTitle(str);
 }
 
-////////////¸Ä±ä´°Ìå´óÐ¡Ïà¹Ø
+////////////æ”¹å˜çª—ä½“å¤§å°ç›¸å…³
 
 void DragAbleWidget::mouseReleaseEvent(QMouseEvent *event)
 {
@@ -100,7 +110,7 @@ void DragAbleWidget::mousePressEvent(QMouseEvent *event)
         {
 //            if(QApplication::keyboardModifiers() == (Qt::ControlModifier|Qt::ShiftModifier|Qt::AltModifier))
             {
-                doChangeFullScreen(); //ctrl + ×ó¼ü
+                doChangeFullScreen(); //ctrl + å·¦é”®
             }
         }
     }
@@ -219,7 +229,11 @@ void DragAbleWidget::mouseMoveEvent(QMouseEvent *event)
             {
                 QPoint point = event->globalPos() - dragPosition;
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                QRect mLimitRect = QApplication::primaryScreen()->availableGeometry();
+#else
                 QRect mLimitRect = QApplication::desktop()->availableGeometry();
+#endif
 
                 if (point.x() < mLimitRect.x())
                     point.setX(mLimitRect.x());
@@ -240,13 +254,13 @@ void DragAbleWidget::mouseMoveEvent(QMouseEvent *event)
             event->accept();
         }
     }
-//    QWidget::mouseMoveEvent(event);¡¢
+//    QWidget::mouseMoveEvent(event);ã€
     event->accept();
 }
 
 void DragAbleWidget::checkCursorDirect(const QPoint &cursorGlobalPoint)
 {
-    // »ñÈ¡´°ÌåÔÚÆÁÄ»ÉÏµÄÎ»ÖÃÇøÓò£¬tlÎªtopleftµã£¬rbÎªrightbottomµã
+    // èŽ·å–çª—ä½“åœ¨å±å¹•ä¸Šçš„ä½ç½®åŒºåŸŸï¼Œtlä¸ºtopleftç‚¹ï¼Œrbä¸ºrightbottomç‚¹
     QRect rect = this->rect();
     QPoint tl = mapToGlobal(rect.topLeft());
     QPoint rb = mapToGlobal(rect.bottomRight());
@@ -255,39 +269,39 @@ void DragAbleWidget::checkCursorDirect(const QPoint &cursorGlobalPoint)
     int y = cursorGlobalPoint.y();
 
     if(tl.x() + PADDING >= x && tl.x() <= x && tl.y() + PADDING >= y && tl.y() <= y) {
-        // ×óÉÏ½Ç
+        // å·¦ä¸Šè§’
         dir = LEFTTOP;
-        this->setCursor(QCursor(Qt::SizeFDiagCursor));  // ÉèÖÃÊó±êÐÎ×´
+        this->setCursor(QCursor(Qt::SizeFDiagCursor));  // è®¾ç½®é¼ æ ‡å½¢çŠ¶
     } else if(x >= rb.x() - PADDING && x <= rb.x() && y >= rb.y() - PADDING && y <= rb.y()) {
-        // ÓÒÏÂ½Ç
+        // å³ä¸‹è§’
         dir = RIGHTBOTTOM;
         this->setCursor(QCursor(Qt::SizeFDiagCursor));
     } else if(x <= tl.x() + PADDING && x >= tl.x() && y >= rb.y() - PADDING && y <= rb.y()) {
-        //×óÏÂ½Ç
+        //å·¦ä¸‹è§’
         dir = LEFTBOTTOM;
         this->setCursor(QCursor(Qt::SizeBDiagCursor));
     } else if(x <= rb.x() && x >= rb.x() - PADDING && y >= tl.y() && y <= tl.y() + PADDING) {
-        // ÓÒÉÏ½Ç
+        // å³ä¸Šè§’
         dir = RIGHTTOP;
         this->setCursor(QCursor(Qt::SizeBDiagCursor));
     } else if(x <= tl.x() + PADDING && x >= tl.x()) {
-        // ×ó±ß
+        // å·¦è¾¹
         dir = LEFT;
         this->setCursor(QCursor(Qt::SizeHorCursor));
     } else if( x <= rb.x() && x >= rb.x() - PADDING) {
-        // ÓÒ±ß
+        // å³è¾¹
         dir = RIGHT;
         this->setCursor(QCursor(Qt::SizeHorCursor));
     }else if(y >= tl.y() && y <= tl.y() + PADDING){
-        // ÉÏ±ß
+        // ä¸Šè¾¹
         dir = UP;
         this->setCursor(QCursor(Qt::SizeVerCursor));
     } else if(y <= rb.y() && y >= rb.y() - PADDING) {
-        // ÏÂ±ß
+        // ä¸‹è¾¹
         dir = DOWN;
         this->setCursor(QCursor(Qt::SizeVerCursor));
     }else {
-        // Ä¬ÈÏ
+        // é»˜è®¤
         dir = NONE;
         this->setCursor(QCursor(Qt::ArrowCursor));
     }
@@ -299,13 +313,13 @@ void DragAbleWidget::doShowFullScreen()
     this->show();
     this->showFullScreen();
     this->raise();
-    ui->widget_frame->setContentsMargins(0,0,0,0); //Òþ²Ø±ß¿ò
+    ui->widget_frame->setContentsMargins(0,0,0,0); //éšè—è¾¹æ¡†
 
     showBorderRadius(false);
 
     ui->btnMenu_Max->setIcon(QIcon(":/image/shownormalbtn.png"));
 
-    ui->widget_title->hide(); //Òþ²Ø±êÌâÀ¸
+    ui->widget_title->hide(); //éšè—æ ‡é¢˜æ 
 //    ui->verticalLayout_titleWidget_Back->removeWidget(ui->widget_title);
 //    ui->widget_title->setParent(NULL);
 //    ui->widget_title->setWindowFlags(Qt::FramelessWindowHint|Qt::WindowStaysOnTopHint|Qt::Tool|Qt::X11BypassWindowManagerHint);

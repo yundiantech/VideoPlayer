@@ -1,6 +1,6 @@
-/**
- * Ò¶º£»Ô
- * QQÈº121376426
+ï»¿/**
+ * å¶æµ·è¾‰
+ * QQç¾¤321159586
  * http://blog.yundiantech.com/
  */
 
@@ -14,7 +14,7 @@ namespace Ui {
 class DragAbleWidget;
 }
 
-//Êó±êÊµÏÖ¸Ä±ä´°¿Ú´óĞ¡
+//é¼ æ ‡å®ç°æ”¹å˜çª—å£å¤§å°
 #define PADDING 6
 enum Direction { UP=0, DOWN, LEFT, RIGHT, LEFTTOP, LEFTBOTTOM, RIGHTBOTTOM, RIGHTTOP, NONE };
 
@@ -36,7 +36,7 @@ private:
 
     QTimer *mTimer;
 
-    ///ÒÔÏÂÊÇ¸Ä±ä´°Ìå´óĞ¡Ïà¹Ø
+    ///ä»¥ä¸‹æ˜¯æ”¹å˜çª—ä½“å¤§å°ç›¸å…³
     ////////
 protected:
 //    bool eventFilter(QObject *obj, QEvent *event);
@@ -45,14 +45,14 @@ protected:
     void mousePressEvent(QMouseEvent *event);
 
 private:
-    bool isMax = false; //ÊÇ·ñ×î´ó»¯
+    bool isMax = false; //æ˜¯å¦æœ€å¤§åŒ–
     QRect mLocation;
 
     bool mIsResizeMode = false;
 
-    bool isLeftPressDown = false;  // ÅĞ¶Ï×ó¼üÊÇ·ñ°´ÏÂ
-    QPoint dragPosition;   // ´°¿ÚÒÆ¶¯ÍÏ¶¯Ê±ĞèÒª¼Ç×¡µÄµã
-    int dir;        // ´°¿Ú´óĞ¡¸Ä±äÊ±£¬¼ÇÂ¼¸Ä±ä·½Ïò
+    bool isLeftPressDown = false;  // åˆ¤æ–­å·¦é”®æ˜¯å¦æŒ‰ä¸‹
+    QPoint dragPosition;   // çª—å£ç§»åŠ¨æ‹–åŠ¨æ—¶éœ€è¦è®°ä½çš„ç‚¹
+    int dir;        // çª—å£å¤§å°æ”¹å˜æ—¶ï¼Œè®°å½•æ”¹å˜æ–¹å‘
 
     void checkCursorDirect(const QPoint &cursorGlobalPoint);
 

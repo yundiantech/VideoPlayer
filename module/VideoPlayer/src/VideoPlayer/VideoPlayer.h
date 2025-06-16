@@ -1,6 +1,6 @@
 ﻿/**
  * 叶海辉
- * QQ群121376426
+ * QQ群321159586
  * http://blog.yundiantech.com/
  */
 
@@ -107,13 +107,15 @@ public:
 
     void seek(int64_t pos); //单位是微秒
 
+    void setEnableHardDec(bool value); //设置是否启用硬件解码
+
     /**
      * 设置能力函数
      * 
      * @param video_decode 是否支持视频解码
-     * @param encoded_video_callback 是否支持编码后的视频回调
+     * @param encoded_video_callback 是否支持解码前的视频回调
      * 
-     * 此函数用于配置对象的视频处理能力，包括是否支持视频解码和是否支持编码后视频的回调
+     * 此函数用于配置对象的视频处理能力，包括是否支持视频解码和是否支持解码前视频的回调
      * 通过设置这些参数，可以控制对象在视频处理过程中的行为和功能
      */
     void setAbility(bool video_decode, bool encoded_video_callback, bool audio_play, bool encoded_audio_callback);
@@ -150,11 +152,11 @@ private:
     float mVolume; //音量 0~1 超过1 表示放大倍数
 
     /// 跳转相关的变量
-    int             seek_req = 0; //跳转标志
-    int64_t         seek_pos; //跳转的位置 -- 微秒
-    int             seek_flag_audio;//跳转标志 -- 用于音频线程中
-    int             seek_flag_video;//跳转标志 -- 用于视频线程中
-    int64_t        seek_time; //跳转的时间(毫秒秒)  值和seek_pos是一样的
+    int           seek_req = 0; //跳转标志
+    int64_t       seek_pos; //跳转的位置 -- 微秒
+    int           seek_flag_audio;//跳转标志 -- 用于音频线程中
+    int           seek_flag_video;//跳转标志 -- 用于视频线程中
+    int64_t       seek_time; //跳转的时间(毫秒秒)  值和seek_pos是一样的
 
     ///播放控制相关
     bool mIsNeedPause; //暂停后跳转先标记此变量
@@ -180,6 +182,11 @@ private:
     AVFormatContext *pFormatCtx = nullptr;
     AVCodecContext *pCodecCtx = nullptr;
     AVCodec *pCodec = nullptr;
+    bool m_enable_hard_dec = true; //是否启用硬件解码
+    bool openVideoDecoder(const AVCodecID &codec_id); //打开视频解码器
+    bool openHardDecoder_Cuvid(const AVCodecID &codec_id); //打开硬件解码器（英伟达）
+    bool openHardDecoder_Qsv(const AVCodecID &codec_id);   //打开硬件解码器（intel）
+    bool openSoftDecoder(const AVCodecID &codec_id); //打开软解码器
 
     ///音频相关
     AVCodecContext *aCodecCtx = nullptr;

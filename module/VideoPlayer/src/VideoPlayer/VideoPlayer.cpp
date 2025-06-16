@@ -1,6 +1,6 @@
 ﻿/**
  * 叶海辉
- * QQ群121376426
+ * QQ群321159586
  * http://blog.yundiantech.com/
  */
 
@@ -188,6 +188,11 @@ void VideoPlayer::setAbility(bool video_decode, bool encoded_video_callback, boo
     m_enable_encoded_video_callback = encoded_video_callback;
     m_enable_audio_play = audio_play;
     m_enable_encoded_audio_callback = encoded_audio_callback;
+}
+
+void VideoPlayer::setEnableHardDec(bool value)
+{
+    m_enable_hard_dec = value;
 }
 
 void VideoPlayer::setMute(bool isMute)
@@ -392,33 +397,43 @@ printf("%s:%d pFormatCtx->nb_streams=%d \n", __FILE__, __LINE__, pFormatCtx->nb_
     if (videoStream >= 0)
     {
         AVStream *video_stream = pFormatCtx->streams[videoStream];
+        mVideoStream = video_stream;
+
+        // if (m_enable_video_decode)
+        // {
+        //     ///查找视频解码器
+        //     pCodec = (AVCodec*)avcodec_find_decoder(video_stream->codecpar->codec_id);
+        //     pCodecCtx = avcodec_alloc_context3(pCodec);
+        //     pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+
+        //     avcodec_parameters_to_context(pCodecCtx, video_stream->codecpar);
+
+        //     if (pCodec == nullptr)
+        //     {
+        //         fprintf(stderr, "PCodec not found.\n");
+        //         doOpenVideoFileFailed();
+        //         goto end;
+        //     }
+
+        //     ///打开视频解码器
+        //     if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0)
+        //     {
+        //         fprintf(stderr, "Could not open video codec.\n");
+        //         doOpenVideoFileFailed();
+        //         goto end;
+        //     }
+        // }
 
         if (m_enable_video_decode)
         {
-            ///查找视频解码器
-            pCodec = (AVCodec*)avcodec_find_decoder(video_stream->codecpar->codec_id);
-            pCodecCtx = avcodec_alloc_context3(pCodec);
-            pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-
-            avcodec_parameters_to_context(pCodecCtx, video_stream->codecpar);
-
-            if (pCodec == nullptr)
-            {
-                fprintf(stderr, "PCodec not found.\n");
-                doOpenVideoFileFailed();
-                goto end;
-            }
-
-            ///打开视频解码器
-            if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0)
+            bool ret = openVideoDecoder(video_stream->codecpar->codec_id);
+            if (!ret)
             {
                 fprintf(stderr, "Could not open video codec.\n");
                 doOpenVideoFileFailed();
                 goto end;
             }
         }
-
-        mVideoStream = video_stream;
 
         if (!m_is_live_mode && m_enable_encoded_video_callback)
         {

@@ -1,7 +1,12 @@
 ﻿#include "AppConfig.h"
 
+// #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+// #include <QScreen>
+// #else
+// #include <QDesktopWidget>
+// #endif
+
 #include <QProcess>
-#include <QDesktopWidget>
 #include <QDesktopServices>
 
 #include <QByteArray>
@@ -14,11 +19,11 @@
 #include <QDateTime>
 #include <QApplication>
 #include <QMessageBox>
+#include <QStandardPaths>
 
 #include <QJsonParseError>
 #include <QJsonObject>
 #include <QJsonArray>
-
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -37,7 +42,7 @@
 
 QString AppConfig::APPID = "{a1db97ad-b8ed-11e9-a297-0235d2b38928}";
 int AppConfig::VERSION = 1;
-QString AppConfig::VERSION_NAME = "2.1.9";
+QString AppConfig::VERSION_NAME = "3.0.0";
 
 MainWindow *AppConfig::gMainWindow = NULL;
 QRect AppConfig::gMainWindowRect;
@@ -262,9 +267,11 @@ void AppConfig::saveConfigInfoToFile()
     if (file.open(QIODevice::WriteOnly))
     {
         QTextStream fileOut(&file);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        fileOut.setEncoding(QStringConverter::Utf8);
+#else
         fileOut.setCodec("UTF-8");  //unicode UTF-8  ANSI
-
-
+#endif
         QJsonObject dataObject;
         dataObject.insert("appid", AppConfig::APPID);
         dataObject.insert("VideoKeepAspectRatio", AppConfig::gVideoKeepAspectRatio);
@@ -304,7 +311,8 @@ void AppConfig::InitLogFile()
 
         if(fileInfo.isFile())
         {
-            qint64 t1 = fileInfo.created().toMSecsSinceEpoch();
+            // qint64 t1 = fileInfo.created().toMSecsSinceEpoch();
+            qint64 t1 = fileInfo.birthTime().toMSecsSinceEpoch();
             qint64 t2 = QDateTime::currentMSecsSinceEpoch();
 
             qint64 t = (t2 - t1) / 1000; //文件创建到现在的时间（单位：秒）
@@ -360,7 +368,11 @@ void AppConfig::WriteLog(QString str)
                 .arg(str);
 
         QTextStream fileOut(&file);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        fileOut.setEncoding(QStringConverter::Utf8);
+#else
         fileOut.setCodec("UTF-8");  //unicode UTF-8  ANSI
+#endif
         fileOut<<tmpStr;
         file.close();
     }

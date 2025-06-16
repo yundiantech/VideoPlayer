@@ -18,7 +18,6 @@
 #include <QMimeData>
 
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QScreen>
 #include <QDateTime>
 
@@ -218,7 +217,8 @@ void ShowVideoWidget::mouseMoveEvent(QMouseEvent *event)
         drag->setMimeData(mimeData);
 
 //        qDebug()<<__FUNCTION__<<"11111";
-        drag->start(Qt::CopyAction| Qt::MoveAction);
+        // drag->start(Qt::CopyAction| Qt::MoveAction);
+        drag->exec(Qt::CopyAction|Qt::MoveAction);
 //        qDebug()<<__FUNCTION__<<"99999";
     }
     else
@@ -542,7 +542,8 @@ void ShowVideoWidget::resizeGL(int window_W, int window_H)
         ui->widget_name->show();
 
         QFontMetrics fontMetrics(ui->label_name->font());
-        int fontSize = fontMetrics.width(mCameraName);//获取之前设置的字符串的像素大小
+        // int fontSize = fontMetrics.width(mCameraName);//获取之前设置的字符串的像素大小
+        int fontSize = fontMetrics.boundingRect(mCameraName).width();//获取之前设置的字符串的像素大小
         QString str = mCameraName;
         if(fontSize > (this->width() / 2))
         {

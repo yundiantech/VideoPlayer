@@ -22,16 +22,13 @@ void MyMessageBox_WithTitle::setText(QString title,QString text,QString acceptBt
     ui->lab_Title->setText(title);
     ui->lab_info->setText(text);
 
-    if (acceptBtnText != NULL)
-    {
-        ui->pushButton_accept->setText(acceptBtnText);
-    }
-    else
+    ui->pushButton_accept->setText(acceptBtnText);
+    if (acceptBtnText.isEmpty())
     {
         ui->pushButton_accept->hide();
     }
 
-    if (rejectBtnText == NULL)
+    if (rejectBtnText.isEmpty())
     {
         ui->pushButto_reject->hide();
     }

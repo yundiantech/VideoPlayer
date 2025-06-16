@@ -1,6 +1,6 @@
 ﻿/**
  * 叶海辉
- * QQ群121376426
+ * QQ群321159586
  * http://blog.yundiantech.com/
  */
 
@@ -11,7 +11,6 @@
 #include <QPaintEvent>
 #include <QFileDialog>
 #include <QDebug>
-#include <QDesktopWidget>
 #include <QFontDatabase>
 #include <QMouseEvent>
 #include <QMessageBox>
@@ -245,7 +244,8 @@ void MainWindow::stopPlay()
 {
     if (mCurrentItem != nullptr)
     {
-        mCurrentItem->setBackgroundColor(QColor(0, 0, 0, 0));
+        // mCurrentItem->setBackgroundColor(QColor(0, 0, 0, 0));
+        mCurrentItem->setBackground(QBrush(QColor(0, 0, 0, 0)));
     }
 
     mCurrentItem = nullptr;
@@ -281,12 +281,14 @@ qDebug()<<__FUNCTION__<<filePath<<playIndex;
 
         if (mCurrentItem != nullptr)
         {
-            mCurrentItem->setBackgroundColor(QColor(0, 0, 0, 0));
+            // mCurrentItem->setBackgroundColor(QColor(0, 0, 0, 0));
+            mCurrentItem->setBackground(QBrush(QColor(0, 0, 0, 0)));
         }
 
         mCurrentItem = item;
 
-        mCurrentItem->setBackgroundColor(QColor(75, 92, 196));
+        // mCurrentItem->setBackgroundColor(QColor(75, 92, 196));
+        mCurrentItem->setBackground(QBrush(QColor(75, 92, 196)));
     }
 }
 
